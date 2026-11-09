@@ -284,8 +284,18 @@ An unknown provider is a hard error (exit 2), not a silent fallback — searchin
 with the wrong engine would bill the wrong account. The same applies if both the
 current and former variable names are set to *different* values.
 
-The former variables `SEARCH_API_KEY` and `JOBSEARCH_SEARCH_PROVIDER` still work
-but print a deprecation warning; they will be removed in a future release.
+Tuning, all under the same prefix:
+
+```bash
+export LAID_OFF_HTTP_TIMEOUT=20         # seconds, must be positive
+export LAID_OFF_CACHE_TTL=300           # seconds to reuse ATS responses; 0 = off
+export LAID_OFF_CACHE_DIR=~/.cache/jobsearch
+```
+
+The former names (`SEARCH_API_KEY`, `JOBSEARCH_SEARCH_PROVIDER`,
+`JOBSEARCH_HTTP_TIMEOUT`, `JOBSEARCH_CACHE_TTL`, `JOBSEARCH_CACHE_DIR`) still
+work but each prints a deprecation warning; they will be removed in a future
+release. An invalid value is a hard error (exit 2) rather than a silent default.
 
 See `references/providers.md` for the exact API contracts.
 
