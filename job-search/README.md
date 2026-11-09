@@ -16,7 +16,8 @@ instead of scraping aggregators.
 
 ## Install
 
-Requires Python 3.10+ (standard library only).
+Requires **Node.js 20+**. No runtime dependencies: build once, then the
+compiled JavaScript runs anywhere Node does.
 
 This skill lives in a multi-skill repo at `skills/job-search/`. Either
 
@@ -29,31 +30,31 @@ git clone <this-repo> /tmp/skills && cp -r /tmp/skills/skills/job-search ~/.agen
 ```
 
 pi and Claude Code discover `~/.agents/skills/` and `~/.claude/skills/`
-recursively. Or run `./jobsearch.py` straight from the directory — the entry point
+recursively. Or run `node dist/main.js` straight from the directory — the entry point
 is self-locating and needs no install or `PYTHONPATH`.
 
 ## Use
 
 ```bash
 # Roles at companies you name
-./jobsearch.py --company Stripe --company Ramp --title "software engineer"
+node dist/main.js --company Stripe --company Ramp --title "software engineer"
 
 # Is this company still hiring after its layoff, and for what?
-./jobsearch.py --check Stripe --check Notion --format md
+node dist/main.js --check Stripe --check Notion --format md
 
 # Which ATS boards does a company have?
-./jobsearch.py --company Notion --list-boards
+node dist/main.js --company Notion --list-boards
 
 # Generate boolean site: queries (no API key needed)
-./jobsearch.py --company Stripe --title "chief of staff" --queries
+node dist/main.js --company Stripe --title "chief of staff" --queries
 
 # Markdown report for humans
-./jobsearch.py --company Stripe --title engineer --format md --limit 20
+node dist/main.js --company Stripe --title engineer --format md --limit 20
 ```
 
 ### Flags
 
-Run `./jobsearch.py --help` for the authoritative list — it is generated from the
+Run `node dist/main.js --help` for the authoritative list — it is generated from the
 code, so it cannot drift. The ones you will reach for first:
 
 | Flag | Description |
@@ -110,11 +111,11 @@ for every account tested, with no public jobs endpoint.
 
 ## Tests
 
-From `skills/job-search/`, using the repo-root dev venv:
+From `skills/job-search/`, after `npm install`:
 
 ```bash
-../.venv/bin/python -m pytest                    # unit + mocked (fast)
-JOBSEARCH_LIVE_TESTS=1 ../.venv/bin/python -m pytest   # + live network
+npm test                    # unit + mocked (fast)
+npm run test:live           # + live network
 ```
 
 The live suite exists because the vendor quirks that actually broke this skill
@@ -128,18 +129,33 @@ directory, which is also the skill root a harness loads.
 
 ```
 SKILL.md              # agent-facing instructions (required by the spec)
-jobsearch.py          # self-locating entrypoint
-jobsearch/            # importable package
-  ats/                # ATS adapters + identity verification
-  search/             # pluggable search providers (Kagi, Brave)
-  discovery.py        # company -> live boards
-  hiring_signal.py    # "is it still hiring?" + why the WARN feed was dropped
-  filtering.py        # profile expansion + filtering + ranking
-  pipeline.py         # orchestration
-  output.py           # dedupe + JSON/Markdown
-  cli.py              # command line
+src/                  # TypeScript source
+  main.ts             # self-locating entrypoint
+  cli.ts              # argument parsing + exit codes
+  pipeline.ts         # orchestration: discover -> fetch -> filter -> rank
+  ats.ts              # ATS adapters + identity verification
+  discovery.ts        # company -> live boards
+  filtering.ts        # profile expansion + filtering + ranking
+  hiring-signal.ts    # "is it still hiring?" + why the WARN feed was dropped
+  search.ts           # pluggable search providers (Kagi, Brave)
+  output.ts           # dedupe + JSON/Markdown
+  http.ts / cache.ts  # fetch + retries, optional TTL cache
+  html.ts             # entity decoding (Node has no built-in decoder)
+dist/                 # compiled JavaScript -- this is what runs
+tests-ts/             # unit, mocked, live, and parity vs the old Python build
 references/           # verified API contracts and caveats
-tests/                # unit, mocked, live
 ```
+
+## Developing
+
+```bash
+npm install          # dev-only: typescript + vitest
+npm run build        # src/ -> dist/
+npm test             # 140 offline tests
+npm run test:live    # + live network (163 total)
+```
+
+`dist/` is what consumers run; `node_modules` is never needed at runtime.
+
 
 

@@ -2,7 +2,7 @@
 name: job-search
 description: Find open roles, or check whether a company is hiring, by reading its ATS job board (Greenhouse, Lever, Ashby, SmartRecruiters) directly. Requires company names; not for open-ended discovery.
 license: MIT
-compatibility: Python 3.10+ (stdlib only). Optional SEARCH_API_KEY for search-engine fallback.
+compatibility: Node.js 20+ (no runtime dependencies). Optional SEARCH_API_KEY for search-engine fallback.
 metadata:
   version: "1.0.0"
   upstream-idea: "site:<ats-domain> boolean job search"
@@ -49,21 +49,22 @@ fallbacks in *Known limitations* rather than running a search that returns nothi
 
 ## Quick start
 
-Run `./jobsearch.py` from this skill directory. It is self-locating, so it
-works from any cwd (e.g. `/path/to/job-search/jobsearch.py ...`).
+Run `node dist/main.js` from this skill directory. The entry point resolves
+paths from its own location, so it works from any cwd, and it needs **no
+`npm install`** — the shipped JavaScript has zero runtime dependencies.
 
 ```bash
 # 1. Roles at companies you name
-./jobsearch.py --company Stripe --company Ramp --title "software engineer"
+node dist/main.js --company Stripe --company Ramp --title "software engineer"
 
 # 2. Is this company still hiring after its layoff announcement, and for what?
-./jobsearch.py --check Stripe --check Notion --format md
+node dist/main.js --check Stripe --check Notion --format md
 
 # 3. See which ATS boards a company actually has
-./jobsearch.py --company Notion --list-boards
+node dist/main.js --company Notion --list-boards
 
 # 4. Generate boolean site: queries (no API key needed)
-./jobsearch.py --company Stripe --title "chief of staff" --queries
+node dist/main.js --company Stripe --title "chief of staff" --queries
 ```
 
 Output defaults to JSON (for agents). Add `--format md` for a human-readable

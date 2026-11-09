@@ -1,18 +1,22 @@
-# Shared development environment
-.venv/
+# Build artifacts that are NOT shipped
+build/
+*.egg-info/
+*.tsbuildinfo
 
-# Python
+# Python toolchain (any skill that uses it)
+.venv/
 __pycache__/
 *.pyc
 *.pyo
-*.egg-info/
-dist/
-build/
+
+# Node toolchain (any skill that uses it)
+node_modules/
 
 # Test / tooling caches
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+coverage/
 
 # Local secrets — never commit. Skills read keys from the environment
 # (e.g. SEARCH_API_KEY); keep them out of the repo entirely.
@@ -23,3 +27,6 @@ build/
 
 # OS
 .DS_Store
+
+# NOTE: `dist/` is intentionally NOT ignored. For a dependency-free skill the
+# compiled output is what users run, so it must be committed.

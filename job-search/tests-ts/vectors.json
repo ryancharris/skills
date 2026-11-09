@@ -1,0 +1,101 @@
+{
+ "slug_candidates": {
+  "Stripe": [
+   "stripe"
+  ],
+  "Meta Platforms": [
+   "metaplatforms",
+   "meta",
+   "meta-platforms"
+  ],
+  "Cisco Systems, Inc.": [
+   "ciscosystems",
+   "cisco",
+   "cisco-systems",
+   "ciscosystemsinc"
+  ],
+  "The Boeing Company": [
+   "boeing",
+   "theboeingcompany"
+  ],
+  "Société Générale": [
+   "societegenerale",
+   "societe",
+   "societe-generale"
+  ],
+  "***": [],
+  "   ": [],
+  "Ramp": [
+   "ramp"
+  ]
+ },
+ "expand_titles": {
+  "chief of staff": [
+   [
+    "chief of staff",
+    "CoS",
+    "chief of staff to CEO"
+   ]
+  ],
+  "product manager": [
+   [
+    "product manager",
+    "PM"
+   ]
+  ],
+  "software engineer": [
+   [
+    "software engineer",
+    "SWE",
+    "software developer"
+   ]
+  ],
+  "astronaut": [
+   [
+    "astronaut"
+   ]
+  ],
+  "designer": [
+   [
+    "designer",
+    "product designer",
+    "UX designer",
+    "UI designer"
+   ]
+  ]
+ },
+ "build_site_query": {
+  "cos": "site:jobs.ashbyhq.com (\"chief of staff\" OR \"CoS\" OR \"chief of staff to CEO\")",
+  "cos+loc": "site:boards.greenhouse.io (\"chief of staff\" OR \"CoS\" OR \"chief of staff to CEO\") \"New York\""
+ },
+ "title_contains": {
+  "Senior PM|PM": true,
+  "Business Development Representative|PM": false,
+  "PM, Growth|PM": true,
+  "Development Manager|PM": false,
+  "Chief of Staff to CEO|CoS": false,
+  "Engineer|engineer": true
+ },
+ "display_company": {
+  "notion": "Notion",
+  "Cohere": "Cohere",
+  "ACME Corp": "ACME Corp",
+  "dvtrading": "Dvtrading",
+  "": ""
+ },
+ "friendly_department": {
+  "GTM": "Sales & Marketing",
+  "gtm": "Sales & Marketing",
+  "unspecified": "Other / unlabelled",
+  "Engineering": "Engineering"
+ },
+ "ashby_pay": {
+  "Canada": "CA$1",
+  "Toronto": "CA$1",
+  "San Francisco": "$1",
+  "New York": "$1",
+  "Korea": "S",
+  "Atlantis": "S",
+  "": "S"
+ }
+}
