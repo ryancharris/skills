@@ -76,6 +76,25 @@ There is no shared language requirement — only the rules above. Dev
 dependencies are installed per skill inside its own directory, so one skill's
 toolchain cannot affect another's.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request. Four jobs:
+
+| Job | What it proves |
+|---|---|
+| `test (node 20/22/24)` | Typecheck + the offline suite passes on the declared minimum and newer runtimes |
+| `dist matches src` | Committed `dist/` was rebuilt after the last `src/` change, so shipped code matches source |
+| `runs standalone` | The skill executes with **no `node_modules`** — the property that lets a harness load it without `npm install` |
+| `SKILL.md is valid` | Frontmatter has a loadable `name` and a non-empty `description`; a skill missing either is never routed to |
+
+**CI never touches a live API.** Live-API tests live under
+`tests-ts/live/`, require `JOBSEARCH_LIVE_TESTS=1`, and need `SEARCH_API_KEY`;
+none of that is set in CI, and `tests-ts/setup.ts` blocks outbound requests in
+every non-live run. Those tests are for deliberate manual runs.
+
+The `dist matches src` job matters because `dist/` is committed: the compiled
+JavaScript is what users run, so a stale build would ship code nobody reviewed.
+
 ## Testing
 
 Each skill owns its tests:
