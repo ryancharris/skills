@@ -528,3 +528,79 @@ describe("ashbyPayForLocation", () => {
     expect(ashbyPayForLocation(tiers, "Atlantis")).toBe("S");
   });
 });
+
+// ------------------------------------------------- empty-state explanations
+
+describe("empty-state messages", () => {
+  it("explains a missing API key instead of blaming the filters", () => {
+    // The old text said "try widening titles", which no title could fix: the
+    // company has no readable board AND the fallback had no key.
+    const md = toMarkdown([], {
+      emptyReason: {
+        kind: "no_key",
+        provider: "kagi",
+        variable: "LAID_OFF_SEARCH_API_KEY",
+        companies: ["Amazon"],
+      },
+    });
+    expect(md).toContain("No roles found for **Amazon**");
+    expect(md).toContain("cannot read directly");
+    expect(md).toContain("LAID_OFF_SEARCH_API_KEY");
+    expect(md).toContain("provider: kagi");
+    expect(md).not.toContain("widening titles");
+  });
+
+  it("pluralises when several companies are involved", () => {
+    const md = toMarkdown([], {
+      emptyReason: {
+        kind: "no_key",
+        provider: "brave",
+        variable: "LAID_OFF_SEARCH_API_KEY",
+        companies: ["Amazon", "Google"],
+      },
+    });
+    expect(md).toContain("No roles found for **Amazon, Google**");
+    expect(md).toContain("These companies use");
+    expect(md).toContain("provider: brave");
+  });
+
+  it("explains a no-board result", () => {
+    const md = toMarkdown([], {
+      emptyReason: { kind: "no_board", companies: ["Acme"] },
+    });
+    expect(md).toContain("No job board found for Acme");
+    expect(md).toContain("LAID_OFF_SEARCH_API_KEY");
+  });
+
+  it("explains a filtered-out result with the real count", () => {
+    const md = toMarkdown([], { emptyReason: { kind: "filtered", raw: 124 } });
+    expect(md).toContain("124 open roles were found");
+    expect(md).toContain("--title");
+  });
+
+  it("falls back to generic advice when no reason is known", () => {
+    expect(toMarkdown([])).toContain("No postings matched");
+  });
+});
+
+describe("empty_reason in JSON", () => {
+  it("is null when there are jobs", () => {
+    const payload = JSON.parse(toJson([job()]));
+    expect(payload.empty_reason).toBeNull();
+  });
+
+  it("carries the structured cause for an agent", () => {
+    const payload = JSON.parse(
+      toJson([], {
+        emptyReason: {
+          kind: "no_key",
+          provider: "kagi",
+          variable: "LAID_OFF_SEARCH_API_KEY",
+          companies: ["Amazon"],
+        },
+      }),
+    );
+    expect(payload.empty_reason.kind).toBe("no_key");
+    expect(payload.empty_reason.variable).toBe("LAID_OFF_SEARCH_API_KEY");
+  });
+});
