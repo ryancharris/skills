@@ -202,6 +202,6 @@ export function buildProvider(config: Config): SearchProvider {
   if (name === "kagi") return new KagiProvider(config.search_api_key, config.http_timeout * 1000);
   if (name === "brave") return new BraveProvider(config.search_api_key, config.http_timeout * 1000);
   throw new SearchError(
-    `Unknown search provider '${name}'. Supported: kagi, brave. Set JOBSEARCH_SEARCH_PROVIDER.`,
+    `Unknown search provider '${name}'. Supported: kagi, brave. Set LAID_OFF_SEARCH_PROVIDER.`,
   );
 }

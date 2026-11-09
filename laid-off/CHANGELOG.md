@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+**Search provider variable renamed to `LAID_OFF_SEARCH_PROVIDER`.** It was
+`JOBSEARCH_SEARCH_PROVIDER` while the API key was already `LAID_OFF_*`, so the
+two halves of one feature sat under different prefixes. They now match. The
+former name still works and warns. An unknown provider is now a hard error
+(exit 2) rather than a silent fallback to kagi — searching with the wrong engine
+bills the wrong account.
+
+
 **Clearer result when `LAID_OFF_SEARCH_API_KEY` is unset.** Previously an
 enterprise search with no key printed `# 0 roles` with *"No postings matched.
 Try widening titles/locations"* — advice that cannot help, because nothing was
