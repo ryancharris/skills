@@ -1,4 +1,17 @@
-# Changelog — job-search skill
+# Changelog — laid-off skill
+
+## Unreleased
+
+**Renamed `job-search` to `laid-off`.** The skill answers "I was laid off — who is
+still hiring?", so the name now states the situation rather than the mechanism.
+
+- Directory: `job-search/` → `laid-off/`; `SKILL.md` `name:` updated to match.
+- npm package: `jobsearch-skill` → `laid-off-skill`; bin `jobsearch` → `laid-off`.
+- `--version` now prints `laid-off 2.0.0`.
+- **Environment variables are unchanged** (`SEARCH_API_KEY`, `JOBSEARCH_*`).
+  Renaming them would silently break anyone who already exported them, and the
+  skill still performs job search — the rename is about the scenario, not a new
+  capability.
 
 ## 2.0.0
 

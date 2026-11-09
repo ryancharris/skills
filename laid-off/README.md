@@ -1,4 +1,4 @@
-# job-search
+# laid-off
 
 Find live job postings by querying company **ATS boards** directly, and check
 whether a company is **still hiring** after a layoff.
@@ -19,14 +19,14 @@ instead of scraping aggregators.
 Requires **Node.js 20+**. No runtime dependencies: build once, then the
 compiled JavaScript runs anywhere Node does.
 
-This skill lives in a multi-skill repo at `skills/job-search/`. Either
+This skill lives in a multi-skill repo at `skills/laid-off/`. Either
 
 ```bash
 # symlink so the harness picks it up and the repo stays the source of truth
-ln -s "$PWD/skills/job-search" ~/.agents/skills/job-search
+ln -s "$PWD/skills/laid-off" ~/.agents/skills/laid-off
 
 # or copy just this skill
-git clone <this-repo> /tmp/skills && cp -r /tmp/skills/skills/job-search ~/.agents/skills/
+git clone <this-repo> /tmp/skills && cp -r /tmp/skills/skills/laid-off ~/.agents/skills/
 ```
 
 pi and Claude Code discover `~/.agents/skills/` and `~/.claude/skills/`
@@ -111,7 +111,7 @@ for every account tested, with no public jobs endpoint.
 
 ## Tests
 
-From `skills/job-search/`, after `npm install`:
+From `skills/laid-off/`, after `npm install`:
 
 ```bash
 npm test                    # 147 tests, NEVER touches the network
@@ -136,7 +136,7 @@ never CI.
 
 ## Layout
 
-In this repo: `skills/job-search/`. Everything below is relative to that
+In this repo: `skills/laid-off/`. Everything below is relative to that
 directory, which is also the skill root a harness loads.
 
 ```

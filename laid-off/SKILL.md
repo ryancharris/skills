@@ -1,14 +1,14 @@
 ---
-name: job-search
-description: Find open roles, or check whether a company is hiring, by reading its ATS job board (Greenhouse, Lever, Ashby, SmartRecruiters) directly. Requires company names; not for open-ended discovery.
+name: laid-off
+description: After a layoff, find open roles or check if a named company is still hiring, by reading its ATS job board directly (Greenhouse, Lever, Ashby, SmartRecruiters). Needs company names; not for discovery.
 license: MIT
 compatibility: Node.js 20+ (no runtime dependencies). Optional SEARCH_API_KEY for search-engine fallback.
 metadata:
-  version: "1.0.0"
+  version: "2.0.0"
   upstream-idea: "site:<ats-domain> boolean job search"
 ---
 
-# Job search
+# Laid-off
 
 Find live job postings on **company ATS boards** instead of job aggregators.
 

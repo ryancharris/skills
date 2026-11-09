@@ -22,7 +22,7 @@ concurrency:
 
 defaults:
   run:
-    working-directory: job-search
+    working-directory: laid-off
 
 jobs:
   test:
@@ -40,7 +40,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-          cache-dependency-path: job-search/package-lock.json
+          cache-dependency-path: laid-off/package-lock.json
 
       - name: Install dev dependencies
         run: npm ci
@@ -64,7 +64,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: job-search/package-lock.json
+          cache-dependency-path: laid-off/package-lock.json
       - run: npm ci
       - run: npm run build
       - name: Fail if the build changed dist/
@@ -107,5 +107,5 @@ jobs:
         with:
           node-version: "22"
       - name: Validate frontmatter
-        working-directory: job-search
+        working-directory: laid-off
         run: node scripts/validate-skill.mjs
