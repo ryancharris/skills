@@ -19,7 +19,7 @@ node_modules/
 coverage/
 
 # Local secrets — never commit. Skills read keys from the environment
-# (e.g. SEARCH_API_KEY); keep them out of the repo entirely.
+# (e.g. LAID_OFF_SEARCH_API_KEY); keep them out of the repo entirely.
 .env
 .env.*
 *.pem
