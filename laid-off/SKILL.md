@@ -152,6 +152,7 @@ mode. Parse `jobs` for `--company`, and `signals` for `--check`.
   "meta": {"companies searched": 1, "live boards": 1, "raw postings": 767,
            "matched postings": 37, "returned": 37, "queries offered": 8},
   "warnings": ["..."],
+  "empty_reason": null,
   "boards": [{"company": "Cohere", "ats": "ashby", "slug": "cohere", "job_count": 124, "url": ""}],
   "queries": ["site:... \"title\" ..."],
   "jobs": [{"title": "...", "company": "...", "url": "...", "source": "ashby",
@@ -177,6 +178,18 @@ mode. Parse `jobs` for `--company`, and `signals` for `--check`.
 
 `count` is how many jobs are in this payload; `total` is how many matched before
 `--limit`. Check `truncated` before saying "there are N roles".
+
+`empty_reason` is `null` unless the result is empty, and then names the cause so
+you can give the right advice instead of "try widening the filters":
+
+| `kind` | Meaning | What to tell the user |
+|---|---|---|
+| `no_key` | No readable board, and the search fallback has no API key | Set `LAID_OFF_SEARCH_API_KEY` and re-run |
+| `no_board` | No supported ATS board exists for the named companies | Try a smaller company, or set the key |
+| `filtered` | The board had roles; every one was filtered out | Widen `--title`/`--location`, drop `--remote` |
+
+Never answer a `no_key` or `no_board` result with "no matching roles" — the
+roles were never read.
 
 Always parse `warnings` — a thin result is explained there. Exit codes: `0` on
 success, `2` on a usage error (no target, or `--queries` without `--title`).

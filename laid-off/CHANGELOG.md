@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+**Clearer result when `LAID_OFF_SEARCH_API_KEY` is unset.** Previously an
+enterprise search with no key printed `# 0 roles` with *"No postings matched.
+Try widening titles/locations"* — advice that cannot help, because nothing was
+ever read. The empty state now names the cause and the remedy, and the JSON
+carries a machine-readable `empty_reason` (`no_key` / `no_board` / `filtered`).
+
+
 **Search API key renamed to `LAID_OFF_SEARCH_API_KEY`.** The old
 `SEARCH_API_KEY` is still read but emits a deprecation warning on stderr; when
 both are set the new name wins. This is deliberately not a hard cut — an

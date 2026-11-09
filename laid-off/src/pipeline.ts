@@ -36,7 +36,20 @@ export interface RunResult {
   signals: HiringSignal[];
   raw_count: number;
   matched_count: number;
+  /**
+   * Why a run produced no jobs, when that is worth saying explicitly.
+   *
+   * "No postings matched, try widening titles" is actively wrong when the real
+   * cause is that no board was readable and the search fallback had no key.
+   * Naming the cause here lets the renderer give the actual remedy.
+   */
+  empty_reason: EmptyReason | null;
 }
+
+export type EmptyReason =
+  | { kind: "no_key"; provider: string; variable: string; companies: string[] }
+  | { kind: "no_board"; companies: string[] }
+  | { kind: "filtered"; raw: number };
 
 function emptyResult(): RunResult {
   return {
@@ -48,6 +61,7 @@ function emptyResult(): RunResult {
     signals: [],
     raw_count: 0,
     matched_count: 0,
+    empty_reason: null,
   };
 }
 
@@ -230,6 +244,7 @@ export async function runSearch(
     result.matched_count = matched.length;
     result.jobs = rankJobs(dedupeJobs(matched), profile);
     if (result.jobs.length === 0) {
+      result.empty_reason = { kind: "filtered", raw: raw.length };
       result.warnings.push(
         `${raw.length} open roles were found, but none matched your filters. ` +
           `Try a broader --title, a different --location, or remove --remote/--max-age-days.`,
@@ -237,6 +252,9 @@ export async function runSearch(
     }
   } else {
     result.jobs = await searchFallback(profile, result, config, options.provider ?? null, options.searchLimit ?? 15);
+    if (result.jobs.length === 0 && result.empty_reason === null && live.length === 0) {
+      result.empty_reason = { kind: "no_board", companies: result.companies };
+    }
   }
 
   return result;
@@ -306,6 +324,12 @@ async function searchFallback(
       active = buildProvider(config);
     } catch (err) {
       result.warnings.push(`Search fallback skipped: ${(err as Error)?.message ?? err}`);
+      result.empty_reason = {
+        kind: "no_key",
+        provider: config.search_provider,
+        variable: "LAID_OFF_SEARCH_API_KEY",
+        companies: result.companies,
+      };
       return [];
     }
   }

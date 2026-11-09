@@ -353,6 +353,7 @@ export async function main(argv: string[]): Promise<number> {
         boards: result.boards,
         meta: meta(result),
         limit: opts.limit,
+        emptyReason: result.empty_reason,
       }) + "\n",
     );
   } else {
@@ -364,6 +365,7 @@ export async function main(argv: string[]): Promise<number> {
         warnings: result.warnings,
         total: result.jobs.length,
         compact: opts.format === "json-compact",
+        emptyReason: result.empty_reason,
       }) + "\n",
     );
   }

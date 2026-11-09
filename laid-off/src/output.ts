@@ -8,6 +8,7 @@
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 import type { HiringSignal } from "./hiring-signal.js";
 import { daysSince, parseIso, type Board, type Job } from "./models.js";
+import type { EmptyReason } from "./pipeline.js";
 
 // --------------------------------------------------------------------- dedupe
 
@@ -107,6 +108,8 @@ export interface JsonOptions {
   /** How many matched before --limit. Defaults to jobs.length. */
   total?: number;
   compact?: boolean;
+  /** Machine-readable reason a result is empty; null when it is not. */
+  emptyReason?: EmptyReason | null;
 }
 
 /**
@@ -141,6 +144,8 @@ export function toJson(jobs: Job[], options: JsonOptions = {}): string {
     truncated: jobs.length < total,
     meta,
     warnings,
+    // Structured so an agent need not parse the warning text to learn why.
+    empty_reason: options.emptyReason ?? null,
     boards: boards.map((b) => ({ ...b })),
     queries,
     jobs: jobDicts,
@@ -190,6 +195,8 @@ export interface MarkdownOptions {
   boards?: Board[];
   meta?: Record<string, unknown>;
   limit?: number | null;
+  /** Why the result is empty, so the remedy can be specific. */
+  emptyReason?: EmptyReason | null;
 }
 
 /**
@@ -219,7 +226,36 @@ export function toMarkdown(jobs: Job[], options: MarkdownOptions = {}): string {
   }
 
   if (shown.length === 0) {
-    lines.push("_No postings matched. Try widening titles/locations or dropping filters._");
+    // "Try widening your filters" is wrong advice when nothing could be read in
+    // the first place. Say what actually happened and what would help.
+    const reason = options.emptyReason;
+    if (reason?.kind === "no_key") {
+      const who = reason.companies.join(", ");
+      const plural = reason.companies.length > 1;
+      lines.push(
+        `No roles found for **${who}**. ${plural ? "These companies use" : "This company uses"} ` +
+          `a careers site this skill cannot read directly, and the search fallback ` +
+          `needs an API key.`,
+      );
+      lines.push("");
+      lines.push(
+        `Export \`${reason.variable}\` (provider: ${reason.provider}) and re-run to ` +
+          `search indexed job boards instead.`,
+      );
+    } else if (reason?.kind === "no_board") {
+      lines.push(
+        `No job board found for ${reason.companies.join(", ")}. Large employers use ` +
+          `custom careers sites; try a smaller company, or set ` +
+          `\`LAID_OFF_SEARCH_API_KEY\` to search indexed boards.`,
+      );
+    } else if (reason?.kind === "filtered") {
+      lines.push(
+        `${reason.raw} open roles were found, but none matched. Try a broader ` +
+          `--title, another --location, or drop --remote/--max-age-days.`,
+      );
+    } else {
+      lines.push("_No postings matched. Try widening titles/locations or dropping filters._");
+    }
     lines.push("");
   }
 
