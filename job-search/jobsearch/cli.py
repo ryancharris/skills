@@ -50,7 +50,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--exclude-company", action="append", default=[], help="Excluded company.")
     p.add_argument("--max-age-days", type=int, default=None, help="Only postings newer than N days.")
     p.add_argument("--limit", type=int, default=50, help="Max results to print.")
-    p.add_argument("--format", choices=["json", "md"], default="json", help="Output format.")
+    p.add_argument(
+        "--format",
+        choices=["json", "json-compact", "md"],
+        default="json",
+        help=(
+            "Output format. json-compact omits empty fields (roughly 40 percent "
+            "fewer tokens); md is for humans."
+        ),
+    )
     p.add_argument("--queries", action="store_true", help="Print only the generated site: queries.")
     p.add_argument(
         "--cache-ttl",
@@ -203,6 +211,8 @@ def main(argv: list[str] | None = None) -> int:
                 result.meta(),
                 queries=result.queries,
                 warnings=result.warnings,
+                total=len(result.jobs),
+                compact=args.format == "json-compact",
             )
         )
     return 0

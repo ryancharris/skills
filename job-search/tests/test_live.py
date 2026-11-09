@@ -113,6 +113,39 @@ def test_bamboohr_unknown_tenant_returns_html_not_json():
     assert adapter.is_valid_slug("definitelynotatenant123") is False
 
 
+# ---------------------------------------------- Ashby per-geography pay tiers
+
+def test_ashby_picks_cad_tier_for_canada_role():
+    """Regression: Ashby's `compensationTierSummary` quotes the FIRST tier, which
+    is usually US. For "Software Engineer, ML Workload Platform" (Canada) it
+    summarises as "$175K – $325K" while the CAD tier is CA$250K – CA$400K --
+    40% understated, in the wrong currency."""
+    jobs = AshbyAdapter(TIMEOUT).fetch("cohere")
+    canada = [
+        j for j in jobs if "ML Workload Platform" in j.title and j.compensation
+    ]
+    assert canada, "fixture role should exist and publish pay"
+    comp = canada[0].compensation
+    assert "CA$" in comp, f"Canada role must quote CAD, got {comp!r}"
+    assert "$175K" not in comp, "must not fall back to the US summary"
+
+
+def test_ashby_picks_usd_tier_for_us_role():
+    """Regression: Cohere publishes BOTH a CAD and a USD tier for the same San
+    Francisco role, so an explicit 'prefer USD here' rule is required -- the
+    first CAD tier otherwise wins."""
+    jobs = AshbyAdapter(TIMEOUT).fetch("cohere")
+    us = [
+        j
+        for j in jobs
+        if j.location.strip() in ("San Francisco", "New York", "United States")
+        and j.compensation
+    ]
+    assert us, "fixture roles should exist"
+    bad = [j for j in us if "CA$" in (j.compensation or "")]
+    assert not bad, f"US roles must not quote CAD: {[(j.title, j.compensation) for j in bad][:3]}"
+
+
 def test_smartrecruiters_pages_past_the_first_100():
     """Regression (B6): a single request truncated boards. Aramark reports 603;
     fetching must page until totalFound is reached, with no duplicate ids."""

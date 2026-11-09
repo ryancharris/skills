@@ -53,26 +53,22 @@ is self-locating and needs no install or `PYTHONPATH`.
 
 ### Flags
 
+Run `./jobsearch.py --help` for the authoritative list — it is generated from the
+code, so it cannot drift. The ones you will reach for first:
+
 | Flag | Description |
 |---|---|
-| `--company` | Company name (repeatable) |
-| `--check` | Report whether each company is hiring, and for what (repeatable) |
-| `--recent-days` | Window for the `--check` "hiring recently" test (default 30) |
-| `--max-companies` | Cap companies probed (default 40) |
+| `--company` | Company name (repeatable) — role search |
+| `--check` | Report whether a company is hiring (repeatable) |
 | `--title` | Job title; expands to synonyms (repeatable) |
-| `--location` | Location filter (repeatable) |
 | `--remote` | Remote roles only |
-| `--seniority` | `intern`/`junior`/`mid`/`senior`/`director` |
-| `--keyword` | Required keyword, AND-ed (repeatable) |
-| `--exclude-keyword` | Excluded keyword |
-| `--exclude-company` | Excluded company |
-| `--max-age-days` | Only postings newer than N days |
-| `--format` | `json` (default) or `md` |
-| `--limit` | Max results (default 50) |
-| `--queries` | Print generated `site:` queries only |
-| `--list-boards` | Print resolved boards only |
-| `--cache-ttl` | Reuse ATS responses for N seconds (default `0` = off) |
-| `--clear-cache` | Delete cached responses, then exit |
+| `--format` | `json` (default), `json-compact`, or `md` |
+| `--limit` | Max results to print (default 50) |
+
+Filtering also takes `--location`, `--seniority`, `--keyword`,
+`--exclude-keyword`, `--exclude-company` and `--max-age-days`. For the full
+reference, including `--queries`, `--list-boards` and the cache flags, see
+[`SKILL.md`](SKILL.md), which is the agent-facing source of truth.
 
 ## Configuration
 
