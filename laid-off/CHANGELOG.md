@@ -2,16 +2,28 @@
 
 ## Unreleased
 
+**Search API key renamed to `LAID_OFF_SEARCH_API_KEY`.** The old
+`SEARCH_API_KEY` is still read but emits a deprecation warning on stderr; when
+both are set the new name wins. This is deliberately not a hard cut — an
+unannounced rename is indistinguishable from "no key configured" for anyone who
+already exported the old variable.
+
+```bash
+# before
+export SEARCH_API_KEY=...
+# after (same key value)
+export LAID_OFF_SEARCH_API_KEY=...
+```
+
 **Renamed `job-search` to `laid-off`.** The skill answers "I was laid off — who is
 still hiring?", so the name now states the situation rather than the mechanism.
 
 - Directory: `job-search/` → `laid-off/`; `SKILL.md` `name:` updated to match.
 - npm package: `jobsearch-skill` → `laid-off-skill`; bin `jobsearch` → `laid-off`.
 - `--version` now prints `laid-off 2.0.0`.
-- **Environment variables are unchanged** (`SEARCH_API_KEY`, `JOBSEARCH_*`).
-  Renaming them would silently break anyone who already exported them, and the
-  skill still performs job search — the rename is about the scenario, not a new
-  capability.
+- **Search key renamed** to `LAID_OFF_SEARCH_API_KEY`. The previous
+  `SEARCH_API_KEY` still works but prints a deprecation warning; it will be
+  removed in a future release. Other variables (`JOBSEARCH_*`) are unchanged.
 
 ## 2.0.0
 
