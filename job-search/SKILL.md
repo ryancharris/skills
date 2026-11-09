@@ -130,13 +130,61 @@ what they have not already said:
 | Freshness | `--max-age-days` | `14` |
 | Is it still hiring? | `--check` (repeatable) | `--check Stripe` |
 | "Recently" window | `--recent-days` | `30` |
+| Cap companies probed | `--max-companies` | `40` |
+| Reuse ATS responses | `--cache-ttl` (seconds, `0` = off) | `300` |
+| Clear the cache | `--clear-cache` | — |
 
 If the user is vague ("find me a job"), propose a starting profile from their
 background and confirm it before running a broad search.
 
 ## Reading the results
 
-JSON output contains stage-by-stage counts. Diagnose a zero result from them:
+Output defaults to JSON, with **two different top-level shapes** depending on
+mode. Parse `jobs` for `--company`, and `signals` for `--check`.
+
+**`--company` (role search):**
+
+```json
+{
+  "generated_at": "2026-11-09T...",
+  "count": 37,
+  "meta": {"companies searched": 1, "live boards": 1, "raw postings": 767,
+           "matched postings": 37, "returned": 37, "queries offered": 8},
+  "warnings": ["..."],
+  "boards": [{"company": "Cohere", "ats": "ashby", "slug": "cohere", "job_count": 124, "url": ""}],
+  "queries": ["site:... \"title\" ..."],
+  "jobs": [{"title": "...", "company": "...", "url": "...", "source": "ashby",
+            "location": "...", "remote": true, "department": "...",
+            "employment_type": "FullTime", "posted_at": "ISO-8601",
+            "compensation": "CA$340K – CA$450K • Offers Equity",
+            "identifier": "...", "snippet": ""}]
+}
+```
+
+**`--check` (hiring report):**
+
+```json
+{
+  "generated_at": "...", "count": 1, "warnings": [], "queries": [],
+  "signals": [{"company": "Cohere", "open_roles": 124, "board_count": 1,
+               "recent_roles": 40, "recent_days": 30, "hiring_recently": true,
+               "top_departments": [{"department": "Engineering & Infra", "open_roles": 12}],
+               "boards": [...], "unknown": false, "partial": false,
+               "board_reported_roles": 124, "verdict": "one-line summary"}]
+}
+```
+
+`count` is how many jobs are in this payload; `total` is how many matched before
+`--limit`. Check `truncated` before saying "there are N roles".
+
+Always parse `warnings` — a thin result is explained there. Exit codes: `0` on
+success, `2` on a usage error (no target, or `--queries` without `--title`).
+
+`--format json-compact` drops the `identifier` field (already inside `url`) and
+empty fields. Use it when feeding many results into context; measured ~11%
+fewer characters on dense Cohere data, more when many roles lack departments.
+
+Diagnose a zero result from `meta`:
 
 ```json
 "meta": {
@@ -153,6 +201,9 @@ JSON output contains stage-by-stage counts. Diagnose a zero result from them:
   (common for enterprises; see below). Use the offered `site:` queries.
 - `raw postings > 0`, `matched postings: 0` → the boards had jobs, but the
   profile excluded them all. Widen `--title`/`--location` or drop filters.
+- `partial: true` (in `--check`) → the board reports more roles than were read;
+  never quote `open_roles` as a total.
+- `unknown: true` (in `--check`) → no board found; do not report "not hiring".
 
 ## Known limitations
 

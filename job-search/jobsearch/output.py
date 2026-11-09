@@ -70,27 +70,59 @@ def dedupe_jobs(jobs: list[Job]) -> list[Job]:
     return [job for key in order for job in groups[key]]
 
 
+#: Fields an agent needs; omitted in `--format json-compact` when empty.
+_COMPACT_DROP_IF_FALSY = (
+    "remote", "department", "employment_type", "posted_at",
+    "compensation", "snippet",
+)
+
+#: Always dropped in compact mode: redundant, not merely empty.
+#: `identifier` is the ATS id, which already appears inside `url`.
+_COMPACT_ALWAYS_DROP = ("identifier",)
+
+
 def to_json(
     jobs: list[Job],
     boards: list[Board] | None = None,
     meta: dict | None = None,
     queries: list[str] | None = None,
     warnings: list[str] | None = None,
+    total: int | None = None,
+    compact: bool = False,
 ) -> str:
     """Serialize results.
 
-    `queries` and `warnings` are included so an agent reading only the JSON can
-    act on them (run the site: searches for unresolved companies, and explain a
-    thin result) without re-parsing stderr.
+    `count` is how many jobs are IN THIS PAYLOAD; `total` is how many matched
+    before `--limit`. Both are given because an agent that reads only `count`
+    would report "3 roles" for a company with 9 and would not know to re-run
+    with a higher limit.
+
+    `compact` drops fields that are empty on most postings, which is the bulk of
+    the token cost when feeding results into a model.
     """
+    job_dicts = []
+    for job in jobs:
+        as_dict = job.to_dict()
+        if compact:
+            as_dict = {
+                k: v
+                for k, v in as_dict.items()
+                if k not in _COMPACT_ALWAYS_DROP
+                and (k not in _COMPACT_DROP_IF_FALSY or v)
+            }
+        job_dicts.append(as_dict)
+
+    hired_total = len(jobs) if total is None else total
     payload = {
         "generated_at": utc_now().isoformat(),
         "count": len(jobs),
+        "total": hired_total,
+        "truncated": len(jobs) < hired_total,
         "meta": meta or {},
         "warnings": warnings or [],
         "boards": [b.to_dict() for b in (boards or [])],
         "queries": queries or [],
-        "jobs": [j.to_dict() for j in jobs],
+        "jobs": job_dicts,
     }
     return json.dumps(payload, indent=2, ensure_ascii=False)
 
@@ -100,6 +132,8 @@ def to_hiring_json(signals, queries=None, warnings=None) -> str:
     payload = {
         "generated_at": utc_now().isoformat(),
         "count": len(signals),
+        "total": len(signals),
+        "truncated": False,
         "warnings": warnings or [],
         "queries": queries or [],
         "signals": [s.to_dict() for s in signals],

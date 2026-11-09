@@ -183,20 +183,90 @@ class LeverAdapter(ATSAdapter):
         return jobs
 
 
+# Location keyword -> currency whose pay tier applies there.
+#
+# Order matters only for overlapping keywords; regions are otherwise disjoint.
+# The US entry is essential: Cohere publishes BOTH a CAD and a USD tier for the
+# same San Francisco role, so without an explicit "prefer USD here" rule the
+# first CAD tier wins and a US salary is reported in Canadian dollars.
+_CURRENCY_BY_LOCATION: list[tuple[tuple[str, ...], str]] = [
+    (
+        (
+            "canada", "ontario", "toronto", "vancouver", "montreal",
+            "quebec", "ottawa", "calgary", "waterloo",
+        ),
+        "CAD",
+    ),
+    (
+        (
+            "united states", "san francisco", "new york", "seattle", "boston",
+            "washington", "california", "usa", "u.s.", "remote-friendly, us",
+        ),
+        "USD",
+    ),
+    (("korea",), "KRW"),
+    (("japan", "tokyo"), "JPY"),
+    (("united kingdom", "london", "uk"), "GBP"),
+    (("europe", "germany", "munich", "paris", "france", "netherlands"), "EUR"),
+]
+
+
+def _ashby_pay_for_location(compensation: Any, location: str) -> str | None:
+    """Pick the pay tier that applies to this role's location.
+
+    Ashby publishes pay *per geography* and `compensationTierSummary` quotes only
+    the FIRST tier, which is usually the US one. Reporting it for a Canada role
+    understates pay by ~40% and in the wrong currency: "Software Engineer, ML
+    Workload Platform" (Canada) summarises as "$175K – $325K" while its CAD tier
+    is CA$250K – CA$400K.
+
+    Match the role's location to a currency, then prefer a tier whose component
+    currency matches. Fall back to the summary when nothing matches, so this can
+    only ever improve on the old behaviour.
+    """
+    if not isinstance(compensation, dict):
+        return None
+
+    summary = compensation.get("compensationTierSummary")
+    tiers = compensation.get("compensationTiers") or []
+    if not tiers:
+        return summary
+
+    low_loc = (location or "").lower()
+    wanted = next(
+        (cur for keys, cur in _CURRENCY_BY_LOCATION if any(k in low_loc for k in keys)),
+        None,
+    )
+
+    if wanted:
+        for tier in tiers:
+            for component in tier.get("components") or []:
+                if component.get("compensationType") != "Salary":
+                    continue
+                if component.get("currencyCode") == wanted:
+                    return tier.get("tierSummary") or summary
+
+    # No location/currency match: the summary quotes the first tier, which is
+    # the previous behaviour. Never worse than before.
+    return summary
+
+
 class AshbyAdapter(ATSAdapter):
     name = "ashby"
     # Ashby exposes no company name in the posting API; unknown slugs 404, and
     # this API REQUIRES a User-Agent (403 without one), which http.py supplies.
     TEMPLATE = "https://api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true"
 
+    @staticmethod
+    def pay_for_location(compensation: Any, location: str) -> str | None:
+        return _ashby_pay_for_location(compensation, location)
+
     def fetch(self, slug: str) -> list[Job]:
         data = self.get(self.TEMPLATE.format(slug=slug))
         jobs: list[Job] = []
         for raw in data.get("jobs", []):
             location = raw.get("location", "") or ""
-            comp = None
-            if isinstance(raw.get("compensation"), dict):
-                comp = raw["compensation"].get("compensationTierSummary")
+            comp = _ashby_pay_for_location(raw.get("compensation"), location)
             jobs.append(
                 Job(
                     title=(raw.get("title") or "").strip(),

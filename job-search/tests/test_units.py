@@ -15,6 +15,7 @@ from jobsearch.filtering import (
     matches,
     rank_jobs,
 )
+from jobsearch.ats import AshbyAdapter
 from jobsearch.hiring_signal import summarize_hiring
 from jobsearch.models import Board, Job, SearchProfile, parse_iso, utc_now
 from jobsearch.output import (
@@ -608,3 +609,24 @@ def test_site_targets_exclude_per_tenant_ats():
     assert "icims" not in joined, "icims is per-tenant; excluded by design"
     assert "myworkdayjobs" not in joined, "workday is per-tenant; excluded by design"
     assert "job-boards.greenhouse.io" in targets
+
+
+# ------------------------------------------- Ashby pay-tier selection (offline)
+
+def test_ashby_tier_selection_is_pure_and_safe():
+    """Unknown/absent compensation must not raise, and must not regress."""
+    assert AshbyAdapter.pay_for_location(None, "Canada") is None
+    assert AshbyAdapter.pay_for_location({}, "Canada") is None
+    # No tiers -> summary passthrough (old behaviour).
+    assert (
+        AshbyAdapter.pay_for_location({"compensationTierSummary": "X"}, "Canada")
+        == "X"
+    )
+    # No location match -> summary passthrough.
+    tiers = {
+        "compensationTierSummary": "S",
+        "compensationTiers": [
+            {"components": [{"compensationType": "Salary", "currencyCode": "USD"}]}
+        ],
+    }
+    assert AshbyAdapter.pay_for_location(tiers, "Atlantis") == "S"

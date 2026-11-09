@@ -163,6 +163,26 @@ def test_cli_generated_queries_exclude_per_tenant_ats(capsys):
     assert "job-boards.greenhouse.io" in out
 
 
+def test_cli_help_renders(capsys):
+    """Regression: a literal '%' in help text crashed argparse on EVERY run
+    (argparse treats '%' as a format specifier)."""
+    import pytest as _pytest
+
+    with _pytest.raises(SystemExit) as exc:
+        main(["--help"])
+    assert exc.value.code == 0
+    assert "json-compact" in capsys.readouterr().out
+
+
+def test_cli_compact_format(monkeypatch, capsys):
+    import json
+
+    monkeypatch.setattr("jobsearch.cli.run_search", lambda *a, **k: _stub_result())
+    assert main(["--company", "Acme", "--format", "json-compact"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert "identifier" not in payload["jobs"][0]
+
+
 def test_cli_passes_profile_through(monkeypatch):
     captured = {}
 
