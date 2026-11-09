@@ -269,14 +269,23 @@ cares about and ask *is it still hiring, and for what?*
 
 The `site:` query generator works with no key. To *execute* queries, set a key:
 
-One key variable serves whichever backend you select:
+Both halves of the search configuration share a `LAID_OFF_` prefix, so
+remembering one gives the other:
 
 ```bash
-export LAID_OFF_SEARCH_API_KEY=...                # your search API key
-
-export JOBSEARCH_SEARCH_PROVIDER=kagi    # default (https://kagi.com/settings/api)
-# export JOBSEARCH_SEARCH_PROVIDER=brave # (https://api.search.brave.com/)
+export LAID_OFF_SEARCH_API_KEY=...      # the key
+export LAID_OFF_SEARCH_PROVIDER=kagi    # kagi (default) or brave
 ```
+
+Key URLs: Kagi https://kagi.com/settings/api · Brave
+https://api.search.brave.com/
+
+An unknown provider is a hard error (exit 2), not a silent fallback — searching
+with the wrong engine would bill the wrong account. The same applies if both the
+current and former variable names are set to *different* values.
+
+The former variables `SEARCH_API_KEY` and `JOBSEARCH_SEARCH_PROVIDER` still work
+but print a deprecation warning; they will be removed in a future release.
 
 See `references/providers.md` for the exact API contracts.
 

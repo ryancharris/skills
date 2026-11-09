@@ -253,6 +253,13 @@ export async function main(argv: string[]): Promise<number> {
     process.stderr.write(`warning: ${warning}\n`);
   }
 
+  // A bad provider config must fail rather than quietly using the default:
+  // searches would go to the wrong engine and bill the wrong account.
+  if (config.error) {
+    process.stderr.write(`error: ${config.error}\n`);
+    return EXIT_USAGE;
+  }
+
   if (opts.clearCache) {
     const removed = await clearCache(config.cache_dir);
     process.stdout.write(`Cleared ${removed} cached response(s) from ${config.cache_dir}\n`);
