@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+**All user-facing variables now share the `LAID_OFF_` prefix.** The remaining
+three were the last under `JOBSEARCH_`:
+
+| Old | New |
+|---|---|
+| `JOBSEARCH_HTTP_TIMEOUT` | `LAID_OFF_HTTP_TIMEOUT` |
+| `JOBSEARCH_CACHE_TTL` | `LAID_OFF_CACHE_TTL` |
+| `JOBSEARCH_CACHE_DIR` | `LAID_OFF_CACHE_DIR` |
+
+Each former name still works and warns. `JOBSEARCH_LIVE_TESTS` is unchanged —
+it is a test-harness flag, not user configuration.
+
+**Invalid numeric settings are now rejected** (exit 2) instead of silently
+becoming `NaN` and failing later inside a request. `LAID_OFF_HTTP_TIMEOUT` must
+be positive; `LAID_OFF_CACHE_TTL` may be 0 (disabled) or positive.
+
+
 **Search provider variable renamed to `LAID_OFF_SEARCH_PROVIDER`.** It was
 `JOBSEARCH_SEARCH_PROVIDER` while the API key was already `LAID_OFF_*`, so the
 two halves of one feature sat under different prefixes. They now match. The

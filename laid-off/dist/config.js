@@ -24,6 +24,44 @@ export const PROVIDER_VAR = "LAID_OFF_SEARCH_PROVIDER";
  */
 export const LEGACY_PROVIDER_VAR = "JOBSEARCH_SEARCH_PROVIDER";
 export const SUPPORTED_PROVIDERS = ["kagi", "brave"];
+/** Request timeout in seconds. */
+export const HTTP_TIMEOUT_VAR = "LAID_OFF_HTTP_TIMEOUT";
+export const LEGACY_HTTP_TIMEOUT_VAR = "JOBSEARCH_HTTP_TIMEOUT";
+/** ATS response cache: seconds to reuse, and where to store it. */
+export const CACHE_TTL_VAR = "LAID_OFF_CACHE_TTL";
+export const LEGACY_CACHE_TTL_VAR = "JOBSEARCH_CACHE_TTL";
+export const CACHE_DIR_VAR = "LAID_OFF_CACHE_DIR";
+export const LEGACY_CACHE_DIR_VAR = "JOBSEARCH_CACHE_DIR";
+/**
+ * Read a variable, preferring its current name.
+ *
+ * Every renamed variable on this skill follows the same rule: the current name
+ * wins, the former name still works but warns, and both set to different values
+ * is a conflict rather than a guess. One helper keeps the three renames from
+ * drifting into three slightly different behaviours.
+ */
+export function readRenamed(env, currentName, legacyName) {
+    const current = env[currentName];
+    const legacy = env[legacyName];
+    if (current !== undefined && current !== "" && legacy !== undefined && legacy !== "" && current !== legacy) {
+        return {
+            value: current,
+            warning: null,
+            error: `Both ${currentName} (${current}) and ${legacyName} (${legacy}) are set. ` +
+                `Remove one -- they disagree.`,
+        };
+    }
+    if (current !== undefined && current !== "")
+        return { value: current, warning: null, error: null };
+    if (legacy !== undefined && legacy !== "") {
+        return {
+            value: legacy,
+            warning: `${legacyName} is deprecated and will be removed; rename it to ${currentName}.`,
+            error: null,
+        };
+    }
+    return { value: null, warning: null, error: null };
+}
 /**
  * Read the search API key, preferring the current variable name.
  *
@@ -80,18 +118,47 @@ export function readProvider(env = process.env) {
         : null;
     return { provider, warning, error: null };
 }
+/**
+ * Parse a numeric setting.
+ *
+ * `Number("abc")` is NaN, which would surface far from its cause as an
+ * `AbortSignal.timeout` failure mid-request. Reject it here with a message that
+ * names the variable.
+ */
+function readNumber(raw, variable, fallback, { allowZero = false } = {}) {
+    if (raw === null)
+        return { value: fallback, error: null };
+    const parsed = Number(raw);
+    const valid = Number.isFinite(parsed) && (allowZero ? parsed >= 0 : parsed > 0);
+    if (!valid) {
+        return {
+            value: fallback,
+            error: `${variable} must be a ${allowZero ? "non-negative" : "positive"} number, ` +
+                `got '${raw}'.`,
+        };
+    }
+    return { value: parsed, error: null };
+}
 export function configFromEnv(env = process.env) {
     const { key, warning } = readApiKey(env);
     const provider = readProvider(env);
-    const warnings = [warning, provider.warning].filter((w) => w !== null);
+    const timeout = readRenamed(env, HTTP_TIMEOUT_VAR, LEGACY_HTTP_TIMEOUT_VAR);
+    const ttl = readRenamed(env, CACHE_TTL_VAR, LEGACY_CACHE_TTL_VAR);
+    const dir = readRenamed(env, CACHE_DIR_VAR, LEGACY_CACHE_DIR_VAR);
+    const warnings = [warning, provider.warning, timeout.warning, ttl.warning, dir.warning].filter((w) => w !== null);
+    // cache_ttl 0 means "disabled", so zero is legitimate there but not for a timeout.
+    const httpTimeout = readNumber(timeout.value, HTTP_TIMEOUT_VAR, 20);
+    const cacheTtl = readNumber(ttl.value, CACHE_TTL_VAR, 0, { allowZero: true });
+    // First fatal problem wins; they are all configuration errors of the same kind.
+    const error = provider.error ?? timeout.error ?? ttl.error ?? dir.error ?? httpTimeout.error ?? cacheTtl.error;
     return {
         search_provider: provider.provider,
         search_api_key: key,
-        http_timeout: Number(env.JOBSEARCH_HTTP_TIMEOUT ?? "20"),
-        cache_ttl: Number(env.JOBSEARCH_CACHE_TTL ?? "0"),
-        cache_dir: env.JOBSEARCH_CACHE_DIR ?? defaultCacheDir(),
+        http_timeout: httpTimeout.value,
+        cache_ttl: cacheTtl.value,
+        cache_dir: dir.value ?? defaultCacheDir(),
         warnings,
-        error: provider.error,
+        error,
     };
 }
 function defaultCacheDir() {
