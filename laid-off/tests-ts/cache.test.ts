@@ -62,10 +62,27 @@ describe("cache", () => {
     expect(await cache.get(url, { ttl: 60, cacheDir: dir })).toBeNull();
   });
 
-  it("never throws on an unwritable dir", async () => {
-    const bad = "/proc/definitely/not/writable";
+  it("never throws when the cache dir cannot be created", async () => {
+    // Portable failure: use a *file* as a directory component. Gives ENOTDIR on
+    // every platform. An earlier version used /proc/..., which fails fast with
+    // ENOENT on macOS but HANGS on Linux, so it passed locally and timed out in
+    // CI on all three Node versions.
+    const blocker = join(dir, "not-a-dir");
+    await writeFile(blocker, "x");
+    const bad = join(blocker, "cache");
+
     await expect(cache.put("https://x/1", { a: 1 }, { cacheDir: bad })).resolves.toBeUndefined();
     expect(await cache.get("https://x/1", { ttl: 60, cacheDir: bad })).toBeNull();
+  });
+
+  it("fails fast rather than hanging on a bad cache dir", async () => {
+    // Guards the CI timeout regression above: the call must return quickly
+    // rather than blocking until the test runner kills it.
+    const blocker = join(dir, "not-a-dir-2");
+    await writeFile(blocker, "x");
+    const started = Date.now();
+    await cache.put("https://x/1", { a: 1 }, { cacheDir: join(blocker, "c") });
+    expect(Date.now() - started).toBeLessThan(1000);
   });
 
   it("is a no-op with an empty cache dir", async () => {

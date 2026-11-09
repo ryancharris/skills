@@ -20,7 +20,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "test:live": "JOBSEARCH_LIVE_TESTS=1 vitest run tests-ts/live",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify": "npm run typecheck && npm test"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
