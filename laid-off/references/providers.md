@@ -6,13 +6,16 @@ no supported ATS board. Query *generation* needs no key — only execution does.
 
 ## Configuration
 
-A single `LAID_OFF_SEARCH_API_KEY` serves whichever provider is selected, so switching
-backends is a one-variable change:
+A single `LAID_OFF_SEARCH_API_KEY` serves whichever provider is selected, so
+switching backends is a one-variable change:
 
 ```bash
-export LAID_OFF_SEARCH_API_KEY=...               # your key, for whichever provider
-export JOBSEARCH_SEARCH_PROVIDER=kagi   # default; or: brave
+export LAID_OFF_SEARCH_API_KEY=...      # your key, for whichever provider
+export LAID_OFF_SEARCH_PROVIDER=kagi    # kagi (default) or brave
 ```
+
+An unknown provider fails with exit 2 rather than falling back to kagi: a silent
+fallback would send searches to the wrong engine and bill the wrong account.
 
 ## Kagi (default)
 

@@ -74,8 +74,11 @@ reference, including `--queries`, `--list-boards` and the cache flags, see
 ## Configuration
 
 ```bash
-export LAID_OFF_SEARCH_API_KEY=...               # only needed for the search fallback
-export JOBSEARCH_SEARCH_PROVIDER=kagi   # or: brave
+# Search settings share a LAID_OFF_ prefix. The key is only needed for the
+# search fallback; a company with a readable ATS board works without one.
+export LAID_OFF_SEARCH_API_KEY=...
+export LAID_OFF_SEARCH_PROVIDER=kagi     # kagi (default) or brave
+
 export JOBSEARCH_HTTP_TIMEOUT=20
 
 # Optional response cache. Off by default: stale job data is a correctness
