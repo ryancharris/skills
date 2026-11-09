@@ -28,6 +28,7 @@ function emptyResult() {
         signals: [],
         raw_count: 0,
         matched_count: 0,
+        empty_reason: null,
     };
 }
 /**
@@ -162,12 +163,16 @@ export async function runSearch(profile, options = {}) {
         result.matched_count = matched.length;
         result.jobs = rankJobs(dedupeJobs(matched), profile);
         if (result.jobs.length === 0) {
+            result.empty_reason = { kind: "filtered", raw: raw.length };
             result.warnings.push(`${raw.length} open roles were found, but none matched your filters. ` +
                 `Try a broader --title, a different --location, or remove --remote/--max-age-days.`);
         }
     }
     else {
         result.jobs = await searchFallback(profile, result, config, options.provider ?? null, options.searchLimit ?? 15);
+        if (result.jobs.length === 0 && result.empty_reason === null && live.length === 0) {
+            result.empty_reason = { kind: "no_board", companies: result.companies };
+        }
     }
     return result;
 }
@@ -212,6 +217,12 @@ async function searchFallback(profile, result, config, provider, searchLimit) {
         }
         catch (err) {
             result.warnings.push(`Search fallback skipped: ${err?.message ?? err}`);
+            result.empty_reason = {
+                kind: "no_key",
+                provider: config.search_provider,
+                variable: "LAID_OFF_SEARCH_API_KEY",
+                companies: result.companies,
+            };
             return [];
         }
     }

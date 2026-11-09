@@ -337,6 +337,7 @@ export async function main(argv) {
             boards: result.boards,
             meta: meta(result),
             limit: opts.limit,
+            emptyReason: result.empty_reason,
         }) + "\n");
     }
     else {
@@ -347,6 +348,7 @@ export async function main(argv) {
             warnings: result.warnings,
             total: result.jobs.length,
             compact: opts.format === "json-compact",
+            emptyReason: result.empty_reason,
         }) + "\n");
     }
     return EXIT_OK;
