@@ -311,3 +311,89 @@ describe("BraveProvider", () => {
     vi.restoreAllMocks();
   });
 });
+
+describe("tunable variables share the LAID_OFF_ prefix", () => {
+  it("reads the new names", () => {
+    const cfg = configFromEnv({
+      LAID_OFF_HTTP_TIMEOUT: "7",
+      LAID_OFF_CACHE_TTL: "120",
+      LAID_OFF_CACHE_DIR: "/tmp/c",
+    });
+    expect(cfg.http_timeout).toBe(7);
+    expect(cfg.cache_ttl).toBe(120);
+    expect(cfg.cache_dir).toBe("/tmp/c");
+    expect(cfg.warnings).toEqual([]);
+    expect(cfg.error).toBeNull();
+  });
+
+  it("defaults when unset", () => {
+    const cfg = configFromEnv({});
+    expect(cfg.http_timeout).toBe(20);
+    expect(cfg.cache_ttl).toBe(0);
+    expect(cfg.cache_dir).toContain(".cache");
+  });
+
+  it("still accepts each legacy name, with a warning naming both", () => {
+    const cases: Array<[Record<string, string>, string, string]> = [
+      [{ JOBSEARCH_HTTP_TIMEOUT: "7" }, "JOBSEARCH_HTTP_TIMEOUT", "LAID_OFF_HTTP_TIMEOUT"],
+      [{ JOBSEARCH_CACHE_TTL: "60" }, "JOBSEARCH_CACHE_TTL", "LAID_OFF_CACHE_TTL"],
+      [{ JOBSEARCH_CACHE_DIR: "/tmp/x" }, "JOBSEARCH_CACHE_DIR", "LAID_OFF_CACHE_DIR"],
+    ];
+    for (const [env, legacy, current] of cases) {
+      const cfg = configFromEnv(env);
+      expect(cfg.error).toBeNull();
+      expect(cfg.warnings.some((w) => w.includes(legacy) && w.includes(current))).toBe(true);
+    }
+  });
+
+  it("prefers the new name when both agree", () => {
+    const cfg = configFromEnv({ LAID_OFF_HTTP_TIMEOUT: "9", JOBSEARCH_HTTP_TIMEOUT: "9" });
+    expect(cfg.http_timeout).toBe(9);
+    expect(cfg.warnings).toEqual([]);
+  });
+
+  it("errors when old and new disagree", () => {
+    const cfg = configFromEnv({ LAID_OFF_CACHE_TTL: "60", JOBSEARCH_CACHE_TTL: "30" });
+    expect(cfg.error).toContain("disagree");
+    expect(cfg.error).toContain("LAID_OFF_CACHE_TTL");
+  });
+
+  it("rejects a non-numeric timeout instead of producing NaN", () => {
+    // Number("abc") is NaN, which used to surface far from its cause as an
+    // AbortSignal failure mid-request.
+    const cfg = configFromEnv({ LAID_OFF_HTTP_TIMEOUT: "abc" });
+    expect(cfg.error).toContain("LAID_OFF_HTTP_TIMEOUT");
+    expect(cfg.error).toContain("positive number");
+    expect(Number.isNaN(cfg.http_timeout)).toBe(false);
+  });
+
+  it("rejects a zero or negative timeout", () => {
+    for (const bad of ["0", "-1"]) {
+      const cfg = configFromEnv({ LAID_OFF_HTTP_TIMEOUT: bad });
+      expect(cfg.error).toContain("positive number");
+    }
+  });
+
+  it("allows a zero cache ttl, which means disabled", () => {
+    const cfg = configFromEnv({ LAID_OFF_CACHE_TTL: "0" });
+    expect(cfg.cache_ttl).toBe(0);
+    expect(cfg.error).toBeNull();
+  });
+
+  it("rejects a negative cache ttl", () => {
+    const cfg = configFromEnv({ LAID_OFF_CACHE_TTL: "-5" });
+    expect(cfg.error).toContain("non-negative");
+  });
+
+  it("collects every deprecation at once", () => {
+    const cfg = configFromEnv({
+      SEARCH_API_KEY: "k",
+      JOBSEARCH_SEARCH_PROVIDER: "brave",
+      JOBSEARCH_HTTP_TIMEOUT: "7",
+      JOBSEARCH_CACHE_TTL: "60",
+      JOBSEARCH_CACHE_DIR: "/tmp/x",
+    });
+    expect(cfg.warnings).toHaveLength(5);
+    expect(cfg.error).toBeNull();
+  });
+});
