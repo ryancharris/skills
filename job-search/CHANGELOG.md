@@ -1,5 +1,42 @@
 # Changelog — job-search skill
 
+## 2.0.0
+
+**Rewritten in TypeScript.** Same behaviour, same output, same flags — verified
+by parity tests against the previous Python implementation on live data.
+
+- Source moves to `src/*.ts`, compiled to `dist/*.js`. The shipped JavaScript has
+  **zero runtime dependencies**, so the skill still runs by copying it anywhere
+  Node is available — no `npm install` at use time. `typescript` and `vitest` are
+  dev-only.
+- Requires **Node.js 20+** instead of Python 3.10+.
+- Output is unchanged: JSON keys, key order, `count`/`total`/`truncated`,
+  `json-compact`, and both Markdown renderings are byte-identical to 1.1.0
+  (verified by `diff` on live results, and by golden-vector tests).
+- `--version` added.
+
+### Notes for maintainers
+The port preserved Python semantics that are *not* 1:1, and each is deliberate:
+
+- `discovery.ts` uses `normalize("NFKD")` + a `\p{M}` strip, because JS
+  `toLowerCase()`/normalisation differ from Python on accented input. "Société
+  Générale" must still fold to slug `societegenerale`.
+- `html.ts` exists because Node has no HTML entity decoder. It decodes one level
+  only and leaves unknown entities intact, matching `html.unescape`.
+- `filtering.ts` builds a lookbehind regex per call: word-boundary matching is
+  load-bearing (`PM` must not match "Develo**pm**ent").
+- `output.ts` formats `generated_at` by hand to match Python's microsecond
+  `+00:00` form rather than `toISOString()`'s milliseconds and `Z`.
+- `rankJobs` carries an explicit index tie-break so ordering is deterministic
+  without relying on sort stability.
+- `dist/` is committed: the compiled JavaScript is what users run, so it must
+  not be gitignored.
+
+### Migration notes
+- `./jobsearch.py` → `node dist/main.js`
+- `python -m pytest` → `npm test` (or `npm run test:live`)
+- Env vars are unchanged (`SEARCH_API_KEY`, `JOBSEARCH_*`).
+
 ## 1.1.0
 
 Board-reading for five ATSes (Greenhouse, Lever, Ashby, SmartRecruiters,

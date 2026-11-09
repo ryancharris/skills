@@ -18,16 +18,16 @@ plus any scripts, references, and assets it needs.
 
 ```
 skills/
-├── .venv/                 # shared DEV environment only (gitignored)
-├── pytest.ini             # registers markers for every skill's tests
-├── .gitignore             # repo-wide
+├── .gitignore             # repo-wide; ignores every skill's toolchain dirs
+├── README.md              # this file
 ├── job-search/            # one skill per directory; self-contained
 │   ├── SKILL.md           # required: frontmatter + instructions
-│   ├── jobsearch.py       # entrypoint
-│   ├── jobsearch/         # importable package
+│   ├── dist/              # compiled JS -- what actually runs
+│   ├── src/               # TypeScript source
+│   ├── tests-ts/          # unit, mocked, live, parity
 │   ├── references/        # detailed docs loaded on demand
-│   ├── tests/
-│   ├── pytest.ini         # for running this skill's tests in isolation
+│   ├── package.json       # dev-only deps; zero runtime deps
+│   ├── tsconfig.json
 │   └── README.md
 └── <next-skill>/
     └── SKILL.md
@@ -39,38 +39,51 @@ Skills are discovered recursively, so nesting is fine.
 
 Four rules keep skills independent. They exist because the alternative was
 measured to break: a shared package name lets one skill shadow another's
-imports, and same-named test files collide in pytest's flat namespace.
+imports, and same-named test files collide in a runner's flat namespace.
 
 1. **Name the package after the directory.** `job-search/` ships
-   `job-search/jobsearch/`; skill `pdf-tools` ships `pdf-tools/pdftools/`.
-   Never import a sibling skill's package — copy the helper instead.
+   `job-search/src/`; skill `pdf-tools` ships `pdf-tools/src/`. Never import a
+   sibling skill's package — copy the helper instead.
 2. **Keep `description` under 200 characters.** It is paid on every model turn
    that considers loading the skill, so it must be tight: what it does, plus
    the trigger. Do not put caveats there; put them in the body.
-3. **Make test file names unique across the repo** (`test_jobsearch_cli.py`, not
-   `test_cli.py`). `pytest` from the root collects everything into one namespace.
-4. **Run stdlib-only at runtime.** The shared `.venv` is for *development* tools
-   (pytest, pyflakes) only. A skill that needs a third-party package at runtime
-   stops being copyable on its own — declare it in that skill's README instead.
+3. **Make test file names unique across the repo** (`cli.test.ts`, not
+   `test.ts`). Test runners collect everything into one namespace when run from
+   the root.
+4. **Ship zero runtime dependencies.** Dev tooling (typescript, vitest, pytest)
+   is fine and stays in the repo's ignore list. But a skill that needs a
+   third-party package at *runtime* stops being copyable on its own. `job-search`
+   compiles to dependency-free JavaScript for exactly this reason.
 
 A skill must work three ways, and `job-search` is tested all three:
 
 ```bash
-python3 skill-name/entry.py                          # copied anywhere, no venv
+node skill-name/dist/main.js                         # copied anywhere, no npm install
 ln -s "$PWD/skill-name" ~/.agents/skills/skill-name  # symlinked into a harness
-cd skill-name && ../.venv/bin/python -m pytest       # tests in isolation
+cd skill-name && npm test                            # tests in isolation
 ```
+
+## Runtimes
+
+Skills are independent, so each may choose its own runtime:
+
+| Skill | Runtime | Test |
+|---|---|---|
+| `job-search` | Node.js 20+ (TypeScript source, compiled) | `npm test` |
+| (future) | Python 3.10+ | `pytest` |
+
+There is no shared language requirement — only the rules above. Dev
+dependencies are installed per skill inside its own directory, so one skill's
+toolchain cannot affect another's.
 
 ## Testing
 
-From the repo root:
+Each skill owns its tests:
 
 ```bash
-.venv/bin/python -m pytest            # every skill's tests
-.venv/bin/python -m pyflakes .        # lint everything
+cd job-search && npm test          # 140 offline tests
+cd job-search && npm run test:live # + live network (163 total)
 ```
-
-To run one skill on its own, `cd` into it and use its local `pytest.ini`.
 
 ## Adding a skill
 
