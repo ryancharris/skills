@@ -1,0 +1,25 @@
+# Shared development environment
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Test / tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Local secrets — never commit. Skills read keys from the environment
+# (e.g. SEARCH_API_KEY); keep them out of the repo entirely.
+.env
+.env.*
+*.pem
+*.key
+
+# OS
+.DS_Store

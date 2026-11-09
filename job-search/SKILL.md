@@ -1,0 +1,222 @@
+---
+name: job-search
+description: Find open roles, or check whether a company is hiring, by reading its ATS job board (Greenhouse, Lever, Ashby, SmartRecruiters) directly. Requires company names; not for open-ended discovery.
+license: MIT
+compatibility: Python 3.10+ (stdlib only). Optional SEARCH_API_KEY for search-engine fallback.
+metadata:
+  version: "1.0.0"
+  upstream-idea: "site:<ats-domain> boolean job search"
+---
+
+# Job search
+
+Find live job postings on **company ATS boards** instead of job aggregators.
+
+Most jobs are never posted to LinkedIn. But almost every company that uses a
+modern ATS (Greenhouse, Lever, Ashby, SmartRecruiters) publishes its full board
+as **structured JSON** at a predictable URL. This skill queries those APIs
+directly — no scraping, no search engine required, no LinkedIn.
+
+## Read this first: what this can and cannot do
+
+**Requires company names.** This is a job *inspector*, not a job *finder*. It
+cannot answer "who is hiring for my role?" — it only looks inside companies you
+name. If the user has no companies in mind, see *When the user has no companies*
+below before running anything.
+
+| Works well | Does not work |
+|---|---|
+| "Which roles is Stripe hiring for?" | "Find me any company hiring engineers" |
+| "Is Notion still hiring after layoffs?" | Companies on iCIMS, Workday, Workable, or a custom site |
+| "PM roles at Ramp, Figma, Linear" | Anything, if the company name is wrong |
+
+Large enterprises (Amazon, Google, Meta, Microsoft) have no supported board, but
+they **do** work when `SEARCH_API_KEY` is set: the search fallback returns real
+postings from ATS-hosted boards at those companies' peers. Without a key you get
+a ready-made query to run yourself, not an empty result.
+
+Tell the user which case they are in **before** they invest effort, and offer the
+fallbacks in *Known limitations* rather than running a search that returns nothing.
+
+## Why this beats searching LinkedIn
+
+- **Less contested**: ATS listings are the source of truth; aggregators repost
+  them later, after the first wave of applicants.
+- **Structured**: real locations, departments, compensation, post dates.
+- **Complete**: you see *every* open role at a company, not a ranked subset.
+- **Layoff-aware**: `--check` reads a company's live board, so after a layoff
+  announcement you can see whether it is *still hiring* and in which areas.
+
+## Quick start
+
+Run `./jobsearch.py` from this skill directory. It is self-locating, so it
+works from any cwd (e.g. `/path/to/job-search/jobsearch.py ...`).
+
+```bash
+# 1. Roles at companies you name
+./jobsearch.py --company Stripe --company Ramp --title "software engineer"
+
+# 2. Is this company still hiring after its layoff announcement, and for what?
+./jobsearch.py --check Stripe --check Notion --format md
+
+# 3. See which ATS boards a company actually has
+./jobsearch.py --company Notion --list-boards
+
+# 4. Generate boolean site: queries (no API key needed)
+./jobsearch.py --company Stripe --title "chief of staff" --queries
+```
+
+Output defaults to JSON (for agents). Add `--format md` for a human-readable
+report.
+
+## How it works
+
+```
+  user inputs                       discovery                 fetching
+  ───────────                       ─────────                 ────────
+  --company Acme ─────────────────► slug candidates ──► probe each ATS ──► live boards
+                                                              │
+  --title/--location ────────────────────────────────────┐    ▼
+  --remote/--keyword                                     └──► fetch postings (JSON API)
+                                                              │
+                                                              ▼
+                                              filter ──► dedupe ──► rank ──► JSON / Markdown
+
+  --check Acme ──────────────► same discover+fetch ──► hiring signal
+                                                       (open roles, recency,
+                                                        top departments)
+```
+
+1. **Seed** — explicit `--company` names (there is no filing-feed seeding; see
+   *Why not seed from layoff filings* below).
+2. **Discover** — derive slug candidates (`"Cisco Systems, Inc."` → `ciscosystems`,
+   `cisco`, `cisco-systems`) and probe each ATS. Boards are **identity-verified**:
+   a board is accepted only if its company name covers the queried company, which
+   rejects look-alikes such as `general motors` → a board named "General Interest".
+3. **Fetch** — pull every posting from each live board in parallel.
+4. **Filter** — apply title (with synonym expansion), location, remote,
+   seniority, keyword and exclusion rules.
+5. **Rank** — title/keyword relevance first, freshness as the tie-breaker.
+
+## When the user has no companies
+
+Do not run a search. Ask one question, offering the three viable routes:
+
+1. **"Which companies do you want to work at?"** — the strongest path. Even two
+   or three names produces useful results.
+2. **"Give me a role and I'll write searches you can run yourself"** — run
+   `--queries` (no API key, no network) and hand over the boolean `site:` URLs.
+3. **"Which companies just laid people off?"** — a layoff feed is a decent *name
+   generator* (`references/layoff-data.md` has the one-liner), but most large
+   filers are enterprises this skill cannot read. Say so up front.
+
+Be explicit that open-ended discovery is out of scope for this skill. Do not
+improvise a company list and present it as comprehensive.
+
+## Asking the user for inputs
+
+Before running, establish the user's search profile. Ask concisely, and only for
+what they have not already said:
+
+| Input | Flag | Example |
+|---|---|---|
+| Target titles | `--title` (repeatable) | `"chief of staff"`, `"staff engineer"` |
+| Locations | `--location` (repeatable) | `"New York"`, `"Berlin"` |
+| Remote only | `--remote` | — |
+| Seniority | `--seniority` | `intern`, `junior`, `mid`, `senior`, `director` |
+| Must-have keywords | `--keyword` (repeatable, AND) | `python`, `kubernetes` |
+| Deal-breakers | `--exclude-keyword` | `contract`, `on-call` |
+| Companies to skip | `--exclude-company` | `Meta` |
+| Freshness | `--max-age-days` | `14` |
+| Is it still hiring? | `--check` (repeatable) | `--check Stripe` |
+| "Recently" window | `--recent-days` | `30` |
+
+If the user is vague ("find me a job"), propose a starting profile from their
+background and confirm it before running a broad search.
+
+## Reading the results
+
+JSON output contains stage-by-stage counts. Diagnose a zero result from them:
+
+```json
+"meta": {
+  "companies searched": 1,
+  "live boards": 1,
+  "raw postings": 100,      // postings found on live boards
+  "matched postings": 0,    // postings that passed the profile
+  "returned": 0,            // postings after dedupe + rank
+  "queries offered": 8
+}
+```
+
+- `raw postings: 0`, `live boards: 0` → the company has no supported ATS board
+  (common for enterprises; see below). Use the offered `site:` queries.
+- `raw postings > 0`, `matched postings: 0` → the boards had jobs, but the
+  profile excluded them all. Widen `--title`/`--location` or drop filters.
+
+## Known limitations
+
+- **Enterprises use bespoke career sites.** Amazon, Microsoft, Meta, Intel,
+  Walmart and Google resolve on **none** of the supported ATSes, so direct board
+  reading returns nothing. With `SEARCH_API_KEY` set the search fallback fills
+  the gap (verified: Amazon → 33 Chief-of-Staff roles from ATS boards). Without
+  a key, hand the user the generated `site:` query.
+- **BambooHR is supported but per-tenant.** `<company>.bamboohr.com/careers/list`
+  returns JSON, so it works by slug probing only — never via `site:`.
+- **iCIMS and Workday are per-tenant.** They live at
+  `careers-<company>.icims.com` and `<company>.wd1.myworkdayjobs.com`, so a
+  `site:` query on the bare domain returns almost nothing. They are deliberately
+  excluded from the generated query list.
+- **`--check` cannot read enterprises.** A large employer with a bespoke career
+  site returns `unknown: true` and a discovery query, not `0 open roles`. Never
+  report "not hiring" from an unknown signal.
+- **Boards paginate.** SmartRecruiters is fetched one 100-job page; its
+  `job_count` reports the true `totalFound`. `--check` flags this as
+  `partial: true` and says "partial: board reports N" rather than understating.
+- **Seniority is title-only.** Ramp, for example, puts no seniority in its
+  titles (all 29 engineer roles are unmarked), so `--seniority senior` correctly
+  returns nothing. An empty seniority result means the board does not encode it,
+  not that no senior roles exist.
+- **Departments are vendor-specific.** Greenhouse's `/jobs` omits departments,
+  so they are resolved from its `/departments` tree and rolled up to the top
+  level (Stripe: GTM/Tech/Core). SmartRecruiters often leaves `department` empty
+  and only fills `function`, which is used instead. Anything still unlabeled is
+  reported as "unspecified" rather than dropped.
+
+## Why not seed from layoff filings
+
+An earlier version seeded searches straight from WARN Act filings (via
+`kadoa-org/layoffs-tracker`, 30,430 companies). It was removed after measurement:
+
+1. **WARN cannot express "tech"** — the fields are company/workers/states/dates,
+   with no industry or occupation. Seeding returned Boeing, Walmart, Sodexo,
+   Tyson Foods and a school-bus operator, not tech companies.
+2. **The seed and the searchable pool are anti-correlated** — the largest filers
+   (Amazon, Meta, Google, Intel, Microsoft) resolve on none of the supported
+   ATSes, so the most interesting companies were the least searchable.
+3. **Low yield** — 8 of 60 recent filers resolved to any board, several of them
+   look-alikes later rejected by identity verification.
+
+`--check` replaces it with the useful inversion: start from a company the user
+cares about and ask *is it still hiring, and for what?*
+
+## Search-engine fallback (optional)
+
+The `site:` query generator works with no key. To *execute* queries, set a key:
+
+One key variable serves whichever backend you select:
+
+```bash
+export SEARCH_API_KEY=...                # your search API key
+
+export JOBSEARCH_SEARCH_PROVIDER=kagi    # default (https://kagi.com/settings/api)
+# export JOBSEARCH_SEARCH_PROVIDER=brave # (https://api.search.brave.com/)
+```
+
+See `references/providers.md` for the exact API contracts.
+
+## Reference files
+
+- `references/ats-endpoints.md` — verified endpoints and payload shapes.
+- `references/providers.md` — Kagi/Brave API contracts and error codes.
+- `references/layoff-data.md` — WARN dataset schema and caveats.
