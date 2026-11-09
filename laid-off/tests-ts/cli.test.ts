@@ -142,6 +142,6 @@ describe("entry point", () => {
   it("prints a version", () => {
     const result = spawnSync(process.execPath, [entry, "--version"], { encoding: "utf8" });
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain("jobsearch");
+    expect(result.stdout).toContain("laid-off");
   });
 });

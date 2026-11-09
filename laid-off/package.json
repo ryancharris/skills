@@ -1,5 +1,5 @@
 {
-  "name": "jobsearch-skill",
+  "name": "laid-off-skill",
   "version": "2.0.0",
   "description": "Find open roles, or check whether a company is hiring, by reading its ATS job board directly.",
   "type": "module",
@@ -8,7 +8,7 @@
     "node": ">=20"
   },
   "bin": {
-    "jobsearch": "./dist/main.js"
+    "laid-off": "./dist/main.js"
   },
   "main": "./dist/main.js",
   "files": [

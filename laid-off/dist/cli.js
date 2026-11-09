@@ -232,7 +232,7 @@ export async function main(argv) {
         return EXIT_OK;
     }
     if (opts.version) {
-        process.stdout.write("jobsearch 2.0.0\n");
+        process.stdout.write("laid-off 2.0.0\n");
         return EXIT_OK;
     }
     // Load config first: cache maintenance must work without a search target.

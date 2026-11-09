@@ -4,7 +4,7 @@
  *
  * Ported from jobsearch/config.py. Variable names and defaults must match.
  */
-export const DEFAULT_UA = "job-search-skill/2.0 (+https://github.com/)";
+export const DEFAULT_UA = "laid-off-skill/2.0 (+https://github.com/)";
 export function configFromEnv(env = process.env) {
     return {
         search_provider: (env.JOBSEARCH_SEARCH_PROVIDER ?? "kagi").toLowerCase(),
