@@ -1,0 +1,111 @@
+name: CI
+
+# Runs on every push and pull request.
+#
+# The suite is split deliberately: `npm test` never touches the network, so CI is
+# fast and deterministic. The live-API suite is NOT run here — it depends on
+# upstream services and an API key, and belongs to deliberate manual runs.
+# `tests-ts/setup.ts` enforces this in code, not by convention.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: laid-off
+
+jobs:
+  test:
+    name: test (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 20 is the declared minimum; 22 and 24 catch forward-compat drift.
+        node: ["20", "22", "24"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: laid-off/package-lock.json
+
+      - name: Install dev dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # The default suite must never make a live API call. Landmine check: if
+      # this leaks to the network, it fails loudly rather than flaking later.
+      - name: Test (offline)
+        run: npm test
+
+  # dist/ is committed because the compiled JavaScript is what users run.
+  # Editing src/ without rebuilding would ship code that does not match source.
+  dist-in-sync:
+    name: dist matches src
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: laid-off/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Fail if the build changed dist/
+        run: |
+          if [ -n "$(git status --porcelain -- dist)" ]; then
+            echo "::error::dist/ is out of date. Run 'npm run build' and commit the result."
+            git --no-pager diff --stat -- dist
+            exit 1
+          fi
+
+  # The skill must stay copyable: no node_modules, no registry access at runtime.
+  # This is the property that lets a harness load it without npm install.
+  portability:
+    name: runs standalone (no node_modules)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Copy only shipped files to a clean directory
+        run: |
+          mkdir -p "$RUNNER_TEMP/standalone"
+          cp -r dist package.json SKILL.md "$RUNNER_TEMP/standalone/"
+      - name: Run with no dependencies installed
+        working-directory: ${{ runner.temp }}/standalone
+        run: |
+          test ! -d node_modules || { echo "::error::node_modules present"; exit 1; }
+          node dist/main.js --version
+          # Pure string building, so this proves the CLI runs without network.
+          node dist/main.js --company Acme --title "chief of staff" --queries
+
+  # Guards against a skill losing the metadata a harness needs to load it.
+  skill-metadata:
+    name: SKILL.md is valid
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate frontmatter
+        working-directory: laid-off
+        run: node scripts/validate-skill.mjs
