@@ -49,8 +49,35 @@ describe("config", () => {
     expect(cfg.search_api_key).toBeNull();
   });
 
-  it("reads a single SEARCH_API_KEY", () => {
-    expect(configFromEnv({ SEARCH_API_KEY: "k" }).search_api_key).toBe("k");
+  it("reads LAID_OFF_SEARCH_API_KEY", () => {
+    const cfg = configFromEnv({ LAID_OFF_SEARCH_API_KEY: "k" });
+    expect(cfg.search_api_key).toBe("k");
+    expect(cfg.warnings).toEqual([]);
+  });
+
+  it("still accepts the legacy SEARCH_API_KEY but warns", () => {
+    // A real key was configured under this name before the rename. Dropping it
+    // silently would look identical to "no key set".
+    const cfg = configFromEnv({ SEARCH_API_KEY: "legacy" });
+    expect(cfg.search_api_key).toBe("legacy");
+    expect(cfg.warnings).toHaveLength(1);
+    expect(cfg.warnings[0]).toContain("SEARCH_API_KEY is deprecated");
+    expect(cfg.warnings[0]).toContain("LAID_OFF_SEARCH_API_KEY");
+  });
+
+  it("prefers the new name when both are set, without warning", () => {
+    const cfg = configFromEnv({
+      LAID_OFF_SEARCH_API_KEY: "new",
+      SEARCH_API_KEY: "legacy",
+    });
+    expect(cfg.search_api_key).toBe("new");
+    expect(cfg.warnings).toEqual([]);
+  });
+
+  it("has no key and no warning when neither is set", () => {
+    const cfg = configFromEnv({});
+    expect(cfg.search_api_key).toBeNull();
+    expect(cfg.warnings).toEqual([]);
   });
 
   it("ignores legacy provider key vars", () => {
@@ -78,15 +105,15 @@ describe("buildProvider", () => {
   });
 
   it("selects brave", () => {
-    const provider = search.buildProvider({ ...configFromEnv({ SEARCH_API_KEY: "b" }), search_provider: "brave" });
+    const provider = search.buildProvider({ ...configFromEnv({ LAID_OFF_SEARCH_API_KEY: "b" }), search_provider: "brave" });
     expect(provider.name).toBe("brave");
   });
 
   it("one key reaches either provider", () => {
-    const kagi = search.buildProvider(configFromEnv({ SEARCH_API_KEY: "test-key" }));
+    const kagi = search.buildProvider(configFromEnv({ LAID_OFF_SEARCH_API_KEY: "test-key" }));
     expect(kagi.name).toBe("kagi");
     const brave = search.buildProvider({
-      ...configFromEnv({ SEARCH_API_KEY: "test-key" }),
+      ...configFromEnv({ LAID_OFF_SEARCH_API_KEY: "test-key" }),
       search_provider: "brave",
     });
     expect(brave.name).toBe("brave");
@@ -95,7 +122,7 @@ describe("buildProvider", () => {
 
 describe("KagiProvider", () => {
   it("requires a key", () => {
-    expect(() => new search.KagiProvider(null)).toThrow(/SEARCH_API_KEY/);
+    expect(() => new search.KagiProvider(null)).toThrow(/LAID_OFF_SEARCH_API_KEY/);
   });
 
   it("parses the live v1 shape", async () => {
@@ -170,7 +197,7 @@ describe("KagiProvider", () => {
     vi.spyOn(await import("../src/http.js"), "postJson").mockRejectedValue(
       new HttpError("u", 401, ""),
     );
-    await expect(new search.KagiProvider("k").search("q")).rejects.toThrow(/no API key sent.*SEARCH_API_KEY/);
+    await expect(new search.KagiProvider("k").search("q")).rejects.toThrow(/no API key sent.*LAID_OFF_SEARCH_API_KEY/);
     vi.restoreAllMocks();
   });
 
@@ -182,7 +209,7 @@ describe("KagiProvider", () => {
     });
     vi.spyOn(await import("../src/http.js"), "postJson").mockRejectedValue(new HttpError("u", 400, body));
     const err = await new search.KagiProvider("k").search("q").catch((e: Error) => e);
-    expect(err.message).toContain("SEARCH_API_KEY");
+    expect(err.message).toContain("LAID_OFF_SEARCH_API_KEY");
     expect(err.message).not.toContain("{");
     vi.restoreAllMocks();
   });
@@ -202,7 +229,7 @@ describe("KagiProvider", () => {
 
 describe("BraveProvider", () => {
   it("requires a key", () => {
-    expect(() => new search.BraveProvider(null)).toThrow(/SEARCH_API_KEY/);
+    expect(() => new search.BraveProvider(null)).toThrow(/LAID_OFF_SEARCH_API_KEY/);
   });
 
   it("rejects an unauthorised key clearly", async () => {

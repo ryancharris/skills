@@ -2,7 +2,7 @@
 name: laid-off
 description: After a layoff, find open roles or check if a named company is still hiring, by reading its ATS job board directly (Greenhouse, Lever, Ashby, SmartRecruiters). Needs company names; not for discovery.
 license: MIT
-compatibility: Node.js 20+ (no runtime dependencies). Optional SEARCH_API_KEY for search-engine fallback.
+compatibility: Node.js 20+ (no runtime dependencies). Optional LAID_OFF_SEARCH_API_KEY for search-engine fallback.
 metadata:
   version: "2.0.0"
   upstream-idea: "site:<ats-domain> boolean job search"
@@ -31,7 +31,7 @@ below before running anything.
 | "PM roles at Ramp, Figma, Linear" | Anything, if the company name is wrong |
 
 Large enterprises (Amazon, Google, Meta, Microsoft) have no supported board, but
-they **do** work when `SEARCH_API_KEY` is set: the search fallback returns real
+they **do** work when `LAID_OFF_SEARCH_API_KEY` is set: the search fallback returns real
 postings from ATS-hosted boards at those companies' peers. Without a key you get
 a ready-made query to run yourself, not an empty result.
 
@@ -210,7 +210,7 @@ Diagnose a zero result from `meta`:
 
 - **Enterprises use bespoke career sites.** Amazon, Microsoft, Meta, Intel,
   Walmart and Google resolve on **none** of the supported ATSes, so direct board
-  reading returns nothing. With `SEARCH_API_KEY` set the search fallback fills
+  reading returns nothing. With `LAID_OFF_SEARCH_API_KEY` set the search fallback fills
   the gap (verified: Amazon → 33 Chief-of-Staff roles from ATS boards). Without
   a key, hand the user the generated `site:` query.
 - **BambooHR is supported but per-tenant.** `<company>.bamboohr.com/careers/list`
@@ -259,7 +259,7 @@ The `site:` query generator works with no key. To *execute* queries, set a key:
 One key variable serves whichever backend you select:
 
 ```bash
-export SEARCH_API_KEY=...                # your search API key
+export LAID_OFF_SEARCH_API_KEY=...                # your search API key
 
 export JOBSEARCH_SEARCH_PROVIDER=kagi    # default (https://kagi.com/settings/api)
 # export JOBSEARCH_SEARCH_PROVIDER=brave # (https://api.search.brave.com/)
