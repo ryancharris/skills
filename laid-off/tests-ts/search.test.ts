@@ -97,6 +97,70 @@ describe("config", () => {
   });
 });
 
+describe("search provider variable", () => {
+  it("reads LAID_OFF_SEARCH_PROVIDER", () => {
+    const cfg = configFromEnv({ LAID_OFF_SEARCH_PROVIDER: "brave" });
+    expect(cfg.search_provider).toBe("brave");
+    expect(cfg.warnings).toEqual([]);
+    expect(cfg.error).toBeNull();
+  });
+
+  it("defaults to kagi when unset", () => {
+    expect(configFromEnv({}).search_provider).toBe("kagi");
+  });
+
+  it("is case-insensitive", () => {
+    expect(configFromEnv({ LAID_OFF_SEARCH_PROVIDER: "Brave" }).search_provider).toBe("brave");
+  });
+
+  it("still accepts the legacy JOBSEARCH_SEARCH_PROVIDER but warns", () => {
+    // It lived under a different prefix from the API key, so remembering one
+    // gave no hint of the other.
+    const cfg = configFromEnv({ JOBSEARCH_SEARCH_PROVIDER: "brave" });
+    expect(cfg.search_provider).toBe("brave");
+    expect(cfg.warnings).toHaveLength(1);
+    expect(cfg.warnings[0]).toContain("JOBSEARCH_SEARCH_PROVIDER is deprecated");
+    expect(cfg.warnings[0]).toContain("LAID_OFF_SEARCH_PROVIDER");
+  });
+
+  it("prefers the new name when both agree, without warning", () => {
+    const cfg = configFromEnv({
+      LAID_OFF_SEARCH_PROVIDER: "brave",
+      JOBSEARCH_SEARCH_PROVIDER: "brave",
+    });
+    expect(cfg.search_provider).toBe("brave");
+    expect(cfg.warnings).toEqual([]);
+    expect(cfg.error).toBeNull();
+  });
+
+  it("is a fatal error when both are set and disagree", () => {
+    const cfg = configFromEnv({
+      LAID_OFF_SEARCH_PROVIDER: "brave",
+      JOBSEARCH_SEARCH_PROVIDER: "kagi",
+    });
+    expect(cfg.error).toContain("disagree");
+    expect(cfg.error).toContain("kagi");
+    expect(cfg.error).toContain("brave");
+  });
+
+  it("rejects an unknown provider instead of silently falling back", () => {
+    // Falling back would send searches to the wrong engine and bill the wrong
+    // account, so this must be an error, not a default.
+    const cfg = configFromEnv({ LAID_OFF_SEARCH_PROVIDER: "nonsense" });
+    expect(cfg.error).toContain("Unknown search provider");
+    expect(cfg.error).toContain("LAID_OFF_SEARCH_PROVIDER");
+    expect(cfg.error).toContain("kagi, brave");
+  });
+
+  it("collects warnings from both key and provider together", () => {
+    const cfg = configFromEnv({
+      SEARCH_API_KEY: "k",
+      JOBSEARCH_SEARCH_PROVIDER: "brave",
+    });
+    expect(cfg.warnings).toHaveLength(2);
+  });
+});
+
 describe("buildProvider", () => {
   it("rejects an unknown provider", () => {
     expect(() => search.buildProvider({ ...configFromEnv({}), search_provider: "nope" })).toThrow(
