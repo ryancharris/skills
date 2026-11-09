@@ -114,13 +114,25 @@ for every account tested, with no public jobs endpoint.
 From `skills/job-search/`, after `npm install`:
 
 ```bash
-npm test                    # unit + mocked (fast)
-npm run test:live           # + live network
+npm test                    # 147 tests, NEVER touches the network
+npm run test:live           # 163 tests, real APIs, opt-in
 ```
 
-The live suite exists because the vendor quirks that actually broke this skill
-(identity collisions, Ashby's 403 without a User-Agent, SmartRecruiters' 200 on
-missing slugs) are invisible to mocks.
+**`npm test` can never make a live API call.** That is enforced, not assumed:
+
+1. Live tests live under `tests-ts/live/` and are excluded unless
+   `JOBSEARCH_LIVE_TESTS=1`.
+2. `tests-ts/setup.ts` replaces `fetch` for every test run. Any request throws a
+   `NetworkGuardError` naming the host and telling the author what to do instead.
+   It fails in ~2 ms rather than paying retry backoff.
+3. A small allow-list of ATS and search hosts — and a denylist for LinkedIn,
+   Indeed and Glassdoor, which must never be contacted even in live mode.
+4. `tests-ts/network-guard.test.ts` tests the guard itself, so it cannot rot.
+
+The live suite still exists because the vendor quirks that actually broke this
+skill (identity collisions, Ashby's 403 without a User-Agent, SmartRecruiters'
+200 on missing slugs) are invisible to mocks. It is for deliberate, manual runs —
+never CI.
 
 ## Layout
 

@@ -23,9 +23,11 @@ export class HttpError extends Error {
     constructor(url, status, body, kind = "status") {
         super(kind === "parse"
             ? `unexpected non-JSON response from ${url} (HTTP ${status})`
-            : kind === "network"
-                ? `network error for ${url}: ${body}`
-                : `HTTP ${status} for ${url}: ${body.slice(0, 200)}`);
+            : kind === "guard"
+                ? body
+                : kind === "network"
+                    ? `network error for ${url}: ${body}`
+                    : `HTTP ${status} for ${url}: ${body.slice(0, 200)}`);
         this.name = "HttpError";
         this.url = url;
         this.status = status;
@@ -75,6 +77,11 @@ export async function request(url, options = {}) {
                     continue;
                 }
                 throw err;
+            }
+            // A test network guard is not a transient failure: retrying would add
+            // seconds of backoff and bury the actionable message. Fail immediately.
+            if (err?.isNetworkGuard) {
+                throw new HttpError(url, 0, err.message, "guard");
             }
             // Network / timeout / DNS.
             lastError = err;

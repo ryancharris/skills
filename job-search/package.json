@@ -4,15 +4,25 @@
   "description": "Find open roles, or check whether a company is hiring, by reading its ATS job board directly.",
   "type": "module",
   "license": "MIT",
-  "engines": { "node": ">=20" },
-  "bin": { "jobsearch": "./dist/main.js" },
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "jobsearch": "./dist/main.js"
+  },
   "main": "./dist/main.js",
-  "files": ["dist", "SKILL.md", "README.md", "references"],
+  "files": [
+    "dist",
+    "SKILL.md",
+    "README.md",
+    "references"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "test:live": "JOBSEARCH_LIVE_TESTS=1 vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "test:live": "JOBSEARCH_LIVE_TESTS=1 vitest run tests-ts/live",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify": "npm run typecheck && npm test"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
