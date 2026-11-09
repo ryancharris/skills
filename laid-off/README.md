@@ -74,7 +74,7 @@ reference, including `--queries`, `--list-boards` and the cache flags, see
 ## Configuration
 
 ```bash
-export SEARCH_API_KEY=...               # only needed for the search fallback
+export LAID_OFF_SEARCH_API_KEY=...               # only needed for the search fallback
 export JOBSEARCH_SEARCH_PROVIDER=kagi   # or: brave
 export JOBSEARCH_HTTP_TIMEOUT=20
 

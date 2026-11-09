@@ -239,6 +239,10 @@ export async function main(argv) {
     let config = configFromEnv();
     if (opts.cacheTtl !== null)
         config = { ...config, cache_ttl: opts.cacheTtl };
+    // Deprecation notices from the environment (e.g. a legacy API key variable).
+    for (const warning of config.warnings) {
+        process.stderr.write(`warning: ${warning}\n`);
+    }
     if (opts.clearCache) {
         const removed = await clearCache(config.cache_dir);
         process.stdout.write(`Cleared ${removed} cached response(s) from ${config.cache_dir}\n`);
@@ -255,7 +259,7 @@ export async function main(argv) {
             process.stderr.write("error: --queries needs at least one --title.\n");
             return EXIT_USAGE;
         }
-        process.stdout.write("Boolean site: queries (export SEARCH_API_KEY to execute):\n\n");
+        process.stdout.write("Boolean site: queries (export LAID_OFF_SEARCH_API_KEY to execute):\n\n");
         for (const domain of sharedDomainSiteTargets()) {
             process.stdout.write(buildSiteQuery(domain, expandTitles(opts.title), opts.location) + "\n");
         }

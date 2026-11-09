@@ -6,11 +6,11 @@ no supported ATS board. Query *generation* needs no key — only execution does.
 
 ## Configuration
 
-A single `SEARCH_API_KEY` serves whichever provider is selected, so switching
+A single `LAID_OFF_SEARCH_API_KEY` serves whichever provider is selected, so switching
 backends is a one-variable change:
 
 ```bash
-export SEARCH_API_KEY=...               # your key, for whichever provider
+export LAID_OFF_SEARCH_API_KEY=...               # your key, for whichever provider
 export JOBSEARCH_SEARCH_PROVIDER=kagi   # default; or: brave
 ```
 
@@ -20,7 +20,7 @@ The **v1** API. The legacy **v0** API is deprecated — do not use it.
 
 ```
 POST https://kagi.com/api/v1/search
-Authorization: Bearer $SEARCH_API_KEY
+Authorization: Bearer $LAID_OFF_SEARCH_API_KEY
 Content-Type: application/json
 
 {"query": "site:jobs.ashbyhq.com (\"chief of staff\" OR \"CoS\")"}
@@ -76,7 +76,7 @@ Secondary implementation:
 
 ```
 GET https://api.search.brave.com/res/v1/web/search?q=...&count=20
-X-Subscription-Token: $SEARCH_API_KEY
+X-Subscription-Token: $LAID_OFF_SEARCH_API_KEY
 Accept: application/json
 ```
 
