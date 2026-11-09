@@ -12,6 +12,12 @@ import * as cache from "./cache.js";
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 
 /**
+ * "guard" is raised when a test network guard blocks a request. It is never
+ * transient, so the HTTP layer fails fast instead of backing off.
+ */
+export type HttpErrorKind = "status" | "parse" | "network" | "guard";
+
+/**
  * A request failed, or returned something we could not use.
  *
  * `kind` distinguishes the two, because reporting a JSON parse failure as
@@ -22,20 +28,22 @@ export class HttpError extends Error {
   readonly url: string;
   readonly status: number;
   readonly body: string;
-  readonly kind: "status" | "parse" | "network";
+  readonly kind: HttpErrorKind;
 
   constructor(
     url: string,
     status: number,
     body: string,
-    kind: "status" | "parse" | "network" = "status",
+    kind: HttpErrorKind = "status",
   ) {
     super(
       kind === "parse"
         ? `unexpected non-JSON response from ${url} (HTTP ${status})`
-        : kind === "network"
-          ? `network error for ${url}: ${body}`
-          : `HTTP ${status} for ${url}: ${body.slice(0, 200)}`,
+        : kind === "guard"
+          ? body
+          : kind === "network"
+            ? `network error for ${url}: ${body}`
+            : `HTTP ${status} for ${url}: ${body.slice(0, 200)}`,
     );
     this.name = "HttpError";
     this.url = url;
@@ -112,6 +120,12 @@ export async function request(
         }
         throw err;
       }
+      // A test network guard is not a transient failure: retrying would add
+      // seconds of backoff and bury the actionable message. Fail immediately.
+      if ((err as { isNetworkGuard?: boolean })?.isNetworkGuard) {
+        throw new HttpError(url, 0, (err as Error).message, "guard");
+      }
+
       // Network / timeout / DNS.
       lastError = err as Error;
       if (attempt < retries - 1) {

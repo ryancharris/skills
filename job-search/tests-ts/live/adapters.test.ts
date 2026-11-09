@@ -16,12 +16,12 @@ import {
   GreenhouseAdapter,
   LeverAdapter,
   SmartRecruitersAdapter,
-} from "../src/ats.js";
-import { discoverBoards } from "../src/discovery.js";
-import { HttpError } from "../src/http.js";
-import { emptyProfile } from "../src/models.js";
-import { dedupeJobs } from "../src/output.js";
-import { checkHiring, runSearch } from "../src/pipeline.js";
+} from "../../src/ats.js";
+import { discoverBoards } from "../../src/discovery.js";
+import { HttpError } from "../../src/http.js";
+import { emptyProfile } from "../../src/models.js";
+import { dedupeJobs } from "../../src/output.js";
+import { checkHiring, runSearch } from "../../src/pipeline.js";
 
 const TIMEOUT = 30_000;
 
