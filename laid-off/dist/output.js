@@ -5,7 +5,7 @@
  * public contract an agent parses, so they must match the Python output.
  */
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
-import { daysSince, parseIso } from "./models.js";
+import { daysSince, parseIso, partialLines } from "./models.js";
 // --------------------------------------------------------------------- dedupe
 /** Repost identity: normalised title + company + location. */
 function contentKey(job) {
@@ -90,6 +90,7 @@ const COMPACT_ALWAYS_DROP = ["identifier"];
  */
 export function toJson(jobs, options = {}) {
     const { boards = [], meta = {}, queries = [], warnings = [], compact = false } = options;
+    const partialBoards = options.partialBoards ?? [];
     const total = options.total ?? jobs.length;
     const jobDicts = jobs.map((job) => {
         const record = { ...job };
@@ -110,6 +111,8 @@ export function toJson(jobs, options = {}) {
         count: jobs.length,
         total,
         truncated: jobs.length < total,
+        partial: partialBoards.length > 0,
+        partial_boards: partialBoards,
         meta,
         warnings,
         // Structured so an agent need not parse the warning text to learn why.
@@ -167,6 +170,8 @@ export function toMarkdown(jobs, options = {}) {
     const noun = jobs.length === 1 ? "role" : "roles";
     const headline = `# ${jobs.length} ${noun}${where ? ` at ${where}` : ""}`;
     const lines = [headline, ""];
+    for (const line of partialLines(options.partialBoards ?? []))
+        lines.push(line, "");
     if (shown.length < jobs.length) {
         lines.push(`_Showing the first ${shown.length}. Raise \`--limit\` for more._`);
         lines.push("");

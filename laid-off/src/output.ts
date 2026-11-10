@@ -7,7 +7,7 @@
 
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 import type { HiringSignal } from "./hiring-signal.js";
-import { daysSince, parseIso, type Board, type Job } from "./models.js";
+import { daysSince, parseIso, partialLines, type Board, type Job, type PartialBoard } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 
 // --------------------------------------------------------------------- dedupe
@@ -110,6 +110,8 @@ export interface JsonOptions {
   compact?: boolean;
   /** Machine-readable reason a result is empty; null when it is not. */
   emptyReason?: EmptyReason | null;
+  /** Boards read incompletely; `partial` in the output is true when any exist. */
+  partialBoards?: PartialBoard[];
 }
 
 /**
@@ -121,6 +123,7 @@ export interface JsonOptions {
  */
 export function toJson(jobs: Job[], options: JsonOptions = {}): string {
   const { boards = [], meta = {}, queries = [], warnings = [], compact = false } = options;
+  const partialBoards = options.partialBoards ?? [];
   const total = options.total ?? jobs.length;
 
   const jobDicts = jobs.map((job) => {
@@ -142,6 +145,8 @@ export function toJson(jobs: Job[], options: JsonOptions = {}): string {
     count: jobs.length,
     total,
     truncated: jobs.length < total,
+    partial: partialBoards.length > 0,
+    partial_boards: partialBoards,
     meta,
     warnings,
     // Structured so an agent need not parse the warning text to learn why.
@@ -197,6 +202,7 @@ export interface MarkdownOptions {
   limit?: number | null;
   /** Why the result is empty, so the remedy can be specific. */
   emptyReason?: EmptyReason | null;
+  partialBoards?: PartialBoard[];
 }
 
 /**
@@ -219,6 +225,7 @@ export function toMarkdown(jobs: Job[], options: MarkdownOptions = {}): string {
   const headline = `# ${jobs.length} ${noun}${where ? ` at ${where}` : ""}`;
 
   const lines: string[] = [headline, ""];
+  for (const line of partialLines(options.partialBoards ?? [])) lines.push(line, "");
 
   if (shown.length < jobs.length) {
     lines.push(`_Showing the first ${shown.length}. Raise \`--limit\` for more._`);

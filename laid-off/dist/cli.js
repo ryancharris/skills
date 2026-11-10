@@ -384,6 +384,7 @@ export async function main(argv) {
         warnings: result.warnings,
         limit: opts.limit,
         emptyReason: result.empty_reason,
+        partialBoards: result.partial_boards,
     }) + "\n");
     return EXIT_OK;
 }
@@ -415,6 +416,7 @@ export function renderJobs(jobs, format, opts) {
         meta: opts.meta,
         limit: opts.limit,
         emptyReason: opts.emptyReason,
+        partialBoards: opts.partialBoards,
     };
     switch (format) {
         case "detail":

@@ -11,7 +11,7 @@
 import { configFromEnv, type Config } from "./config.js";
 import { buildSiteQuery, expandTitles } from "./filtering.js";
 import { sharedDomainSiteTargets } from "./ats.js";
-import { emptyProfile, type Board, type Job, type SearchProfile } from "./models.js";
+import { emptyProfile, type Board, type Job, type PartialBoard, type SearchProfile } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 import type { HiringSignal } from "./hiring-signal.js";
 import { toHiringJson, toHiringMarkdown, toJson, toMarkdown } from "./output.js";
@@ -422,6 +422,7 @@ export async function main(argv: string[]): Promise<number> {
       warnings: result.warnings,
       limit: opts.limit,
       emptyReason: result.empty_reason,
+      partialBoards: result.partial_boards,
     }) + "\n",
   );
   return EXIT_OK;
@@ -461,6 +462,7 @@ export interface RenderOptions {
   warnings: string[];
   limit: number | null;
   emptyReason: EmptyReason | null;
+  partialBoards: PartialBoard[];
 }
 
 /** Render a role search in the requested format. */
@@ -471,6 +473,7 @@ export function renderJobs(jobs: Job[], format: string, opts: RenderOptions): st
     meta: opts.meta,
     limit: opts.limit,
     emptyReason: opts.emptyReason,
+    partialBoards: opts.partialBoards,
   };
 
   switch (format) {

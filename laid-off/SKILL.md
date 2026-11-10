@@ -185,6 +185,10 @@ mode. Parse `jobs` for `--company`, and `signals` for `--check`.
 `count` is how many jobs are in this payload; `total` is how many matched before
 `--limit`. Check `truncated` before saying "there are N roles".
 
+`partial` is `true` when a board reports more postings than were read (SmartRecruiters
+stops at 1,000). `partial_boards` names each one with `read` and `reported`. Then
+the count is a lower bound: say "at least N", never "N".
+
 `empty_reason` is `null` unless the result is empty, and then names the cause so
 you can give the right advice instead of "try widening the filters":
 
