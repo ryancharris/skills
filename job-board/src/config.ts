@@ -3,7 +3,7 @@
  * dropped into any harness without a config file.
  */
 
-export const DEFAULT_UA = "laid-off-skill/2.0 (+https://github.com/)";
+export const DEFAULT_UA = "job-board/2.0 (+https://github.com/)";
 
 /** The search API key variable. */
 export const API_KEY_VAR = "LAID_OFF_SEARCH_API_KEY";
@@ -224,5 +224,5 @@ export function configFromEnv(env: Record<string, string | undefined> = process.
 
 function defaultCacheDir(): string {
   const home = process.env.HOME ?? process.env.USERPROFILE ?? "";
-  return `${home}/.cache/jobsearch`;
+  return `${home}/.cache/job-board`;
 }

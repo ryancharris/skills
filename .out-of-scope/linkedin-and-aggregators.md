@@ -1,6 +1,6 @@
 # Scraping LinkedIn or job aggregators
 
-**Rejected.** `laid-off` reads ATS job boards directly. It does not scrape LinkedIn,
+**Rejected.** `job-board` reads ATS job boards directly. It does not scrape LinkedIn,
 Indeed, or other aggregators.
 
 ## Why

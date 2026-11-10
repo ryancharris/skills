@@ -2,7 +2,7 @@
  * Configuration, driven entirely by environment variables so the skill can be
  * dropped into any harness without a config file.
  */
-export const DEFAULT_UA = "laid-off-skill/2.0 (+https://github.com/)";
+export const DEFAULT_UA = "job-board/2.0 (+https://github.com/)";
 /** The search API key variable. */
 export const API_KEY_VAR = "LAID_OFF_SEARCH_API_KEY";
 /**
@@ -163,5 +163,5 @@ export function configFromEnv(env = process.env) {
 }
 function defaultCacheDir() {
     const home = process.env.HOME ?? process.env.USERPROFILE ?? "";
-    return `${home}/.cache/jobsearch`;
+    return `${home}/.cache/job-board`;
 }

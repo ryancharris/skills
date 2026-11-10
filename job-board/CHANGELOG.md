@@ -1,6 +1,13 @@
-# Changelog — laid-off skill
+# Changelog — job-board skill
 
 ## Unreleased
+
+**Renamed from `laid-off` to `job-board`.** The directory, skill name, CLI name
+(`job-board --version`), package name, User-Agent, and default cache directory
+(`~/.cache/job-board`) all changed. The `LAID_OFF_*` environment variables did not:
+existing setups keep working. Entries below this one use the former name.
+
+**Fixed.** `--help` said `usage: jobsearch`, an older name. It now says `job-board`.
 
 **Agents no longer pick companies when none were named.** Measured in opencode over
 10 runs of "find me any tech company hiring engineers": 6 runs chose companies themselves
