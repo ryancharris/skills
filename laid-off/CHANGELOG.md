@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+**Untrusted text is cleaned on ingestion.** Titles, companies, locations and snippets
+collapse to one line. Titles are capped at 200 characters and snippets at 300. Only
+`http(s)` URLs are kept, so a `javascript:` URL can no longer reach an `href`. Markdown
+link text and destinations are escaped, so a title cannot inject a heading or break a
+link. Each claim was checked against the code before the fix.
+
 **Markdown uses badges.** `md` now shows the same emoji badges as `detail`
 (remote, pay listed, new, possibly stale; hiring and unreadable for `--check`), with
 a legend line. The JSON formats stay emoji-free.
