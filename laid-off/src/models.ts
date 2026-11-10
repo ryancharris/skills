@@ -137,12 +137,42 @@ export interface PartialBoard {
   reported: number;
 }
 
-/** One plain-text line per partial board, for the non-JSON formats. */
-export function partialLines(boards: PartialBoard[]): string[] {
-  return boards.map(
-    (b) =>
-      `Partial: ${b.company}'s ${b.ats} board has ${b.reported} postings but only ${b.read} were read. Results for this company are incomplete.`,
+/** The warning text for a partial board. Shared so the notes can drop the duplicate. */
+export function partialWarning(p: PartialBoard): string {
+  return `${p.company}'s ${p.ats} board has ${p.reported} postings but only ${p.read} were read; results for this company are incomplete.`;
+}
+
+export interface NoteInput {
+  partialBoards?: PartialBoard[];
+  warnings?: string[];
+  cached?: boolean;
+  /** Oldest fetch time (ISO 8601) of the responses used, when cached. */
+  fetchedAt?: string | null;
+}
+
+/**
+ * Plain-text notes for the human formats (md, detail, html). They carry the same
+ * facts as the JSON fields, so a person sees what an agent is told: a partial
+ * read, cached data, and any warnings. Each partial board appears once, as a
+ * "Partial:" line, not again among the warnings.
+ */
+export function noteLines(input: NoteInput): string[] {
+  const partials = input.partialBoards ?? [];
+  const lines: string[] = partials.map(
+    (p) =>
+      `Partial: ${p.company}'s ${p.ats} board has ${p.reported} postings but only ${p.read} were read. Results for this company are incomplete.`,
   );
+  if (input.cached) {
+    const asOf = input.fetchedAt ?? "unknown time";
+    lines.push(
+      `Cached: some board data came from the cache (oldest fetch ${asOf}). Check that time before saying the data is current.`,
+    );
+  }
+  const partialTexts = new Set(partials.map(partialWarning));
+  for (const warning of new Set(input.warnings ?? [])) {
+    if (!partialTexts.has(warning)) lines.push(warning);
+  }
+  return lines;
 }
 
 /** Longest title kept. ATS titles are short; a longer one is noise or a payload. */

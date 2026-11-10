@@ -120,6 +120,18 @@ describe("end to end through the built CLI (synthetic board, no network)", () =>
   );
 
   it(
+    "a cached run says so in the markdown the person reads",
+    async () => {
+      const cacheDir = await freshCacheDir();
+      const args = ["--company", "Acme", "--title", "engineer", "--format", "md", "--limit", "1", "--cache-ttl", "300"];
+      await runCli(args, 800, cacheDir);
+      const second = await runCli(args, 800, cacheDir);
+      expect(second.stdout).toContain("Cached: some board data came from the cache");
+    },
+    TIMEOUT,
+  );
+
+  it(
     "a run without a cache TTL is never reported as cached",
     async () => {
       const cacheDir = await freshCacheDir();

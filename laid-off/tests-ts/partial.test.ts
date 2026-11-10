@@ -15,7 +15,7 @@ import { toHtml } from "../src/format-html.js";
 import { boardKey, partialBoards } from "../src/pipeline.js";
 import { toJson, toMarkdown } from "../src/output.js";
 import { summarizeHiring, verdict } from "../src/hiring-signal.js";
-import { makeJob, type Board, type Job, type PartialBoard } from "../src/models.js";
+import { makeJob, noteLines, type Board, type Job, type PartialBoard } from "../src/models.js";
 
 /** A SmartRecruiters adapter serving a synthetic board of `totalFound` postings. */
 class FakeSmartRecruiters extends SmartRecruitersAdapter {
@@ -171,17 +171,17 @@ describe("human formats show the partial line", () => {
   const LINE = "Partial: Acme's smartrecruiters board has 1500 postings but only 1000 were read";
 
   it("markdown", () => {
-    expect(toMarkdown([job("1")], { partialBoards: [PARTIAL] })).toContain(LINE);
+    expect(toMarkdown([job("1")], { notes: noteLines({ partialBoards: [PARTIAL] }) })).toContain(LINE);
     expect(toMarkdown([job("1")], {})).not.toContain("Partial:");
   });
 
   it("detail", () => {
-    expect(toDetail([job("1")], { partialBoards: [PARTIAL] })).toContain(LINE);
+    expect(toDetail([job("1")], { notes: noteLines({ partialBoards: [PARTIAL] }) })).toContain(LINE);
     expect(toDetail([job("1")], {})).not.toContain("Partial:");
   });
 
   it("html (escaped, so the apostrophe is an entity, not a raw quote)", () => {
-    const html = toHtml([job("1")], { partialBoards: [PARTIAL] });
+    const html = toHtml([job("1")], { notes: noteLines({ partialBoards: [PARTIAL] }) });
     expect(html).toContain("Partial: Acme");
     expect(html).toContain("only 1000 were read");
     expect(toHtml([job("1")], {})).not.toContain("Partial:");
