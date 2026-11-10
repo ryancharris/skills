@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+**Reference docs match the TypeScript CLI.** `references/` still named the removed Python
+modules and a `./jobsearch.py` command. Those now point to `src/` and `dist/main.js`. The
+SmartRecruiters read limit is documented there too.
+
 **Renamed from `laid-off` to `job-board`.** The directory, skill name, CLI name
 (`job-board --version`), package name, User-Agent, and default cache directory
 (`~/.cache/job-board`) all changed. The `LAID_OFF_*` environment variables did not:
