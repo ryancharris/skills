@@ -10,7 +10,6 @@
  * page or inject markup.
  */
 import { displayCompany } from "./hiring-signal.js";
-import { partialLines } from "./models.js";
 import { SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
 import { friendlyDepartment, verdict } from "./hiring-signal.js";
 const ESCAPES = {
@@ -75,8 +74,8 @@ export function toHtml(jobs, options = {}) {
     parts.push("</head>");
     parts.push("<body>");
     parts.push(`<h1>${SYMBOLS.hot} ${escapeHtml(heading)}</h1>`);
-    for (const line of partialLines(options.partialBoards ?? [])) {
-        parts.push(`<p class="sub"><strong>${escapeHtml(line)}</strong></p>`);
+    for (const note of options.notes ?? []) {
+        parts.push(`<p class="sub">${escapeHtml(note)}</p>`);
     }
     if (shown.length < jobs.length) {
         parts.push(`<p class="sub">Showing the first ${shown.length} of ${jobs.length}.</p>`);
@@ -158,7 +157,7 @@ function emptyHtml(reason) {
  * `--check --format html` previously emitted Markdown, which silently ignored
  * what the caller asked for.
  */
-export function toHiringHtml(signals, queries = []) {
+export function toHiringHtml(signals, queries = [], notes = []) {
     const parts = [];
     parts.push("<!DOCTYPE html>");
     parts.push('<html lang="en">');
@@ -170,6 +169,8 @@ export function toHiringHtml(signals, queries = []) {
     parts.push("</head>");
     parts.push("<body>");
     parts.push(`<h1>${SYMBOLS.hot} Is this company hiring?</h1>`);
+    for (const note of notes)
+        parts.push(`<p class="sub">${escapeHtml(note)}</p>`);
     parts.push("");
     if (signals.length === 0)
         parts.push('<p class="sub">No companies checked.</p>');

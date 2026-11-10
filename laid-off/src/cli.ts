@@ -11,7 +11,7 @@
 import { configFromEnv, type Config } from "./config.js";
 import { buildSiteQuery, expandTitles } from "./filtering.js";
 import { sharedDomainSiteTargets } from "./ats.js";
-import { emptyProfile, type Board, type Job, type PartialBoard, type SearchProfile } from "./models.js";
+import { emptyProfile, noteLines, type Board, type Job, type PartialBoard, type SearchProfile } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 import type { HiringSignal } from "./hiring-signal.js";
 import { toHiringJson, toHiringMarkdown, toJson, toMarkdown } from "./output.js";
@@ -447,17 +447,19 @@ export function renderHiring(
   warnings: string[],
   provenance?: Provenance,
 ): string {
+  const cache = cacheFields(provenance);
+  const notes = noteLines({ warnings, ...cache });
   switch (format) {
     case "html":
-      return toHiringHtml(signals, queries);
+      return toHiringHtml(signals, queries, notes);
     case "detail":
-      return toHiringDetail(signals, queries);
+      return toHiringDetail(signals, queries, notes);
     case "md":
-      return toHiringMarkdown(signals, queries);
+      return toHiringMarkdown(signals, queries, notes);
     case "json-compact":
     case "json":
     default:
-      return toHiringJson(signals, { queries, warnings, ...cacheFields(provenance) });
+      return toHiringJson(signals, { queries, warnings, ...cache });
   }
 }
 
@@ -476,25 +478,32 @@ export interface RenderOptions {
 /** Render a role search in the requested format. */
 export function renderJobs(jobs: Job[], format: string, opts: RenderOptions): string {
   const shown = opts.limit !== null ? jobs.slice(0, opts.limit) : jobs;
-  const shared = {
+  const cache = cacheFields(opts.provenance);
+  const notes = noteLines({ partialBoards: opts.partialBoards, warnings: opts.warnings, ...cache });
+
+  const human = { boards: opts.boards, meta: opts.meta, limit: opts.limit, emptyReason: opts.emptyReason, notes };
+  const json = {
     boards: opts.boards,
     meta: opts.meta,
-    limit: opts.limit,
     emptyReason: opts.emptyReason,
+    queries: opts.queries,
+    warnings: opts.warnings,
     partialBoards: opts.partialBoards,
+    total: jobs.length,
+    ...cache,
   };
 
   switch (format) {
     case "detail":
-      return toDetail(jobs, shared);
+      return toDetail(jobs, human);
     case "html":
-      return toHtml(jobs, shared);
+      return toHtml(jobs, human);
     case "md":
-      return toMarkdown(jobs, shared);
+      return toMarkdown(jobs, human);
     case "json-compact":
-      return toJson(shown, { ...shared, queries: opts.queries, warnings: opts.warnings, total: jobs.length, compact: true, ...cacheFields(opts.provenance) });
+      return toJson(shown, { ...json, compact: true });
     case "json":
     default:
-      return toJson(shown, { ...shared, queries: opts.queries, warnings: opts.warnings, total: jobs.length, ...cacheFields(opts.provenance) });
+      return toJson(shown, json);
   }
 }

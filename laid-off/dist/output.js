@@ -6,7 +6,7 @@
  */
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, hiringBadge, jobBadges } from "./format-detail.js";
-import { daysSince, parseIso, partialLines } from "./models.js";
+import { daysSince, parseIso } from "./models.js";
 // --------------------------------------------------------------------- dedupe
 /** Repost identity: normalised title + company + location. */
 function contentKey(job) {
@@ -183,8 +183,8 @@ export function toMarkdown(jobs, options = {}) {
     const noun = jobs.length === 1 ? "role" : "roles";
     const headline = `# ${jobs.length} ${noun}${where ? ` at ${where}` : ""}`;
     const lines = [headline, ""];
-    for (const line of partialLines(options.partialBoards ?? []))
-        lines.push(line, "");
+    for (const note of options.notes ?? [])
+        lines.push(note, "");
     if (shown.length < jobs.length) {
         lines.push(`_Showing the first ${shown.length}. Raise \`--limit\` for more._`);
         lines.push("");
@@ -266,8 +266,10 @@ export function toMarkdown(jobs, options = {}) {
     return lines.join("\n");
 }
 /** Human-readable hiring report. */
-export function toHiringMarkdown(signals, queries = []) {
+export function toHiringMarkdown(signals, queries = [], notes = []) {
     const lines = ["# Is this company hiring?", ""];
+    for (const note of notes)
+        lines.push(note, "");
     if (signals.length === 0)
         lines.push("_No companies checked._");
     for (const signal of signals) {

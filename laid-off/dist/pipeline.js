@@ -15,7 +15,7 @@ import { discoverBoards } from "./discovery.js";
 import { buildDiscoveryQuery, buildSiteQuery, expandTitles, filterJobs, rankJobs, } from "./filtering.js";
 import { stripHtml } from "./html.js";
 import { summarizeHiring } from "./hiring-signal.js";
-import { makeJob } from "./models.js";
+import { makeJob, partialWarning } from "./models.js";
 import { dedupeJobs, toJson, toMarkdown } from "./output.js";
 import { buildProvider, SearchError } from "./search.js";
 function emptyResult() {
@@ -170,7 +170,7 @@ export async function runSearch(profile, options = {}) {
     result.raw_count = raw.length;
     result.partial_boards = partialBoards(live, fetched);
     for (const p of result.partial_boards) {
-        result.warnings.push(`${p.company}'s ${p.ats} board has ${p.reported} postings but only ${p.read} were read; results for this company are incomplete.`);
+        result.warnings.push(partialWarning(p));
     }
     // For companies with no live board, hand the agent a discovery query.
     const resolved = new Set(boards.map((b) => b.company));
