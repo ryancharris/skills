@@ -75,18 +75,18 @@ export function makeJob(
   partial: Partial<Job> & { title: string; company: string; url: string; source: JobSource },
 ): Job {
   return {
-    title: partial.title,
-    company: partial.company,
-    url: partial.url,
+    title: oneLine(partial.title, TITLE_MAX),
+    company: oneLine(partial.company),
+    url: httpUrl(partial.url),
     source: partial.source,
-    location: partial.location ?? "",
+    location: oneLine(partial.location ?? ""),
     remote: partial.remote ?? null,
-    department: partial.department ?? "",
-    employment_type: partial.employment_type ?? "",
+    department: oneLine(partial.department ?? ""),
+    employment_type: oneLine(partial.employment_type ?? ""),
     posted_at: partial.posted_at ?? null,
-    compensation: partial.compensation ?? null,
+    compensation: typeof partial.compensation === "string" ? oneLine(partial.compensation) : null,
     identifier: partial.identifier ?? "",
-    snippet: partial.snippet ?? "",
+    snippet: oneLine(partial.snippet ?? "", SNIPPET_MAX),
   };
 }
 
@@ -143,4 +143,26 @@ export function partialLines(boards: PartialBoard[]): string[] {
     (b) =>
       `Partial: ${b.company}'s ${b.ats} board has ${b.reported} postings but only ${b.read} were read. Results for this company are incomplete.`,
   );
+}
+
+/** Longest title kept. ATS titles are short; a longer one is noise or a payload. */
+export const TITLE_MAX = 200;
+/** Longest search snippet kept, for the same reason. */
+export const SNIPPET_MAX = 300;
+
+/**
+ * Collapse all whitespace (newlines included) so the text stays on one line,
+ * then cap its length in characters. Over the cap, the text is cut with an ellipsis.
+ */
+export function oneLine(text: string, max = Infinity): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  const chars = [...flat];
+  if (chars.length <= max) return flat;
+  return `${chars.slice(0, max - 1).join("")}\u2026`;
+}
+
+/** Keep only http(s) URLs. Anything else (javascript:, data:, relative) becomes "". */
+export function httpUrl(url: string): string {
+  const trimmed = url.trim();
+  return /^https?:\/\//i.test(trimmed) ? trimmed : "";
 }

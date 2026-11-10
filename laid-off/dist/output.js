@@ -165,6 +165,14 @@ export function toHiringJson(signals, options = {}) {
  * metadata and an ATS table, so the reader scrolled past noise to reach the
  * thing they asked for. Diagnostics go last.
  */
+/** Escape characters that would break a Markdown link label. */
+export function mdEscapeText(text) {
+    return text.replace(/([\\[\]])/g, "\\$1");
+}
+/** Encode characters that would end a Markdown link destination early. */
+export function mdUrl(url) {
+    return url.replace(/\(/g, "%28").replace(/\)/g, "%29").replace(/ /g, "%20");
+}
 export function toMarkdown(jobs, options = {}) {
     const { boards = [], meta = {}, limit = null } = options;
     const now = new Date();
@@ -226,7 +234,10 @@ export function toMarkdown(jobs, options = {}) {
         const kind = job.employment_type ? ` · ${job.employment_type}` : "";
         const badges = jobBadges(job, now);
         const lead = badges.length > 0 ? `${badges.join(" ")} ` : "";
-        lines.push(`### ${lead}[${job.title}](${job.url})`);
+        const heading = job.url
+            ? `[${mdEscapeText(job.title)}](${mdUrl(job.url)})`
+            : mdEscapeText(job.title);
+        lines.push(`### ${lead}${heading}`);
         lines.push(`${displayCompany(job.company)}${loc}${remote}${dept}${kind}${comp}${freshness}`);
         if (job.snippet) {
             lines.push("");

@@ -135,8 +135,10 @@ export function toDetail(jobs: Job[], options: DetailOptions = {}): string {
     }
 
     lines.push("");
-    lines.push(`🔗 ${job.url}`);
-    lines.push("");
+    if (job.url) {
+      lines.push(`🔗 ${job.url}`);
+      lines.push("");
+    }
   }
 
   if (shown.length > 0) lines.push(rule());
