@@ -118,6 +118,9 @@ for every account tested, with no public jobs endpoint.
 | `detail` | humans | one block per role, with emoji and a copyable link |
 | `html` | humans | standalone page to send to someone |
 
+`md`, `detail` and `html` also state partial reads, cached data and warnings in plain
+text, so the person reading sees what an agent is told.
+
 Emoji appear in `md`, `detail` and `html`. `json` and `json-compact` stay plain: an
 agent parses them.
 

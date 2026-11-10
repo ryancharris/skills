@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+**Human formats state what JSON states.** `md`, `detail` and `html` now show partial
+reads, cached data (with the fetch time), and every warning, for both role search and
+`--check`. Before, only JSON carried them. Each partial board is stated once.
+
+**Real-board check.** Ran the built CLI against a live SmartRecruiters board of 756
+postings (ServiceNow): read in full, not flagged partial, and the cache path reports
+its fetch time. No public board above 1,000 was found, so the 1,000-posting cap is
+validated only against a synthetic board.
+
 **Untrusted text is cleaned on ingestion.** Titles, companies, locations and snippets
 collapse to one line. Titles are capped at 200 characters and snippets at 300. Only
 `http(s)` URLs are kept, so a `javascript:` URL can no longer reach an `href`. Markdown

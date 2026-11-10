@@ -11,7 +11,7 @@
  */
 
 import { displayCompany } from "./hiring-signal.js";
-import { parseIso, partialLines, type Board, type Job, type PartialBoard } from "./models.js";
+import { parseIso, type Board, type Job } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 import { SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
 import type { HiringSignal } from "./hiring-signal.js";
@@ -34,7 +34,8 @@ export interface HtmlOptions {
   meta?: Record<string, unknown>;
   limit?: number | null;
   emptyReason?: EmptyReason | null;
-  partialBoards?: PartialBoard[];
+  /** Plain-text notes (partial reads, cache, warnings). */
+  notes?: string[];
   /** Page title; defaults to a summary of the result count. */
   title?: string;
 }
@@ -96,8 +97,8 @@ export function toHtml(jobs: Job[], options: HtmlOptions = {}): string {
   parts.push("<body>");
   parts.push(`<h1>${SYMBOLS.hot} ${escapeHtml(heading)}</h1>`);
 
-  for (const line of partialLines(options.partialBoards ?? [])) {
-    parts.push(`<p class="sub"><strong>${escapeHtml(line)}</strong></p>`);
+  for (const note of options.notes ?? []) {
+    parts.push(`<p class="sub">${escapeHtml(note)}</p>`);
   }
   if (shown.length < jobs.length) {
     parts.push(`<p class="sub">Showing the first ${shown.length} of ${jobs.length}.</p>`);
@@ -193,7 +194,7 @@ function emptyHtml(reason: EmptyReason | null | undefined): string {
  * `--check --format html` previously emitted Markdown, which silently ignored
  * what the caller asked for.
  */
-export function toHiringHtml(signals: HiringSignal[], queries: string[] = []): string {
+export function toHiringHtml(signals: HiringSignal[], queries: string[] = [], notes: string[] = []): string {
   const parts: string[] = [];
   parts.push("<!DOCTYPE html>");
   parts.push('<html lang="en">');
@@ -205,6 +206,7 @@ export function toHiringHtml(signals: HiringSignal[], queries: string[] = []): s
   parts.push("</head>");
   parts.push("<body>");
   parts.push(`<h1>${SYMBOLS.hot} Is this company hiring?</h1>`);
+  for (const note of notes) parts.push(`<p class="sub">${escapeHtml(note)}</p>`);
   parts.push("");
 
   if (signals.length === 0) parts.push('<p class="sub">No companies checked.</p>');
