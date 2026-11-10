@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+**Markdown uses badges.** `md` now shows the same emoji badges as `detail`
+(remote, pay listed, new, possibly stale; hiring and unreadable for `--check`), with
+a legend line. The JSON formats stay emoji-free.
+
 **Cache provenance.** JSON output now says whether the ATS data came from the
 `--cache-ttl` cache: `cached` (any response from the cache) and `fetched_at` (the
 oldest fetch time among the responses used). A cache entry written earlier in the
