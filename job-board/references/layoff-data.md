@@ -8,7 +8,7 @@ decision is not silently reversed later.
 An earlier version fetched `kadoa-org/layoffs-tracker`
 (`public/data/companies.json`, ~30,430 companies, 4.8 MB) and used it to seed
 searches: `--layoffs --since YYYY-MM-DD --min-workers N`. Three flags, a download,
-a 24 h cache, and a `layoffs.py` module.
+a 24 h cache, and a layoffs module in the Python implementation.
 
 ## Why
 
