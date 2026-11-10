@@ -128,3 +128,19 @@ export function dedupeKey(job: Job): string {
 export interface BoardResult {
   boards: Board[];
 }
+
+/** A board whose own total is larger than the number of postings read. */
+export interface PartialBoard {
+  company: string;
+  ats: string;
+  read: number;
+  reported: number;
+}
+
+/** One plain-text line per partial board, for the non-JSON formats. */
+export function partialLines(boards: PartialBoard[]): string[] {
+  return boards.map(
+    (b) =>
+      `Partial: ${b.company}'s ${b.ats} board has ${b.reported} postings but only ${b.read} were read. Results for this company are incomplete.`,
+  );
+}

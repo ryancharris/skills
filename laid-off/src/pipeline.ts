@@ -10,7 +10,7 @@
  *    indistinguishable from "this company has no jobs".
  */
 
-import { allAdapters, sharedDomainSiteTargets, type ATSAdapter } from "./ats.js";
+import { allAdapters, sharedDomainSiteTargets, type ATSAdapter, type BoardRead } from "./ats.js";
 import { configFromEnv, type Config } from "./config.js";
 import { discoverBoards } from "./discovery.js";
 import {
@@ -22,7 +22,7 @@ import {
 } from "./filtering.js";
 import { stripHtml } from "./html.js";
 import { summarizeHiring, type HiringSignal } from "./hiring-signal.js";
-import type { Board, Job, SearchProfile } from "./models.js";
+import type { Board, Job, PartialBoard, SearchProfile } from "./models.js";
 import { makeJob } from "./models.js";
 import { dedupeJobs, toJson, toMarkdown } from "./output.js";
 import { buildProvider, SearchError, type SearchProvider } from "./search.js";
@@ -36,6 +36,8 @@ export interface RunResult {
   signals: HiringSignal[];
   raw_count: number;
   matched_count: number;
+  /** Boards whose own total exceeds the postings read; totals are lower bounds. */
+  partial_boards: PartialBoard[];
   /**
    * Why a run produced no jobs, when that is worth saying explicitly.
    *
@@ -61,6 +63,7 @@ function emptyResult(): RunResult {
     signals: [],
     raw_count: 0,
     matched_count: 0,
+    partial_boards: [],
     empty_reason: null,
   };
 }
@@ -138,6 +141,28 @@ async function resolveBoards(
 }
 
 /** Identity of one board. The ATS must be part of the key. */
+/**
+ * Boards whose own total is larger than what was read, e.g. SmartRecruiters
+ * boards past the page cap. A board that reports no total, or failed to read,
+ * is not listed here (its failure already produces a warning).
+ */
+export function partialBoards(live: Board[], reads: Map<string, BoardRead>): PartialBoard[] {
+  const out: PartialBoard[] = [];
+  for (const board of live) {
+    const read = reads.get(boardKey(board));
+    if (!read || read.reported === null) continue;
+    if (read.jobs.length < read.reported) {
+      out.push({
+        company: board.company,
+        ats: board.ats,
+        read: read.jobs.length,
+        reported: read.reported,
+      });
+    }
+  }
+  return out;
+}
+
 export function boardKey(board: Board): string {
   return `${board.company}\u0000${board.ats}\u0000${board.slug}`;
 }
@@ -148,15 +173,15 @@ export async function fetchBoard(
   adapters: ATSAdapter[],
   timeoutMs: number,
   errors?: string[],
-): Promise<Job[]> {
+): Promise<BoardRead> {
   const base = adapters.find((a) => a.name === board.ats);
-  if (!base) return [];
+  if (!base) return { jobs: [], reported: null };
 
   const adapter =
     base.timeout === timeoutMs ? base : new (base.constructor as new (t: number) => ATSAdapter)(timeoutMs);
 
   try {
-    return await adapter.fetch(board.slug);
+    return await adapter.fetchRead(board.slug);
   } catch (err) {
     if (errors) {
       errors.push(
@@ -164,7 +189,7 @@ export async function fetchBoard(
           `(${(err as Error)?.name ?? "Error"}); counts may be understated`,
       );
     }
-    return [];
+    return { jobs: [], reported: null };
   }
 }
 
@@ -174,8 +199,8 @@ async function fetchAll(
   adapters: ATSAdapter[],
   timeoutMs: number,
   result: RunResult,
-): Promise<Map<string, Job[]>> {
-  const fetched = new Map<string, Job[]>();
+): Promise<Map<string, BoardRead>> {
+  const fetched = new Map<string, BoardRead>();
   const sinks = new Map<string, string[]>();
   for (const board of live) sinks.set(boardKey(board), []);
 
@@ -222,8 +247,14 @@ export async function runSearch(
 
   const live = boards.filter((b) => b.job_count > 0);
   const fetched = await fetchAll(live, adapters, config.http_timeout * 1000, result);
-  const raw: Job[] = [...fetched.values()].flat();
+  const raw: Job[] = [...fetched.values()].flatMap((r) => r.jobs);
   result.raw_count = raw.length;
+  result.partial_boards = partialBoards(live, fetched);
+  for (const p of result.partial_boards) {
+    result.warnings.push(
+      `${p.company}'s ${p.ats} board has ${p.reported} postings but only ${p.read} were read; results for this company are incomplete.`,
+    );
+  }
 
   // For companies with no live board, hand the agent a discovery query.
   const resolved = new Set(boards.map((b) => b.company));
@@ -294,11 +325,11 @@ export async function checkHiring(
 
   const live = boards.filter((b) => b.job_count > 0);
   const fetched = await fetchAll(live, adapters, config.http_timeout * 1000, result);
-  result.raw_count = [...fetched.values()].reduce((n, jobs) => n + jobs.length, 0);
+  result.raw_count = [...fetched.values()].reduce((n, r) => n + r.jobs.length, 0);
 
   for (const name of result.companies) {
     const companyBoards = byCompany.get(name) ?? [];
-    const companyJobs = companyBoards.flatMap((b) => fetched.get(boardKey(b)) ?? []);
+    const companyJobs = companyBoards.flatMap((b) => fetched.get(boardKey(b))?.jobs ?? []);
     result.signals.push(
       summarizeHiring(name, companyBoards, companyJobs, { recentDays: options.recentDays ?? 30 }),
     );

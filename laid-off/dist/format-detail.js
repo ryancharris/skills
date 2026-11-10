@@ -10,7 +10,7 @@
  * read as unserious.
  */
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
-import { daysSince, parseIso } from "./models.js";
+import { daysSince, parseIso, partialLines } from "./models.js";
 // ------------------------------------------------------------------- symbols
 /** A finding is "fresh" within this many days. */
 const FRESH_DAYS = 14;
@@ -82,6 +82,8 @@ export function toDetail(jobs, options = {}) {
         lines.push(`_Showing the first ${shown.length}. Raise \`--limit\` for more._`);
         lines.push("");
     }
+    for (const line of partialLines(options.partialBoards ?? []))
+        lines.push(line, "");
     if (shown.length === 0) {
         lines.push(...emptyBlock(options.emptyReason));
     }

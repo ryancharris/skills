@@ -132,8 +132,9 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
   career sites and resolve on none of the supported ATSes.
 - **`--check` cannot read enterprises** for the same reason; it returns
   `unknown: true` plus a discovery query rather than implying "not hiring".
-- **Boards paginate**: SmartRecruiters returns 100 per page while `job_count`
-  reports the true total.
+- **Boards paginate**: SmartRecruiters returns 100 per page and the read stops at
+  1,000 postings. A larger board is reported as `partial` in both role search and
+  `--check`, with its true total, so the count is never silently understated.
 - Measured discovery rate on 26 modern tech companies: **85%**.
 
 ## Tests
