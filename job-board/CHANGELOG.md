@@ -9,6 +9,13 @@ existing setups keep working. Entries below this one use the former name.
 
 **Fixed.** `--help` said `usage: jobsearch`, an older name. It now says `job-board`.
 
+**Routing after the rename.** The new name reads like a job-listing site, and in opencode
+that pulled generic "find me any tech company hiring" prompts toward the skill (4 of 4
+improvised a company list, against 0 of 6 for the old name). The description now opens
+with the layoff trigger and says it does not search or find companies. Measured after
+the change: layoff checks routed 3 of 3 in pi and 3 of 3 in opencode; no-company prompts
+improvised in 2 of 6 opencode runs (0 of 6 under the old name), and 0 of 4 in pi.
+
 **Agents no longer pick companies when none were named.** Measured in opencode over
 10 runs of "find me any tech company hiring engineers": 6 runs chose companies themselves
 (from memory, a web search, or a placeholder) and ran the CLI on them. The "no
