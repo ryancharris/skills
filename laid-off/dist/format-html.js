@@ -10,6 +10,7 @@
  * page or inject markup.
  */
 import { displayCompany } from "./hiring-signal.js";
+import { partialLines } from "./models.js";
 import { SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
 import { friendlyDepartment, verdict } from "./hiring-signal.js";
 const ESCAPES = {
@@ -74,6 +75,9 @@ export function toHtml(jobs, options = {}) {
     parts.push("</head>");
     parts.push("<body>");
     parts.push(`<h1>${SYMBOLS.hot} ${escapeHtml(heading)}</h1>`);
+    for (const line of partialLines(options.partialBoards ?? [])) {
+        parts.push(`<p class="sub"><strong>${escapeHtml(line)}</strong></p>`);
+    }
     if (shown.length < jobs.length) {
         parts.push(`<p class="sub">Showing the first ${shown.length} of ${jobs.length}.</p>`);
     }

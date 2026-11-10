@@ -11,7 +11,7 @@
  */
 
 import { displayCompany } from "./hiring-signal.js";
-import { parseIso, type Board, type Job } from "./models.js";
+import { parseIso, partialLines, type Board, type Job, type PartialBoard } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 import { SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
 import type { HiringSignal } from "./hiring-signal.js";
@@ -34,6 +34,7 @@ export interface HtmlOptions {
   meta?: Record<string, unknown>;
   limit?: number | null;
   emptyReason?: EmptyReason | null;
+  partialBoards?: PartialBoard[];
   /** Page title; defaults to a summary of the result count. */
   title?: string;
 }
@@ -95,6 +96,9 @@ export function toHtml(jobs: Job[], options: HtmlOptions = {}): string {
   parts.push("<body>");
   parts.push(`<h1>${SYMBOLS.hot} ${escapeHtml(heading)}</h1>`);
 
+  for (const line of partialLines(options.partialBoards ?? [])) {
+    parts.push(`<p class="sub"><strong>${escapeHtml(line)}</strong></p>`);
+  }
   if (shown.length < jobs.length) {
     parts.push(`<p class="sub">Showing the first ${shown.length} of ${jobs.length}.</p>`);
   }

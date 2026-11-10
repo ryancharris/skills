@@ -12,7 +12,7 @@
 
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 import type { HiringSignal } from "./hiring-signal.js";
-import { daysSince, parseIso, type Board, type Job } from "./models.js";
+import { daysSince, parseIso, partialLines, type Board, type Job, type PartialBoard } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 
 // ------------------------------------------------------------------- symbols
@@ -67,6 +67,7 @@ export interface DetailOptions {
   meta?: Record<string, unknown>;
   limit?: number | null;
   emptyReason?: EmptyReason | null;
+  partialBoards?: PartialBoard[];
 }
 
 /**
@@ -95,6 +96,8 @@ export function toDetail(jobs: Job[], options: DetailOptions = {}): string {
     lines.push(`_Showing the first ${shown.length}. Raise \`--limit\` for more._`);
     lines.push("");
   }
+
+  for (const line of partialLines(options.partialBoards ?? [])) lines.push(line, "");
 
   if (shown.length === 0) {
     lines.push(...emptyBlock(options.emptyReason));

@@ -75,3 +75,7 @@ export function dedupeKey(job) {
     }
     return `${job.source}\u0000${job.url.replace(/\/+$/, "")}`.toLowerCase();
 }
+/** One plain-text line per partial board, for the non-JSON formats. */
+export function partialLines(boards) {
+    return boards.map((b) => `Partial: ${b.company}'s ${b.ats} board has ${b.reported} postings but only ${b.read} were read. Results for this company are incomplete.`);
+}
