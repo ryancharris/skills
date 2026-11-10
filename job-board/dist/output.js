@@ -287,9 +287,9 @@ export function toHiringMarkdown(signals, queries = [], notes = []) {
         }
     }
     if (queries.length > 0) {
-        lines.push("## Next step: find the careers page yourself");
+        lines.push("## Next step for the user: find the careers page");
         lines.push("");
-        lines.push("Paste this into a search engine to locate the company's board:");
+        lines.push("The user can search for the company's board with this query:");
         lines.push("");
         lines.push(`> ${queries[0]}`);
         lines.push("");
