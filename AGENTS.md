@@ -5,19 +5,20 @@ this file). Keep it to rules an agent could otherwise break.
 
 ## What this repo is
 
-A collection of Agent Skills. Today it holds one skill, `laid-off/`, which finds
+A collection of Agent Skills. Today it holds one skill, `job-board/`, which finds
 open roles at named companies by reading their ATS boards. Ideas already rejected
 are recorded in `.out-of-scope/`. Read those before proposing a change.
 
 ## Constraints (do not break)
 
-- **Zero runtime dependencies.** `laid-off/` ships compiled JavaScript in `dist/`
+- **Zero runtime dependencies.** `job-board/` ships compiled JavaScript in `dist/`
   and runs with no `npm install`. Dev dependencies are fine. Node 20+.
 - **`dist/` is committed and must match `src/`.** Edit `src/`, run `npm run build`
-  in `laid-off/`, and commit both. CI fails on drift.
+  in `job-board/`, and commit both. CI fails on drift.
 - **Paths in docs.** Write the CLI as `<skill-dir>/dist/main.js`, never a bare
   `dist/main.js`. The validator fails on a bare path.
-- **Settings use the `LAID_OFF_` prefix.** Old names still work and warn. The
+- **Settings use the `LAID_OFF_` prefix.** That prefix is the skill's former name, kept
+  so existing environment setups keep working. Old names still work and warn. The
   test-harness flag `JOBSEARCH_LIVE_TESTS` is intentionally unchanged.
 - **Emoji.** `json` and `json-compact` never contain emoji. `md`, `detail` and
   `html` may.
@@ -40,13 +41,13 @@ are recorded in `.out-of-scope/`. Read those before proposing a change.
 - No direct pushes to `main`. One change per PR. CI must pass before merge.
 - Do not commit scratch files, session notes, logs, generated outputs, or API keys.
 - User-visible changes get an entry under "Unreleased" in
-  `laid-off/CHANGELOG.md`.
+  `job-board/CHANGELOG.md`.
 - Before calling a fix done, run the documented command exactly as written. A
   passing unit test is not the same thing.
 
 ## Docs
 
-- `laid-off/SKILL.md` is read by the agent. Keep it true to the code. JSON examples
+- `job-board/SKILL.md` is read by the agent. Keep it true to the code. JSON examples
   must list the keys `toJson` actually emits.
-- Install commands live in `laid-off/README.md`. The root README must agree with
+- Install commands live in `job-board/README.md`. The root README must agree with
   them.

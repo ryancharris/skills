@@ -1,5 +1,5 @@
 /**
- * Shared data types for the laid-off skill.
+ * Shared data types for the job-board skill.
  *
  * Ported from jobsearch/models.py. Field names are part of the public JSON
  * contract, so they must match the Python implementation exactly.

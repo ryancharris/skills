@@ -92,7 +92,7 @@ describe("getJson on a cache hit", () => {
   });
 
   async function freshDir(): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), "laid-off-prov-"));
+    const dir = await mkdtemp(join(tmpdir(), "job-board-prov-"));
     dirs.push(dir);
     return dir;
   }

@@ -30,7 +30,7 @@ afterAll(async () => {
 });
 
 async function freshCacheDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "laid-off-e2e-"));
+  const dir = await mkdtemp(join(tmpdir(), "job-board-e2e-"));
   dirs.push(dir);
   return dir;
 }
@@ -145,14 +145,14 @@ describe("end to end through the built CLI (synthetic board, no network)", () =>
   it(
     "the documented invocation works from an unrelated directory",
     async () => {
-      const elsewhere = await mkdtemp(join(tmpdir(), "laid-off-cwd-"));
+      const elsewhere = await mkdtemp(join(tmpdir(), "job-board-cwd-"));
       dirs.push(elsewhere);
       const out = await new Promise<string>((done, fail) => {
         execFile(process.execPath, [cli, "--version"], { cwd: elsewhere }, (error, stdout) =>
           error ? fail(error) : done(stdout),
         );
       });
-      expect(out).toMatch(/^laid-off \d/);
+      expect(out).toMatch(/^job-board \d/);
     },
     TIMEOUT,
   );
