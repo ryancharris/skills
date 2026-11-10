@@ -356,7 +356,7 @@ async function searchFallback(
       result.empty_reason = {
         kind: "no_key",
         provider: config.search_provider,
-        variable: "LAID_OFF_SEARCH_API_KEY",
+        variable: "JOB_BOARD_SEARCH_API_KEY",
         companies: result.companies,
       };
       return [];

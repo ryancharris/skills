@@ -1,122 +1,65 @@
 /**
  * Configuration, driven entirely by environment variables so the skill can be
  * dropped into any harness without a config file.
+ *
+ * Every setting has one current name, `JOB_BOARD_*`, and any number of former
+ * names that are still accepted with a deprecation warning. One reader applies
+ * the same rules to every setting, so the renames cannot drift apart.
  */
 export const DEFAULT_UA = "job-board/2.0 (+https://github.com/)";
-/** The search API key variable. */
-export const API_KEY_VAR = "LAID_OFF_SEARCH_API_KEY";
-/**
- * Name accepted for backwards compatibility.
- *
- * A real key was in use under this name before the rename. Reading it silently
- * would hide the migration, so it is accepted but warns -- an unannounced
- * rename shows up as "no API key" for someone who already configured it, which
- * is indistinguishable from a bug.
- */
-export const LEGACY_API_KEY_VAR = "SEARCH_API_KEY";
-/** The search provider variable. */
-export const PROVIDER_VAR = "LAID_OFF_SEARCH_PROVIDER";
-/**
- * Former provider variable.
- *
- * It lived under a different prefix from the API key, so remembering one gave no
- * hint of the other. Accepted for compatibility, with a warning like the key.
- */
-export const LEGACY_PROVIDER_VAR = "JOBSEARCH_SEARCH_PROVIDER";
+export const SETTINGS = {
+    apiKey: {
+        current: "JOB_BOARD_SEARCH_API_KEY",
+        // SEARCH_API_KEY predates the prefix; a real key was configured under it.
+        former: ["LAID_OFF_SEARCH_API_KEY", "SEARCH_API_KEY"],
+    },
+    provider: {
+        current: "JOB_BOARD_SEARCH_PROVIDER",
+        former: ["LAID_OFF_SEARCH_PROVIDER", "JOBSEARCH_SEARCH_PROVIDER"],
+    },
+    httpTimeout: {
+        current: "JOB_BOARD_HTTP_TIMEOUT",
+        former: ["LAID_OFF_HTTP_TIMEOUT", "JOBSEARCH_HTTP_TIMEOUT"],
+    },
+    cacheTtl: {
+        current: "JOB_BOARD_CACHE_TTL",
+        former: ["LAID_OFF_CACHE_TTL", "JOBSEARCH_CACHE_TTL"],
+    },
+    cacheDir: {
+        current: "JOB_BOARD_CACHE_DIR",
+        former: ["LAID_OFF_CACHE_DIR", "JOBSEARCH_CACHE_DIR"],
+    },
+};
 export const SUPPORTED_PROVIDERS = ["kagi", "brave"];
-/** Request timeout in seconds. */
-export const HTTP_TIMEOUT_VAR = "LAID_OFF_HTTP_TIMEOUT";
-export const LEGACY_HTTP_TIMEOUT_VAR = "JOBSEARCH_HTTP_TIMEOUT";
-/** ATS response cache: seconds to reuse, and where to store it. */
-export const CACHE_TTL_VAR = "LAID_OFF_CACHE_TTL";
-export const LEGACY_CACHE_TTL_VAR = "JOBSEARCH_CACHE_TTL";
-export const CACHE_DIR_VAR = "LAID_OFF_CACHE_DIR";
-export const LEGACY_CACHE_DIR_VAR = "JOBSEARCH_CACHE_DIR";
 /**
- * Read a variable, preferring its current name.
+ * Read one setting.
  *
- * Every renamed variable on this skill follows the same rule: the current name
- * wins, the former name still works but warns, and both set to different values
- * is a conflict rather than a guess. One helper keeps the three renames from
- * drifting into three slightly different behaviours.
+ * The current name wins, then the former names in order. Each former name that
+ * is set produces a warning, because an unannounced rename looks identical to
+ * "no value set". Two names set to different values is an error rather than a
+ * guess. The error names the variables but never prints a value: one of them may
+ * be a secret.
  */
-export function readRenamed(env, currentName, legacyName) {
-    const current = env[currentName];
-    const legacy = env[legacyName];
-    if (current !== undefined && current !== "" && legacy !== undefined && legacy !== "" && current !== legacy) {
+export function readSetting(env, setting, normalise = (value) => value) {
+    const names = [setting.current, ...setting.former];
+    const set = names.filter((name) => env[name] !== undefined && env[name] !== "");
+    if (set.length === 0)
+        return { value: null, warnings: [], error: null };
+    const distinct = new Set(set.map((name) => normalise(env[name])));
+    if (distinct.size > 1) {
         return {
-            value: current,
-            warning: null,
-            error: `Both ${currentName} (${current}) and ${legacyName} (${legacy}) are set. ` +
-                `Remove one -- they disagree.`,
+            value: null,
+            warnings: [],
+            error: `${set.join(" and ")} are set to different values. ` +
+                `Keep only ${setting.current}.`,
         };
     }
-    if (current !== undefined && current !== "")
-        return { value: current, warning: null, error: null };
-    if (legacy !== undefined && legacy !== "") {
-        return {
-            value: legacy,
-            warning: `${legacyName} is deprecated and will be removed; rename it to ${currentName}.`,
-            error: null,
-        };
-    }
-    return { value: null, warning: null, error: null };
-}
-/**
- * Read the search API key, preferring the current variable name.
- *
- * Returns the key plus a deprecation warning when only the legacy name is set.
- */
-export function readApiKey(env = process.env) {
-    const current = env[API_KEY_VAR];
-    if (current)
-        return { key: current, warning: null };
-    const legacy = env[LEGACY_API_KEY_VAR];
-    if (legacy) {
-        return {
-            key: legacy,
-            warning: `${LEGACY_API_KEY_VAR} is deprecated and will be removed; rename it to ` +
-                `${API_KEY_VAR}.`,
-        };
-    }
-    return { key: null, warning: null };
-}
-/**
- * Read the search provider, preferring the current variable name.
- *
- * An unrecognised value is a usage error the caller must report: silently
- * falling back to kagi would send searches to the wrong engine and bill the
- * wrong account.
- */
-export function readProvider(env = process.env) {
-    const current = env[PROVIDER_VAR];
-    const legacy = env[LEGACY_PROVIDER_VAR];
-    const raw = current ?? legacy;
-    if (current && legacy && current.toLowerCase() !== legacy.toLowerCase()) {
-        return {
-            provider: current.toLowerCase(),
-            warning: null,
-            error: `Both ${PROVIDER_VAR} (${current}) and ${LEGACY_PROVIDER_VAR} (${legacy}) ` +
-                `are set. Remove one -- they disagree.`,
-        };
-    }
-    if (!raw) {
-        return { provider: "kagi", warning: null, error: null };
-    }
-    const provider = raw.toLowerCase();
-    if (!SUPPORTED_PROVIDERS.includes(provider)) {
-        return {
-            provider,
-            warning: null,
-            error: `Unknown search provider '${raw}'. Supported: ${SUPPORTED_PROVIDERS.join(", ")}. ` +
-                `Set ${PROVIDER_VAR}.`,
-        };
-    }
-    const warning = !current && legacy
-        ? `${LEGACY_PROVIDER_VAR} is deprecated and will be removed; rename it to ` +
-            `${PROVIDER_VAR}.`
-        : null;
-    return { provider, warning, error: null };
+    const warnings = set
+        .filter((name) => name !== setting.current)
+        .map((name) => `${name} is deprecated and will be removed; rename it to ${setting.current}.`);
+    // `set` is non-empty here, and all of its names agree, so the first one is the value.
+    const first = set[0];
+    return { value: env[first], warnings, error: null };
 }
 /**
  * Parse a numeric setting.
@@ -140,20 +83,39 @@ function readNumber(raw, variable, fallback, { allowZero = false } = {}) {
     return { value: parsed, error: null };
 }
 export function configFromEnv(env = process.env) {
-    const { key, warning } = readApiKey(env);
-    const provider = readProvider(env);
-    const timeout = readRenamed(env, HTTP_TIMEOUT_VAR, LEGACY_HTTP_TIMEOUT_VAR);
-    const ttl = readRenamed(env, CACHE_TTL_VAR, LEGACY_CACHE_TTL_VAR);
-    const dir = readRenamed(env, CACHE_DIR_VAR, LEGACY_CACHE_DIR_VAR);
-    const warnings = [warning, provider.warning, timeout.warning, ttl.warning, dir.warning].filter((w) => w !== null);
+    const key = readSetting(env, SETTINGS.apiKey);
+    const provider = readSetting(env, SETTINGS.provider, (value) => value.toLowerCase());
+    const timeout = readSetting(env, SETTINGS.httpTimeout);
+    const ttl = readSetting(env, SETTINGS.cacheTtl);
+    const dir = readSetting(env, SETTINGS.cacheDir);
+    const reads = [key, provider, timeout, ttl, dir];
+    const warnings = reads.flatMap((read) => read.warnings);
+    // The provider is the one setting with a fixed set of valid values.
+    let providerName = "kagi";
+    let providerError = provider.error;
+    if (provider.value !== null) {
+        const raw = provider.value;
+        providerName = raw.toLowerCase();
+        if (!SUPPORTED_PROVIDERS.includes(providerName)) {
+            providerError =
+                `Unknown search provider '${raw}'. Supported: ${SUPPORTED_PROVIDERS.join(", ")}. ` +
+                    `Set ${SETTINGS.provider.current}.`;
+        }
+    }
     // cache_ttl 0 means "disabled", so zero is legitimate there but not for a timeout.
-    const httpTimeout = readNumber(timeout.value, HTTP_TIMEOUT_VAR, 20);
-    const cacheTtl = readNumber(ttl.value, CACHE_TTL_VAR, 0, { allowZero: true });
+    const httpTimeout = readNumber(timeout.value, SETTINGS.httpTimeout.current, 20);
+    const cacheTtl = readNumber(ttl.value, SETTINGS.cacheTtl.current, 0, { allowZero: true });
     // First fatal problem wins; they are all configuration errors of the same kind.
-    const error = provider.error ?? timeout.error ?? ttl.error ?? dir.error ?? httpTimeout.error ?? cacheTtl.error;
+    const error = providerError ??
+        timeout.error ??
+        ttl.error ??
+        dir.error ??
+        key.error ??
+        httpTimeout.error ??
+        cacheTtl.error;
     return {
-        search_provider: provider.provider,
-        search_api_key: key,
+        search_provider: providerName,
+        search_api_key: key.value,
         http_timeout: httpTimeout.value,
         cache_ttl: cacheTtl.value,
         cache_dir: dir.value ?? defaultCacheDir(),

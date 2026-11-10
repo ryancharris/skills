@@ -2,7 +2,7 @@
 name: job-board
 description: After a layoff, check if named companies are still hiring or find their open roles from their ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters). Does not search or find companies.
 license: MIT
-compatibility: Node.js 20+ (no runtime dependencies). Optional LAID_OFF_SEARCH_API_KEY for search-engine fallback.
+compatibility: Node.js 20+ (no runtime dependencies). Optional JOB_BOARD_SEARCH_API_KEY for search-engine fallback.
 metadata:
   version: "2.0.0"
   upstream-idea: "site:<ats-domain> boolean job search"
@@ -31,7 +31,7 @@ below before running anything.
 | "PM roles at Ramp, Figma, Linear" | Anything, if the company name is wrong |
 
 Large enterprises (Amazon, Google, Meta, Microsoft) have no supported board, but
-they **do** work when `LAID_OFF_SEARCH_API_KEY` is set: the search fallback returns real
+they **do** work when `JOB_BOARD_SEARCH_API_KEY` is set: the search fallback returns real
 postings from ATS-hosted boards at those companies' peers. Without a key you get
 a ready-made query to run yourself, not an empty result.
 
@@ -215,7 +215,7 @@ you can give the right advice instead of "try widening the filters":
 
 | `kind` | Meaning | What to tell the user |
 |---|---|---|
-| `no_key` | No readable board, and the search fallback has no API key | Set `LAID_OFF_SEARCH_API_KEY` and re-run |
+| `no_key` | No readable board, and the search fallback has no API key | Set `JOB_BOARD_SEARCH_API_KEY` and re-run |
 | `no_board` | No supported ATS board exists for the named companies | Try a smaller company, or set the key |
 | `filtered` | The board had roles; every one was filtered out | Widen `--title`/`--location`, drop `--remote` |
 
@@ -254,7 +254,7 @@ Diagnose a zero result from `meta`:
 
 - **Enterprises use bespoke career sites.** Amazon, Microsoft, Meta, Intel,
   Walmart and Google resolve on **none** of the supported ATSes, so direct board
-  reading returns nothing. With `LAID_OFF_SEARCH_API_KEY` set the search fallback fills
+  reading returns nothing. With `JOB_BOARD_SEARCH_API_KEY` set the search fallback fills
   the gap (verified: Amazon → 33 Chief-of-Staff roles from ATS boards). Without
   a key, hand the user the generated `site:` query.
 - **BambooHR is supported but per-tenant.** `<company>.bamboohr.com/careers/list`
@@ -301,33 +301,34 @@ cares about and ask *is it still hiring, and for what?*
 
 The `site:` query generator works with no key. To *execute* queries, set a key:
 
-Both halves of the search configuration share a `LAID_OFF_` prefix, so
+Both halves of the search configuration share the `JOB_BOARD_` prefix, so
 remembering one gives the other:
 
 ```bash
-export LAID_OFF_SEARCH_API_KEY=...      # the key
-export LAID_OFF_SEARCH_PROVIDER=kagi    # kagi (default) or brave
+export JOB_BOARD_SEARCH_API_KEY=...      # the key
+export JOB_BOARD_SEARCH_PROVIDER=kagi    # kagi (default) or brave
 ```
 
 Key URLs: Kagi https://kagi.com/settings/api · Brave
 https://api.search.brave.com/
 
 An unknown provider is a hard error (exit 2), not a silent fallback — searching
-with the wrong engine would bill the wrong account. The same applies if both the
-current and former variable names are set to *different* values.
+with the wrong engine would bill the wrong account. The same applies if two names
+for one setting are set to *different* values. The error names the variables and
+never prints a key.
 
 Tuning, all under the same prefix:
 
 ```bash
-export LAID_OFF_HTTP_TIMEOUT=20         # seconds, must be positive
-export LAID_OFF_CACHE_TTL=300           # seconds to reuse ATS responses; 0 = off
-export LAID_OFF_CACHE_DIR=~/.cache/job-board
+export JOB_BOARD_HTTP_TIMEOUT=20         # seconds, must be positive
+export JOB_BOARD_CACHE_TTL=300           # seconds to reuse ATS responses; 0 = off
+export JOB_BOARD_CACHE_DIR=~/.cache/job-board
 ```
 
-The former names (`SEARCH_API_KEY`, `JOBSEARCH_SEARCH_PROVIDER`,
-`JOBSEARCH_HTTP_TIMEOUT`, `JOBSEARCH_CACHE_TTL`, `JOBSEARCH_CACHE_DIR`) still
-work but each prints a deprecation warning; they will be removed in a future
-release. An invalid value is a hard error (exit 2) rather than a silent default.
+The former names still work but each prints a deprecation warning; they will be
+removed in a future release: `LAID_OFF_*` (the skill's former name, for every
+setting above), `SEARCH_API_KEY`, and `JOBSEARCH_SEARCH_PROVIDER`,
+`JOBSEARCH_HTTP_TIMEOUT`, `JOBSEARCH_CACHE_TTL`, `JOBSEARCH_CACHE_DIR`. An invalid value is a hard error (exit 2) rather than a silent default.
 
 See `references/providers.md` for the exact API contracts.
 

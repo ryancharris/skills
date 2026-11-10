@@ -311,7 +311,7 @@ export async function main(argv) {
             process.stderr.write("error: --queries needs at least one --title.\n");
             return EXIT_USAGE;
         }
-        process.stdout.write("Boolean site: queries (export LAID_OFF_SEARCH_API_KEY to execute):\n\n");
+        process.stdout.write("Boolean site: queries (export JOB_BOARD_SEARCH_API_KEY to execute):\n\n");
         for (const domain of sharedDomainSiteTargets()) {
             process.stdout.write(buildSiteQuery(domain, expandTitles(opts.title), opts.location) + "\n");
         }

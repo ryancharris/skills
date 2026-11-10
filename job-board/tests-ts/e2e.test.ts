@@ -47,7 +47,7 @@ function runCli(args: string[], total: number, cacheDir?: string): Promise<Run> 
     HOME: process.env.HOME ?? "",
     FAKE_SR_TOTAL: String(total),
   };
-  if (cacheDir) env.LAID_OFF_CACHE_DIR = cacheDir;
+  if (cacheDir) env.JOB_BOARD_CACHE_DIR = cacheDir;
   return new Promise((done) => {
     execFile(
       process.execPath,

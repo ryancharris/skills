@@ -189,7 +189,7 @@ function emptyBlock(reason: EmptyReason | null | undefined): string[] {
       `${SYMBOLS.unreadable} No job board found for ${reason.companies.join(", ")}.`,
       "",
       "Large employers use custom careers sites. Try a smaller company, or set " +
-        "`LAID_OFF_SEARCH_API_KEY` to search indexed boards.",
+        "`JOB_BOARD_SEARCH_API_KEY` to search indexed boards.",
       "",
     ];
   }
