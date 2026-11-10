@@ -12,10 +12,28 @@ import { buildSiteQuery, expandTitles } from "./filtering.js";
 import { sharedDomainSiteTargets } from "./ats.js";
 import { emptyProfile } from "./models.js";
 import { toHiringJson, toHiringMarkdown, toJson, toMarkdown } from "./output.js";
+import { toDetail } from "./format-detail.js";
+import { toHiringHtml, toHtml } from "./format-html.js";
 import { checkHiring, meta, runSearch } from "./pipeline.js";
 import { clear as clearCache } from "./cache.js";
 export const EXIT_OK = 0;
 export const EXIT_USAGE = 2;
+export const FORMATS = {
+    json: { name: "json", agent: true, description: "JSON (default), for agents" },
+    "json-compact": {
+        name: "json-compact",
+        agent: true,
+        description: "JSON with empty fields dropped",
+    },
+    md: { name: "md", agent: false, description: "concise Markdown, one line per role" },
+    detail: {
+        name: "detail",
+        agent: false,
+        description: "one block per role, with emoji and a copyable link",
+    },
+    html: { name: "html", agent: false, description: "standalone page you can share" },
+};
+export const FORMAT_NAMES = Object.keys(FORMATS);
 const HELP = `usage: jobsearch [options]
 
 Find jobs on company ATS boards, and check whether a company is still hiring.
@@ -37,7 +55,7 @@ Role filters:
   --max-companies N     Cap companies probed (default 40)
 
 Output:
-  --format F            json (default), json-compact, or md
+  --format F            json (default) | json-compact | md | detail | html
   --limit N             Max results to print (default 50)
   --queries             Print only the generated site: queries
   --list-boards         Print only resolved boards
@@ -190,8 +208,8 @@ export function parseArgs(argv) {
                     const v = read();
                     if (v === null)
                         return null;
-                    if (!["json", "json-compact", "md"].includes(v)) {
-                        process.stderr.write(`error: --format must be json, json-compact or md (got '${v}')\n`);
+                    if (!FORMAT_NAMES.includes(v)) {
+                        process.stderr.write(`error: --format must be one of ${FORMAT_NAMES.join(", ")} (got '${v}')\n`);
                         return null;
                     }
                     opts.format = v;
@@ -311,12 +329,20 @@ export async function main(argv) {
         });
         for (const warning of result.warnings)
             process.stderr.write(`warning: ${warning}\n`);
-        process.stdout.write(opts.format === "md"
-            ? toHiringMarkdown(result.signals, result.queries) + "\n"
-            : toHiringJson(result.signals, {
+        let rendered;
+        if (opts.format === "html") {
+            rendered = toHiringHtml(result.signals, result.queries);
+        }
+        else if (opts.format === "md" || opts.format === "detail") {
+            rendered = toHiringMarkdown(result.signals, result.queries);
+        }
+        else {
+            rendered = toHiringJson(result.signals, {
                 queries: result.queries,
                 warnings: result.warnings,
-            }) + "\n");
+            });
+        }
+        process.stdout.write(rendered + "\n");
         return EXIT_OK;
     }
     const result = await runSearch(profileFrom(opts), {
@@ -337,25 +363,36 @@ export async function main(argv) {
         }
         return EXIT_OK;
     }
-    const shown = result.jobs.slice(0, opts.limit);
-    if (opts.format === "md") {
-        process.stdout.write(toMarkdown(result.jobs, {
-            boards: result.boards,
-            meta: meta(result),
-            limit: opts.limit,
-            emptyReason: result.empty_reason,
-        }) + "\n");
-    }
-    else {
-        process.stdout.write(toJson(shown, {
-            boards: result.boards,
-            meta: meta(result),
-            queries: result.queries,
-            warnings: result.warnings,
-            total: result.jobs.length,
-            compact: opts.format === "json-compact",
-            emptyReason: result.empty_reason,
-        }) + "\n");
-    }
+    process.stdout.write(renderJobs(result.jobs, opts.format, {
+        boards: result.boards,
+        meta: meta(result),
+        queries: result.queries,
+        warnings: result.warnings,
+        limit: opts.limit,
+        emptyReason: result.empty_reason,
+    }) + "\n");
     return EXIT_OK;
+}
+/** Render a role search in the requested format. */
+export function renderJobs(jobs, format, opts) {
+    const shown = opts.limit !== null ? jobs.slice(0, opts.limit) : jobs;
+    const shared = {
+        boards: opts.boards,
+        meta: opts.meta,
+        limit: opts.limit,
+        emptyReason: opts.emptyReason,
+    };
+    switch (format) {
+        case "detail":
+            return toDetail(jobs, shared);
+        case "html":
+            return toHtml(jobs, shared);
+        case "md":
+            return toMarkdown(jobs, shared);
+        case "json-compact":
+            return toJson(shown, { ...shared, queries: opts.queries, warnings: opts.warnings, total: jobs.length, compact: true });
+        case "json":
+        default:
+            return toJson(shown, { ...shared, queries: opts.queries, warnings: opts.warnings, total: jobs.length });
+    }
 }

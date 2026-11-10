@@ -22,18 +22,68 @@ export function friendlyDepartment(department: string): string {
 }
 
 /**
+ * Brands whose capitalisation plain title-casing would mangle.
+ *
+ * Ashby exposes no company name, so the slug is displayed. "openai" title-cased
+ * becomes "Openai", which looks wrong to anyone who works there.
+ */
+const BRAND_NAMES: Record<string, string> = {
+  openai: "OpenAI",
+  anthropic: "Anthropic",
+  cohere: "Cohere",
+  notion: "Notion",
+  stripe: "Stripe",
+  ramp: "Ramp",
+  figma: "Figma",
+  linear: "Linear",
+  huggingface: "Hugging Face",
+  togetherai: "Together AI",
+  poolside: "Poolside",
+  mistral: "Mistral",
+  elevenlabs: "ElevenLabs",
+  anyscale: "Anyscale",
+  vercel: "Vercel",
+  railway: "Railway",
+  retool: "Retool",
+  databricks: "Databricks",
+  snowflake: "Snowflake",
+  duolingo: "Duolingo",
+  instacart: "Instacart",
+  doordash: "DoorDash",
+  robinhood: "Robinhood",
+  coinbase: "Coinbase",
+  scale: "Scale AI",
+  vendor: "Vendor",
+};
+
+/**
  * Present a company name the way a person writes it.
  *
- * Some vendors (Ashby) expose no company name, so the ATS slug is used and
- * arrives lowercase ("notion"). Title-case for display only.
+ * Order: known brand, then a name that already looks intentional, then a slug
+ * split into words. Slug-only input ("andurilindustries") cannot be split
+ * reliably, so it at least gets a capital letter rather than staying lowercase.
  */
 export function displayCompany(name: string): string {
   const text = (name ?? "").trim();
-  if (!text || text !== text.toLowerCase()) return text;
-  return text
-    .split(/\s+/)
-    .map((word) => word.slice(0, 1).toUpperCase() + word.slice(1))
-    .join(" ");
+  if (!text) return "";
+
+  const compact = text.toLowerCase().replace(/[\s_-]+/g, "");
+  const brand = BRAND_NAMES[compact];
+  if (brand) return brand;
+
+  // Already has deliberate capitalisation ("Cohere", "OpenAI for Gov").
+  if (text !== text.toLowerCase()) return text;
+
+  // Slug with separators: split and capitalise each word.
+  if (/[\s_-]/.test(text)) {
+    return text
+      .split(/[\s_-]+/)
+      .filter(Boolean)
+      .map((w) => w.slice(0, 1).toUpperCase() + w.slice(1))
+      .join(" ");
+  }
+
+  return text.slice(0, 1).toUpperCase() + text.slice(1);
 }
 
 export interface HiringSignal {
