@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 
 import { renderJobs } from "../src/cli.js";
+import { BraveProvider, KagiProvider } from "../src/search.js";
 import { SYMBOLS } from "../src/format-detail.js";
 import { makeJob, resultHeadline, unreadableCompanies } from "../src/models.js";
 
@@ -116,3 +117,38 @@ describe("the headline in every human format", () => {
     expect(payload.empty_reason.kind).toBe("no_key");
   });
 });
+
+describe("the key instruction is said once", () => {
+  it("a missing Kagi key names the variable and the signup link, once, with no export line", () => {
+    let msg = "";
+    try {
+      new KagiProvider(null);
+    } catch (err) {
+      msg = (err as Error).message;
+    }
+    expect(msg).toContain("JOB_BOARD_SEARCH_API_KEY is not set");
+    expect(msg.split("https://kagi.com/settings/api").length - 1).toBe(1);
+    expect(msg).not.toMatch(/export|Create a/i);
+  });
+
+  it("a missing Brave key has the same shape", () => {
+    let msg = "";
+    try {
+      new BraveProvider(null);
+    } catch (err) {
+      msg = (err as Error).message;
+    }
+    expect(msg).toContain("JOB_BOARD_SEARCH_API_KEY is not set");
+    expect(msg).not.toMatch(/export|Create a/i);
+  });
+
+  it("the markdown, detail and HTML unreadable paragraphs do not repeat the key advice", () => {
+    for (const fmt of ["md", "detail", "html"] as const) {
+      const out = renderJobs([], fmt, opts(NO_KEY));
+      expect(out, fmt).not.toContain("needs an API key");
+      expect(out, fmt).not.toMatch(/\bExport\b/);
+      expect(out, fmt).toContain("JOB_BOARD_SEARCH_API_KEY");
+    }
+  });
+});
+

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+**Less repetition when a key is missing, and tidier locations.** The missing-key advice was said
+three times in the unreadable-company output. It is now said once: the warning names the variable and
+the signup link, and the remedy line says what to set. Locations with an empty part, such as
+"Hyderabad, , India" from SmartRecruiters, now read "Hyderabad, India".
+
 **The agent no longer gives a hiring verdict for a company it could not read.** When a board
 could not be read (no key, no supported board, or `unknown: true` in `--check`), the skill guidance
 now has the agent say it could not check that company, and stop there. It must not web-search or

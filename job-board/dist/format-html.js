@@ -139,9 +139,9 @@ function emptyHtml(reason) {
         const plural = reason.companies.length > 1;
         return (`${SYMBOLS.unreadable} No roles found for <strong>${who}</strong>. ` +
             `${plural ? "These companies use" : "This company uses"} a careers site this skill ` +
-            `cannot read directly, and the search fallback needs an API key. ` +
-            `Export <code>${escapeHtml(reason.variable)}</code> (provider: ` +
-            `${escapeHtml(reason.provider)}) and re-run.`);
+            `cannot read directly. ` +
+            `Set <code>${escapeHtml(reason.variable)}</code> (provider: ` +
+            `${escapeHtml(reason.provider)}) and re-run to search indexed job boards instead.`);
     }
     if (reason?.kind === "no_board") {
         return (`${SYMBOLS.unreadable} No job board found for ${escapeHtml(reason.companies.join(", "))}. ` +

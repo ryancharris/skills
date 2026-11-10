@@ -168,9 +168,9 @@ function emptyHtml(reason: EmptyReason | null | undefined): string {
     return (
       `${SYMBOLS.unreadable} No roles found for <strong>${who}</strong>. ` +
       `${plural ? "These companies use" : "This company uses"} a careers site this skill ` +
-      `cannot read directly, and the search fallback needs an API key. ` +
-      `Export <code>${escapeHtml(reason.variable)}</code> (provider: ` +
-      `${escapeHtml(reason.provider)}) and re-run.`
+      `cannot read directly. ` +
+      `Set <code>${escapeHtml(reason.variable)}</code> (provider: ` +
+      `${escapeHtml(reason.provider)}) and re-run to search indexed job boards instead.`
     );
   }
   if (reason?.kind === "no_board") {

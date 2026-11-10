@@ -82,8 +82,7 @@ export class KagiProvider extends SearchProvider {
     super();
     if (!apiKey) {
       throw new SearchError(
-        "JOB_BOARD_SEARCH_API_KEY is not set. Create a Kagi key at " +
-          "https://kagi.com/settings/api and export JOB_BOARD_SEARCH_API_KEY=your-key",
+        "JOB_BOARD_SEARCH_API_KEY is not set (Kagi keys: https://kagi.com/settings/api)",
       );
     }
     this.apiKey = apiKey;
@@ -152,8 +151,7 @@ export class BraveProvider extends SearchProvider {
     super();
     if (!apiKey) {
       throw new SearchError(
-        "JOB_BOARD_SEARCH_API_KEY is not set. Create a Brave key at " +
-          "https://api.search.brave.com/ and export JOB_BOARD_SEARCH_API_KEY=your-key",
+        "JOB_BOARD_SEARCH_API_KEY is not set (Brave keys: https://api.search.brave.com/)",
       );
     }
     this.apiKey = apiKey;
