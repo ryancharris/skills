@@ -99,9 +99,12 @@ GET https://api.smartrecruiters.com/v1/companies/{slug}/postings?limit=100
   validity signal. Use `totalFound > 0`.
 - Paginated: `limit` caps the page (100), `totalFound` is the true size. The skill
   reads at most 10 pages (1,000 postings); a larger board is flagged `partial`.
-- Public board host moved: `jobs.smartrecruiters.com` → **`careers.smartrecruiters.com`** (301).
-  Checked: the board root redirects; a job link on `jobs.` still returns 200, which is what
-  the skill emits.
+- Hosts differ by page type (checked 2026-11-10):
+  - Board root: `jobs.smartrecruiters.com/<slug>` → **301** to `careers.smartrecruiters.com/<slug>`.
+  - Job link: `jobs.smartrecruiters.com/<slug>/<id>` → **200**, with the job. The same path on
+    `careers.` → **302** back to the board, so the job is lost. The skill emits the `jobs.` job link.
+  - The vendor's detail API (`/v1/companies/<slug>/postings/<id>`) uses `jobs.` in its
+    `postingUrl`, `applyUrl` and `referralUrl` fields. Do not switch job links to `careers.`.
 - Slugs are often suffixed (`Ubisoft2`, not `Ubisoft`).
 - Payload:
 

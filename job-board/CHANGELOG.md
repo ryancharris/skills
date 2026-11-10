@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+**SmartRecruiters links.** Job links stay on `jobs.smartrecruiters.com`. Only the board root
+moved to `careers.`; a `careers.` job link redirects back to the board. The reference said
+otherwise and is corrected.
+
 **Reference docs match the TypeScript CLI.** `references/` still named the removed Python
 modules and a `./jobsearch.py` command. Those now point to `src/` and `dist/main.js`. The
 SmartRecruiters read limit is documented there too.
