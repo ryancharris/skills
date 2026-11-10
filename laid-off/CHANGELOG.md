@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+**New output formats.** `--format` is now a registry rather than three hardcoded
+branches:
+
+| Format | For | |
+|---|---|---|
+| `json` / `json-compact` | agents | unchanged |
+| `md` | humans | unchanged; one line per role |
+| `detail` | humans | **new** — one block per role, emoji, copyable link |
+| `html` | humans | **new** — standalone page, no scripts or external assets |
+
+Emoji appear only in `detail` and `html`. The JSON key set is unchanged and
+covered by a regression test; a second test asserts no emoji can reach it.
+
+`--check --format html` now emits HTML; it previously fell back to Markdown.
+
+Fixed: `displayCompany` title-cased brand names into "Openai" and
+"Andurilindustries". Now consults a brand map and handles slug separators.
+
+
 **All user-facing variables now share the `LAID_OFF_` prefix.** The remaining
 three were the last under `JOBSEARCH_`:
 

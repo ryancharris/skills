@@ -67,8 +67,12 @@ node dist/main.js --company Notion --list-boards
 node dist/main.js --company Stripe --title "chief of staff" --queries
 ```
 
-Output defaults to JSON (for agents). Add `--format md` for a human-readable
-report.
+Output defaults to JSON. Formats: `json` (default), `json-compact`, `md`
+(concise), `detail` (one block per role, with emoji) and `html` (standalone
+page). See *Reading the results* for the JSON shape.
+
+**Emoji appear only in `detail` and `html`.** `json`, `json-compact` and `md`
+stay plain — an agent parses JSON, and `md` is the compact scanning format.
 
 ## How it works
 
