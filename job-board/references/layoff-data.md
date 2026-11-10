@@ -62,8 +62,8 @@ That starts from a name the user already cares about, works with the data we
 have, and produces an actionable read — a company cutting costs while still
 posting in a particular department is signalling where it is re-investing.
 
-`jobsearch/hiring_signal.py` holds the interpretation; `pipeline.check_hiring`
-does the fetching.
+`src/hiring-signal.ts` holds the interpretation (`summarizeHiring`); `checkHiring` in
+`src/pipeline.ts` does the fetching.
 
 Output per company: board count, open roles, roles posted within
 `--recent-days`, and the top departments by open roles. For a company with no
@@ -81,7 +81,7 @@ not resolve to a supported board:
 curl -s https://raw.githubusercontent.com/kadoa-org/layoffs-tracker/main/public/data/companies.json \
   | python3 -c 'import json,sys; [print(c["name"]) for c in json.load(sys.stdin) if (c["last_filed"] or "") >= "2026-01-01"]'
 
-./jobsearch.py --check "Company Name"
+node "<skill-dir>/dist/main.js" --check "Company Name"
 ```
 
 Caveats if you do: `last_filed` is nullable (2,826 of 30,430 records), `workers`
