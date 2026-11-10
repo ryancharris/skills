@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+**Format audit.** Six issues found by systematically checking every format
+against every mode, and fixed:
+
+- `--check --format detail` silently fell back to Markdown — the same bug just
+  fixed for `html`. `--check` now dispatches per format.
+- `--queries` and `--list-boards` silently ignored `--format`; they now say so.
+- `--limit -1` returned **all but the last** result (`slice(0, -1)`). Negative
+  and non-integer values are now rejected, exit 2.
+- `--max-companies -1` silently behaved like `1`. Now rejected.
+- `friendlyDepartment` missed `Go To Market` — the exact string OpenAI uses.
+- `md` omitted Team and Type, so switching format silently changed which facts
+  existed.
+
+`--limit 0` is documented as "no results".
+
+Checked and cleared during the same audit: HTML escaping (a deliberate breakout
+attempt with a quote and `<script>` in the url is neutralised), HTML
+well-formedness (strict parser, no mismatched tags), empty states across all
+formats, and `--check` warning about ignored role filters.
+
+
 **New output formats.** `--format` is now a registry rather than three hardcoded
 branches:
 

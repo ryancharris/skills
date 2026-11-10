@@ -13,6 +13,9 @@ import { daysSince, parseIso, type Board, type Job } from "./models.js";
 const DEPARTMENT_ALIASES: Record<string, string> = {
   gtm: "Sales & Marketing",
   "go-to-market": "Sales & Marketing",
+  // OpenAI writes this one with spaces and capitals; the map lookup is
+  // case-insensitive but the spacing has to match.
+  "go to market": "Sales & Marketing",
   unspecified: "Other / unlabelled",
 };
 

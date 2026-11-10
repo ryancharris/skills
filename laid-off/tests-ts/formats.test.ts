@@ -201,3 +201,111 @@ describe("--check html", () => {
     expect(html).toContain(SYMBOLS.unreadable);
   });
 });
+
+// ------------------------------------------------------- audit fixes (A11-A17)
+
+describe("A11: --check honours every format", () => {
+  const signals = async () => {
+    const { summarizeHiring } = await import("../src/hiring-signal.js");
+    return [
+      summarizeHiring(
+        "Cohere",
+        [{ company: "Cohere", ats: "ashby", slug: "cohere", job_count: 3, url: "" }],
+        [job({ posted_at: daysAgo(1) })],
+        { now: NOW },
+      ),
+    ];
+  };
+
+  it("detail differs from md", async () => {
+    const { renderHiring } = await import("../src/cli.js");
+    const md = renderHiring(await signals(), "md", [], []);
+    const detail = renderHiring(await signals(), "detail", [], []);
+    expect(detail).not.toBe(md);
+    expect(detail).toContain("Is this company hiring?");
+  });
+
+  it("html differs from md", async () => {
+    const { renderHiring } = await import("../src/cli.js");
+    const html = renderHiring(await signals(), "html", [], []);
+    expect(html.startsWith("<!DOCTYPE html>")).toBe(true);
+    expect(html).not.toContain("## Cohere");
+  });
+
+  it("json and json-compact stay parseable", async () => {
+    const { renderHiring } = await import("../src/cli.js");
+    for (const f of ["json", "json-compact"]) {
+      const parsed = JSON.parse(renderHiring(await signals(), f, [], []));
+      expect(parsed.signals).toHaveLength(1);
+    }
+  });
+});
+
+describe("A14: negative numeric arguments are rejected", () => {
+  it("parseCount rejects negatives and non-integers", async () => {
+    const { main } = await import("../src/cli.js");
+    // main returns EXIT_USAGE; the message goes to stderr.
+    expect(await main(["--company", "X", "--limit", "-1"])).toBe(2);
+    expect(await main(["--company", "X", "--limit", "abc"])).toBe(2);
+    expect(await main(["--company", "X", "--max-companies", "-1"])).toBe(2);
+  });
+});
+
+describe("A16: department aliases cover spaced variants", () => {
+  it.each(["GTM", "go-to-market", "Go To Market", "GO TO MARKET"])(
+    "%s maps to Sales & Marketing",
+    async (dept) => {
+      const { friendlyDepartment } = await import("../src/hiring-signal.js");
+      expect(friendlyDepartment(dept)).toBe("Sales & Marketing");
+    },
+  );
+});
+
+describe("A17: md and detail agree on which facts exist", () => {
+  it("md shows department and employment type", async () => {
+    const { renderJobs } = await import("../src/cli.js");
+    const md = renderJobs(
+      [job({ department: "Security", employment_type: "FullTime" })],
+      "md",
+      EMPTY_OPTS,
+    );
+    expect(md).toContain("Security");
+    expect(md).toContain("FullTime");
+  });
+});
+
+describe("A12: flags that ignore --format say so", () => {
+  it("--queries and --list-boards warn instead of silently ignoring", async () => {
+    const { main } = await import("../src/cli.js");
+    const written: string[] = [];
+    const original = process.stderr.write.bind(process.stderr);
+    process.stderr.write = ((chunk: unknown) => {
+      written.push(String(chunk));
+      return true;
+    }) as typeof process.stderr.write;
+    try {
+      await main(["--company", "X", "--title", "y", "--queries", "--format", "html"]);
+    } finally {
+      process.stderr.write = original;
+    }
+    expect(written.join("")).toContain("--queries ignores --format");
+  });
+});
+
+describe("A13: --limit 0 means none, not unlimited", () => {
+  it("renders zero jobs", async () => {
+    const { renderJobs } = await import("../src/cli.js");
+    const out = renderJobs([job(), job()], "json", { ...EMPTY_OPTS, limit: 0 });
+    expect(JSON.parse(out).count).toBe(0);
+  });
+
+  it("never uses a negative slice", async () => {
+    // slice(0, -1) silently dropped only the last element.
+    const { renderJobs } = await import("../src/cli.js");
+    const out = renderJobs([job({ title: "A" }), job({ title: "B" })], "json", {
+      ...EMPTY_OPTS,
+      limit: 1,
+    });
+    expect(JSON.parse(out).count).toBe(1);
+  });
+});
