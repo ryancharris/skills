@@ -13,7 +13,6 @@
   "main": "./dist/main.js",
   "files": [
     "dist",
-    "LICENSE",
     "SKILL.md",
     "README.md",
     "references"
