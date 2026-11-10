@@ -19,18 +19,20 @@ instead of scraping aggregators.
 Requires **Node.js 20+**. No runtime dependencies: build once, then the
 compiled JavaScript runs anywhere Node does.
 
-This skill lives in a multi-skill repo at `skills/laid-off/`. Either
+This skill is the `laid-off/` folder of this repo. Run these from the repo root,
+the folder that contains `laid-off/`:
 
 ```bash
 # symlink so the harness picks it up and the repo stays the source of truth
-ln -s "$PWD/skills/laid-off" ~/.agents/skills/laid-off
+ln -s "$PWD/laid-off" ~/.agents/skills/laid-off
 
 # or copy just this skill
-git clone <this-repo> /tmp/skills && cp -r /tmp/skills/skills/laid-off ~/.agents/skills/
+cp -r laid-off ~/.agents/skills/
 ```
 
-pi and Claude Code discover `~/.agents/skills/` and `~/.claude/skills/`
-recursively. Or run `node dist/main.js` from inside the skill directory. From anywhere else,
+pi and opencode discover `~/.agents/skills/` (both verified by listing the skill
+in each). Claude Code reads `~/.claude/skills/`; that path is not yet verified on
+this machine. Or run `node dist/main.js` from inside the skill directory. From anywhere else,
 use the absolute path (`node /path/to/laid-off/dist/main.js ...`). No install or
 `PYTHONPATH` is needed.
 
@@ -200,8 +202,8 @@ references/           # verified API contracts and caveats
 ```bash
 npm install          # dev-only: typescript + vitest
 npm run build        # src/ -> dist/
-npm test             # 140 offline tests
-npm run test:live    # + live network (163 total)
+npm test             # offline: unit, format, cache, provenance, end-to-end
+npm run test:live    # real ATS APIs; opt-in, makes network calls
 ```
 
 `dist/` is what consumers run; `node_modules` is never needed at runtime.
