@@ -265,9 +265,13 @@ export function toMarkdown(jobs: Job[], options: MarkdownOptions = {}): string {
     const remote = job.remote ? " · remote" : "";
     const loc = job.location ? ` · ${job.location}` : "";
     const comp = job.compensation ? ` · ${job.compensation}` : "";
+    // `detail` shows Team and Type; `md` omitted them, so switching format
+    // silently changed which facts existed. Compact forms go on the same line.
+    const dept = job.department ? ` · ${job.department}` : "";
+    const kind = job.employment_type ? ` · ${job.employment_type}` : "";
 
     lines.push(`### [${job.title}](${job.url})`);
-    lines.push(`${displayCompany(job.company)}${loc}${remote}${comp}${freshness}`);
+    lines.push(`${displayCompany(job.company)}${loc}${remote}${dept}${kind}${comp}${freshness}`);
     if (job.snippet) {
       lines.push("");
       lines.push(`> ${job.snippet}`);

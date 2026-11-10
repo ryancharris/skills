@@ -11,6 +11,9 @@ import { daysSince, parseIso } from "./models.js";
 const DEPARTMENT_ALIASES = {
     gtm: "Sales & Marketing",
     "go-to-market": "Sales & Marketing",
+    // OpenAI writes this one with spaces and capitals; the map lookup is
+    // case-insensitive but the spacing has to match.
+    "go to market": "Sales & Marketing",
     unspecified: "Other / unlabelled",
 };
 /** Expand department names a normal reader would not recognise. */

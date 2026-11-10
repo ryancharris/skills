@@ -9,7 +9,7 @@
  * may be read by someone who has just lost their job, and a wall of emoji would
  * read as unserious.
  */
-import { displayCompany } from "./hiring-signal.js";
+import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 import { daysSince, parseIso } from "./models.js";
 // ------------------------------------------------------------------- symbols
 /** A finding is "fresh" within this many days. */
@@ -166,4 +166,54 @@ function emptyBlock(reason) {
         ];
     }
     return ["_No postings matched. Try widening titles/locations or dropping filters._", ""];
+}
+/**
+ * Hiring report in the detail format.
+ *
+ * `--check --format detail` used to fall back to plain Markdown, silently
+ * ignoring the requested format. Distinct output now: one block per company
+ * with a department table. The table body is emitted only when there are
+ * departments, so an unreadable company collapses to its verdict line.
+ */
+export function toHiringDetail(signals, queries = []) {
+    const lines = [];
+    lines.push(`# ${SYMBOLS.hot} Is this company hiring?`);
+    lines.push("");
+    if (signals.length === 0) {
+        lines.push("_No companies checked._");
+        lines.push("");
+    }
+    for (const signal of signals) {
+        const badge = signal.unknown
+            ? SYMBOLS.unreadable
+            : signal.hiring_recently
+                ? SYMBOLS.hot
+                : "";
+        lines.push(rule());
+        lines.push(`### ${displayCompany(signal.company)}${badge ? `  ${badge}` : ""}`);
+        lines.push("");
+        lines.push(verdict(signal));
+        lines.push("");
+        if (signal.top_departments.length > 0) {
+            lines.push("| Department | Open roles |");
+            lines.push("|---|---|");
+            for (const d of signal.top_departments.slice(0, 10)) {
+                lines.push(`| ${friendlyDepartment(d.department)} | ${d.open_roles} |`);
+            }
+            if (isPartial(signal)) {
+                lines.push("");
+                lines.push(`_Most recent roles only; board reports ${signal.board_reported_roles}._`);
+            }
+            lines.push("");
+        }
+    }
+    if (queries.length > 0) {
+        lines.push(rule());
+        lines.push("#### 🔗 Find the careers page yourself");
+        lines.push("");
+        lines.push(`\`${queries[0]}\``);
+        lines.push("");
+    }
+    lines.push(`<sub>${SYMBOLS.hot} hiring recently · ${SYMBOLS.unreadable} could not read</sub>`);
+    return lines.join("\n");
 }
