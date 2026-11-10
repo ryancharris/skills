@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+**The agent no longer gives a hiring verdict for a company it could not read.** When a board
+could not be read (no key, no supported board, or `unknown: true` in `--check`), the skill guidance
+now has the agent say it could not check that company, and stop there. It must not web-search or
+fetch the careers site, and must not say "yes, still hiring" from memory. The "find the careers
+page" text in `--check` output is now addressed to the user, not to the agent. The guidance also
+stops telling the agent to run the `site:` queries itself; the user runs them.
+
 **The headline no longer says "0 roles" for a company whose board was not read.** An unreadable
 company (no key, or no supported board) showed "# 0 roles" in markdown and "0 roles" in the
 other human formats. That reads as "Amazon has no roles", which is not known. The headline now

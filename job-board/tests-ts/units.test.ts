@@ -485,14 +485,14 @@ describe("hiring JSON/Markdown", () => {
   it("surfaces the first query as a next step", () => {
     const signal = summarizeHiring("Google", [], []);
     const md = toHiringMarkdown([signal], ["first-query", "second-query"]);
-    expect(md).toContain("find the careers page yourself");
+    expect(md).toContain("Next step for the user: find the careers page");
     expect(md).toContain("> first-query");
     expect(md).toContain("second-query");
   });
 
   it("omits the next-step block when resolved", () => {
     const signal = summarizeHiring("Acme", oneBoard, jobsOf([["Eng", "Eng", null]]));
-    expect(toHiringMarkdown([signal], [])).not.toContain("find the careers page yourself");
+    expect(toHiringMarkdown([signal], [])).not.toContain("Next step for the user");
   });
 
   it("renders an empty state", () => {

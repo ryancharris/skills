@@ -217,7 +217,7 @@ export function toHiringDetail(signals, queries = [], notes = []) {
     }
     if (queries.length > 0) {
         lines.push(rule());
-        lines.push("#### 🔗 Find the careers page yourself");
+        lines.push("#### 🔗 Next step for the user: find the careers page");
         lines.push("");
         lines.push(`\`${queries[0]}\``);
         lines.push("");
