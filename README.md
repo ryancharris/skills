@@ -102,9 +102,16 @@ JavaScript is what users run, so a stale build would ship code nobody reviewed.
 Each skill owns its tests:
 
 ```bash
-cd laid-off && npm test            # 147 offline tests
-cd laid-off && npm run test:live   # + live network (23 tests)
+cd laid-off && npm test            # offline; never touches the network
+cd laid-off && npm run test:live   # real ATS APIs; opt-in
 ```
+
+Test counts are not written here: they go stale. Run the commands to see them.
+
+## Contributing
+
+Read [SCOPE.md](SCOPE.md) for the bar a change must clear, and
+[CONTRIBUTING.md](CONTRIBUTING.md) for how to file issues and pull requests.
 
 ## Adding a skill
 
