@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+**Agents no longer pick companies when none were named.** Measured in opencode over
+10 runs of "find me any tech company hiring engineers": 6 runs chose companies themselves
+(from memory, a web search, or a placeholder) and ran the CLI on them. The "no
+companies" section now forbids that and tells the agent to ask in plain text, not with
+a question tool (which returns nothing in a non-interactive run). After: 3 of 10. The
+remaining 3 web-searched before the skill loaded; that is the harness, not the skill.
+pi: 4 of 4 correct before and after.
+
 **Human formats state what JSON states.** `md`, `detail` and `html` now show partial
 reads, cached data (with the fetch time), and every warning, for both role search and
 `--check`. Before, only JSON carried them. Each partial board is stated once.
