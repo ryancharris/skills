@@ -18,6 +18,13 @@
 import { getJson, HttpError } from "./http.js";
 import { makeJob, type Job, type JobSource } from "./models.js";
 
+/** Every posting on a board, plus the total the board itself reports (if any). */
+export interface BoardRead {
+  jobs: Job[];
+  /** The vendor's own count; null when the vendor does not report one. */
+  reported: number | null;
+}
+
 /** ATS platforms that cannot be addressed with a bare shared-domain site: query. */
 export const PER_TENANT_ATS: Record<string, string> = {
   icims: "careers-<company>.icims.com",
@@ -50,6 +57,15 @@ export abstract class ATSAdapter {
   }
 
   abstract fetch(slug: string): Promise<Job[]>;
+
+  /**
+   * Fetch the postings and the vendor's own total from the same request(s).
+   * Reading the total in a second call could skew the comparison if postings
+   * change in between, so adapters that report one override this.
+   */
+  async fetchRead(slug: string): Promise<BoardRead> {
+    return { jobs: await this.fetch(slug), reported: null };
+  }
 
   /** Authoritative company name for this board, if the vendor exposes one. */
   boardCompany(_slug: string): string | null {
@@ -347,12 +363,18 @@ export class SmartRecruitersAdapter extends ATSAdapter {
     return num(data.totalFound) ?? 0;
   }
 
+  override async fetch(slug: string): Promise<Job[]> {
+    return (await this.fetchRead(slug)).jobs;
+  }
+
   /**
    * Fetch the whole board, paging past the 100-per-request limit.
    *
-   * A single request silently truncated boards (Aramark reports 603).
+   * A single request silently truncated boards (Aramark reports 603). Past
+   * MAX_PAGES * PAGE_SIZE (1,000) postings the read stops, so `reported` (the
+   * board's totalFound) can exceed the number of jobs returned.
    */
-  async fetch(slug: string): Promise<Job[]> {
+  override async fetchRead(slug: string): Promise<BoardRead> {
     const jobs: Job[] = [];
     let total: number | null = null;
 
@@ -366,7 +388,7 @@ export class SmartRecruitersAdapter extends ATSAdapter {
       jobs.push(...this.toJobs(content, slug));
       if (jobs.length >= (total ?? 0)) break;
     }
-    return jobs;
+    return { jobs, reported: total };
   }
 
   private toJobs(content: RawJob[], slug: string): Job[] {

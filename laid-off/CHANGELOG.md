@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+**Partial results are flagged.** A SmartRecruiters board larger than the
+1,000-posting read limit was silently cut short in role search (only `--check`
+noticed). Role search now reports `partial: true` and `partial_boards` in JSON,
+with a "Partial:" line in every human format. The total comes from the same
+requests as the postings, so a change between two calls cannot cause a false flag.
+
 **Format audit.** Six issues found by systematically checking every format
 against every mode, and fixed:
 

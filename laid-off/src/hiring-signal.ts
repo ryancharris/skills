@@ -137,7 +137,7 @@ export function verdict(signal: HiringSignal): string {
   // "at least N" reads as competent handling of an API page limit; "partial"
   // made it look like something broke.
   const count = isPartial(signal)
-    ? `at least ${signal.open_roles} open role${plural} (${signal.board_reported_roles} total; first page read)`
+    ? `at least ${signal.open_roles} open role${plural} (${signal.board_reported_roles} total; ${signal.open_roles} read)`
     : `${signal.open_roles} open role${plural}`;
 
   return `${company}: ${count} -- ${recency}. Top areas: ${top || "n/a"}.`;
