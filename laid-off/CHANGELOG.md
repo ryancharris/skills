@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+**Cache provenance.** JSON output now says whether the ATS data came from the
+`--cache-ttl` cache: `cached` (any response from the cache) and `fetched_at` (the
+oldest fetch time among the responses used). A cache entry written earlier in the
+same run counts as a fresh fetch, not a cached one. Human formats do not show this
+yet.
+
 **Partial results are flagged.** A SmartRecruiters board larger than the
 1,000-posting read limit was silently cut short in role search (only `--check`
 noticed). Role search now reports `partial: true` and `partial_boards` in JSON,

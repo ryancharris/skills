@@ -94,6 +94,8 @@ export LAID_OFF_CACHE_DIR=~/.cache/jobsearch
 Caching is read-through and fails safe: any cache error falls back to a normal
 request. Only GETs are cached — the search API is billed per call and is never
 replayed.
+JSON output reports `cached` and `fetched_at`, so a cached result is not presented as
+fresh.
 
 ## Supported ATS
 

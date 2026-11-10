@@ -108,6 +108,8 @@ export function toJson(jobs, options = {}) {
     });
     const payload = {
         generated_at: isoLikePython(),
+        fetched_at: options.fetchedAt ?? null,
+        cached: options.cached ?? false,
         count: jobs.length,
         total,
         truncated: jobs.length < total,
@@ -128,6 +130,8 @@ export function toHiringJson(signals, options = {}) {
     const { queries = [], warnings = [] } = options;
     const payload = {
         generated_at: isoLikePython(),
+        fetched_at: options.fetchedAt ?? null,
+        cached: options.cached ?? false,
         count: signals.length,
         total: signals.length,
         truncated: false,

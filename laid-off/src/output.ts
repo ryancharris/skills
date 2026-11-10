@@ -112,6 +112,10 @@ export interface JsonOptions {
   emptyReason?: EmptyReason | null;
   /** Boards read incompletely; `partial` in the output is true when any exist. */
   partialBoards?: PartialBoard[];
+  /** True when any ATS response used came from the cache. */
+  cached?: boolean;
+  /** Oldest fetch time of the responses used (ISO 8601), or null. */
+  fetchedAt?: string | null;
 }
 
 /**
@@ -142,6 +146,8 @@ export function toJson(jobs: Job[], options: JsonOptions = {}): string {
 
   const payload = {
     generated_at: isoLikePython(),
+    fetched_at: options.fetchedAt ?? null,
+    cached: options.cached ?? false,
     count: jobs.length,
     total,
     truncated: jobs.length < total,
@@ -161,6 +167,8 @@ export function toJson(jobs: Job[], options: JsonOptions = {}): string {
 export interface HiringJsonOptions {
   queries?: string[];
   warnings?: string[];
+  cached?: boolean;
+  fetchedAt?: string | null;
 }
 
 /** Serialize hiring signals for agent consumption. */
@@ -168,6 +176,8 @@ export function toHiringJson(signals: HiringSignal[], options: HiringJsonOptions
   const { queries = [], warnings = [] } = options;
   const payload = {
     generated_at: isoLikePython(),
+    fetched_at: options.fetchedAt ?? null,
+    cached: options.cached ?? false,
     count: signals.length,
     total: signals.length,
     truncated: false,
