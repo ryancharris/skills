@@ -12,7 +12,7 @@ import { buildSiteQuery, expandTitles } from "./filtering.js";
 import { sharedDomainSiteTargets } from "./ats.js";
 import { emptyProfile } from "./models.js";
 import { toHiringJson, toHiringMarkdown, toJson, toMarkdown } from "./output.js";
-import { toDetail } from "./format-detail.js";
+import { toDetail, toHiringDetail } from "./format-detail.js";
 import { toHiringHtml, toHtml } from "./format-html.js";
 import { checkHiring, meta, runSearch } from "./pipeline.js";
 import { clear as clearCache } from "./cache.js";
@@ -34,6 +34,21 @@ export const FORMATS = {
     html: { name: "html", agent: false, description: "standalone page you can share" },
 };
 export const FORMAT_NAMES = Object.keys(FORMATS);
+/**
+ * Parse a non-negative integer argument.
+ *
+ * `Number("-1")` is happy to produce -1, and `Array.slice(0, -1)` then drops the
+ * last element instead of returning nothing -- so `--limit -1` used to return
+ * every result but one. Reject it instead of coercing.
+ */
+function parseCount(raw, flag) {
+    const n = Number(raw);
+    if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0) {
+        process.stderr.write(`error: ${flag} must be a non-negative integer (got '${raw}')\n`);
+        return null;
+    }
+    return n;
+}
 const HELP = `usage: jobsearch [options]
 
 Find jobs on company ATS boards, and check whether a company is still hiring.
@@ -190,13 +205,19 @@ export function parseArgs(argv) {
                     const v = read();
                     if (v === null)
                         return null;
-                    opts.maxCompanies = Number(v);
+                    const n = parseCount(v, "--max-companies");
+                    if (n === null)
+                        return null;
+                    opts.maxCompanies = n;
                 }
                 else if (valueFlag === "--limit") {
                     const v = read();
                     if (v === null)
                         return null;
-                    opts.limit = Number(v);
+                    const n = parseCount(v, "--limit");
+                    if (n === null)
+                        return null;
+                    opts.limit = n;
                 }
                 else if (valueFlag === "--cache-ttl") {
                     const v = read();
@@ -278,6 +299,12 @@ export async function main(argv) {
         return EXIT_USAGE;
     }
     // Generated queries are pure string building: never touch the network.
+    // --queries and --list-boards emit plain/tab-separated text by design. Saying
+    // so beats silently discarding an explicit --format.
+    if ((opts.queries || opts.listBoards) && opts.format !== "json") {
+        process.stderr.write(`warning: --${opts.queries ? "queries" : "list-boards"} ignores --format ` +
+            `(${opts.format}); it prints plain text.\n`);
+    }
     if (opts.queries) {
         if (opts.title.length === 0) {
             process.stderr.write("error: --queries needs at least one --title.\n");
@@ -329,20 +356,7 @@ export async function main(argv) {
         });
         for (const warning of result.warnings)
             process.stderr.write(`warning: ${warning}\n`);
-        let rendered;
-        if (opts.format === "html") {
-            rendered = toHiringHtml(result.signals, result.queries);
-        }
-        else if (opts.format === "md" || opts.format === "detail") {
-            rendered = toHiringMarkdown(result.signals, result.queries);
-        }
-        else {
-            rendered = toHiringJson(result.signals, {
-                queries: result.queries,
-                warnings: result.warnings,
-            });
-        }
-        process.stdout.write(rendered + "\n");
+        process.stdout.write(renderHiring(result.signals, opts.format, result.queries, result.warnings) + "\n");
         return EXIT_OK;
     }
     const result = await runSearch(profileFrom(opts), {
@@ -372,6 +386,26 @@ export async function main(argv) {
         emptyReason: result.empty_reason,
     }) + "\n");
     return EXIT_OK;
+}
+/**
+ * Render a hiring report in the requested format.
+ *
+ * Explicit per-format dispatch: `detail` previously fell through to Markdown,
+ * silently ignoring what the caller asked for.
+ */
+export function renderHiring(signals, format, queries, warnings) {
+    switch (format) {
+        case "html":
+            return toHiringHtml(signals, queries);
+        case "detail":
+            return toHiringDetail(signals, queries);
+        case "md":
+            return toHiringMarkdown(signals, queries);
+        case "json-compact":
+        case "json":
+        default:
+            return toHiringJson(signals, { queries, warnings });
+    }
 }
 /** Render a role search in the requested format. */
 export function renderJobs(jobs, format, opts) {
