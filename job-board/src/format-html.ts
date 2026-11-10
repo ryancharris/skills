@@ -11,7 +11,7 @@
  */
 
 import { displayCompany } from "./hiring-signal.js";
-import { parseIso, type Board, type Job } from "./models.js";
+import { parseIso, resultHeadline, unreadableCompanies, type Board, type Job } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 import { SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
 import type { HiringSignal } from "./hiring-signal.js";
@@ -82,8 +82,8 @@ export function toHtml(jobs: Job[], options: HtmlOptions = {}): string {
   const companies = [...new Set(jobs.map((j) => displayCompany(j.company)).filter(Boolean))].sort();
   const where =
     companies.slice(0, 4).join(", ") + (companies.length > 4 ? ` +${companies.length - 4} more` : "");
-  const noun = jobs.length === 1 ? "role" : "roles";
-  const heading = title ?? `${jobs.length} ${noun}${where ? ` at ${where}` : ""}`;
+  const unreadable = unreadableCompanies(jobs.length, options.emptyReason);
+  const heading = title ?? resultHeadline(jobs.length, where, unreadable);
 
   const parts: string[] = [];
   parts.push("<!DOCTYPE html>");
@@ -95,7 +95,8 @@ export function toHtml(jobs: Job[], options: HtmlOptions = {}): string {
   parts.push(`<style>${STYLE}</style>`);
   parts.push("</head>");
   parts.push("<body>");
-  parts.push(`<h1>${SYMBOLS.hot} ${escapeHtml(heading)}</h1>`);
+  const symbol = unreadable && !title ? SYMBOLS.unreadable : SYMBOLS.hot;
+  parts.push(`<h1>${symbol} ${escapeHtml(heading)}</h1>`);
 
   for (const note of options.notes ?? []) {
     parts.push(`<p class="sub">${escapeHtml(note)}</p>`);

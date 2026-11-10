@@ -6,7 +6,7 @@
  */
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, hiringBadge, jobBadges } from "./format-detail.js";
-import { daysSince, parseIso } from "./models.js";
+import { daysSince, parseIso, resultHeadline, unreadableCompanies } from "./models.js";
 // --------------------------------------------------------------------- dedupe
 /** Repost identity: normalised title + company + location. */
 function contentKey(job) {
@@ -180,8 +180,7 @@ export function toMarkdown(jobs, options = {}) {
     const companies = [...new Set(jobs.map((j) => displayCompany(j.company)).filter(Boolean))].sort();
     const where = companies.slice(0, 4).join(", ") +
         (companies.length > 4 ? ` +${companies.length - 4} more` : "");
-    const noun = jobs.length === 1 ? "role" : "roles";
-    const headline = `# ${jobs.length} ${noun}${where ? ` at ${where}` : ""}`;
+    const headline = `# ${resultHeadline(jobs.length, where, unreadableCompanies(jobs.length, options.emptyReason))}`;
     const lines = [headline, ""];
     for (const note of options.notes ?? [])
         lines.push(note, "");

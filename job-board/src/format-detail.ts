@@ -12,7 +12,7 @@
 
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 import type { HiringSignal } from "./hiring-signal.js";
-import { daysSince, parseIso, type Board, type Job } from "./models.js";
+import { daysSince, parseIso, resultHeadline, unreadableCompanies, type Board, type Job } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 
 // ------------------------------------------------------------------- symbols
@@ -93,10 +93,10 @@ export function toDetail(jobs: Job[], options: DetailOptions = {}): string {
   const companies = [...new Set(jobs.map((j) => displayCompany(j.company)).filter(Boolean))].sort();
   const where =
     companies.slice(0, 4).join(", ") + (companies.length > 4 ? ` +${companies.length - 4} more` : "");
-  const noun = jobs.length === 1 ? "role" : "roles";
+  const unreadable = unreadableCompanies(jobs.length, options.emptyReason);
 
   const lines: string[] = [];
-  lines.push(`# ${SYMBOLS.hot} ${jobs.length} ${noun}${where ? ` at ${where}` : ""}`);
+  lines.push(`# ${unreadable ? SYMBOLS.unreadable : SYMBOLS.hot} ${resultHeadline(jobs.length, where, unreadable)}`);
   lines.push("");
 
   if (shown.length < jobs.length) {
