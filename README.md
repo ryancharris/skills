@@ -19,7 +19,9 @@ plus any scripts, references, and assets it needs.
 ```
 skills/
 ├── .gitignore             # repo-wide; ignores every skill's toolchain dirs
+├── LICENSE                # MIT, covers the whole repo
 ├── README.md              # this file
+├── .github/               # CI: tests, dist-in-sync, portability, SKILL.md validity
 ├── laid-off/              # one skill per directory; self-contained
 │   ├── SKILL.md           # required: frontmatter + instructions
 │   ├── dist/              # compiled JS -- what actually runs
@@ -58,7 +60,7 @@ imports, and same-named test files collide in a runner's flat namespace.
 A skill must work three ways, and `laid-off` is tested all three:
 
 ```bash
-node skill-name/dist/main.js                         # copied anywhere, no npm install
+node /path/to/skill-name/dist/main.js                 # copied anywhere, no npm install
 ln -s "$PWD/skill-name" ~/.agents/skills/skill-name  # symlinked into a harness
 cd skill-name && npm test                            # tests in isolation
 ```
