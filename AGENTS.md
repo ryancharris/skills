@@ -36,6 +36,7 @@ are recorded in `.out-of-scope/`. Read those before proposing a change.
 
 ## Workflow
 
+- Contribution rules and the acceptance bar are in `CONTRIBUTING.md` and `SCOPE.md`.
 - No direct pushes to `main`. One change per PR. CI must pass before merge.
 - Do not commit scratch files, session notes, logs, generated outputs, or API keys.
 - User-visible changes get an entry under "Unreleased" in
