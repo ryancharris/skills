@@ -30,10 +30,14 @@ git clone <this-repo> /tmp/skills && cp -r /tmp/skills/skills/laid-off ~/.agents
 ```
 
 pi and Claude Code discover `~/.agents/skills/` and `~/.claude/skills/`
-recursively. Or run `node dist/main.js` straight from the directory — the entry point
-is self-locating and needs no install or `PYTHONPATH`.
+recursively. Or run `node dist/main.js` from inside the skill directory. From anywhere else,
+use the absolute path (`node /path/to/laid-off/dist/main.js ...`). No install or
+`PYTHONPATH` is needed.
 
 ## Use
+
+The examples below assume you are in the skill directory (`cd laid-off`). For
+an agent harness, see the path rule in `SKILL.md`.
 
 ```bash
 # Roles at companies you name

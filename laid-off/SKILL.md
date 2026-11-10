@@ -49,22 +49,24 @@ fallbacks in *Known limitations* rather than running a search that returns nothi
 
 ## Quick start
 
-Run `node dist/main.js` from this skill directory. The entry point resolves
-paths from its own location, so it works from any cwd, and it needs **no
-`npm install`** — the shipped JavaScript has zero runtime dependencies.
+Run the CLI as `node "<skill-dir>/dist/main.js"`, where `<skill-dir>` is the
+absolute path of the directory that contains this SKILL.md. Do **not** rely on
+your current directory: without the prefix, the command works only from inside
+the skill directory. The CLI needs **no `npm install`** — the shipped
+JavaScript has zero runtime dependencies.
 
 ```bash
 # 1. Roles at companies you name
-node dist/main.js --company Stripe --company Ramp --title "software engineer"
+node "<skill-dir>/dist/main.js" --company Stripe --company Ramp --title "software engineer"
 
 # 2. Is this company still hiring after its layoff announcement, and for what?
-node dist/main.js --check Stripe --check Notion --format md
+node "<skill-dir>/dist/main.js" --check Stripe --check Notion --format md
 
 # 3. See which ATS boards a company actually has
-node dist/main.js --company Notion --list-boards
+node "<skill-dir>/dist/main.js" --company Notion --list-boards
 
 # 4. Generate boolean site: queries (no API key needed)
-node dist/main.js --company Stripe --title "chief of staff" --queries
+node "<skill-dir>/dist/main.js" --company Stripe --title "chief of staff" --queries
 ```
 
 Output defaults to JSON. Formats: `json` (default), `json-compact`, `md`
