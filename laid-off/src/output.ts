@@ -6,6 +6,7 @@
  */
 
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
+import { FRESH_DAYS, STALE_DAYS, SYMBOLS, hiringBadge, jobBadges } from "./format-detail.js";
 import type { HiringSignal } from "./hiring-signal.js";
 import { daysSince, parseIso, partialLines, type Board, type Job, type PartialBoard } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
@@ -276,6 +277,14 @@ export function toMarkdown(jobs: Job[], options: MarkdownOptions = {}): string {
     lines.push("");
   }
 
+  if (shown.length > 0) {
+    lines.push(
+      `_${SYMBOLS.remote} remote · ${SYMBOLS.salary} pay listed · ` +
+        `${SYMBOLS.fresh} under ${FRESH_DAYS}d · ${SYMBOLS.stale} over ${STALE_DAYS}d_`,
+    );
+    lines.push("");
+  }
+
   for (const job of shown) {
     const posted = parseIso(job.posted_at);
     const freshness = posted ? ` · ${daysSince(posted, now)}d ago` : "";
@@ -287,7 +296,9 @@ export function toMarkdown(jobs: Job[], options: MarkdownOptions = {}): string {
     const dept = job.department ? ` · ${job.department}` : "";
     const kind = job.employment_type ? ` · ${job.employment_type}` : "";
 
-    lines.push(`### [${job.title}](${job.url})`);
+    const badges = jobBadges(job, now);
+    const lead = badges.length > 0 ? `${badges.join(" ")} ` : "";
+    lines.push(`### ${lead}[${job.title}](${job.url})`);
     lines.push(`${displayCompany(job.company)}${loc}${remote}${dept}${kind}${comp}${freshness}`);
     if (job.snippet) {
       lines.push("");
@@ -327,7 +338,8 @@ export function toHiringMarkdown(signals: HiringSignal[], queries: string[] = []
   if (signals.length === 0) lines.push("_No companies checked._");
 
   for (const signal of signals) {
-    lines.push(`## ${displayCompany(signal.company)}`);
+    const badge = hiringBadge(signal);
+    lines.push(`## ${displayCompany(signal.company)}${badge ? ` ${badge}` : ""}`);
     lines.push("");
     lines.push(verdict(signal));
     lines.push("");

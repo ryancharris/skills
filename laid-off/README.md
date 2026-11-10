@@ -114,12 +114,12 @@ for every account tested, with no public jobs endpoint.
 |---|---|---|
 | `json` | agents | full structured result (default) |
 | `json-compact` | agents | same, with empty fields dropped |
-| `md` | humans | one line per role, easy to scan 50 results |
+| `md` | humans | one line per role, with badges, easy to scan 50 results |
 | `detail` | humans | one block per role, with emoji and a copyable link |
 | `html` | humans | standalone page to send to someone |
 
-Emoji appear only in `detail` and `html`. `json`, `json-compact` and `md` stay
-plain: an agent parses JSON, and `md` is the compact format for scanning.
+Emoji appear in `md`, `detail` and `html`. `json` and `json-compact` stay plain: an
+agent parses them.
 
 ```bash
 node dist/main.js --company OpenAI --remote --title "infrastructure security" --format detail

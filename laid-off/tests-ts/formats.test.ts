@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { FORMATS, renderJobs } from "../src/cli.js";
+import { FORMATS, renderHiring, renderJobs } from "../src/cli.js";
 import { SYMBOLS, ageLabel, jobBadges, toDetail } from "../src/format-detail.js";
 import { escapeHtml, toHtml } from "../src/format-html.js";
 import { makeJob, type Job } from "../src/models.js";
@@ -63,7 +63,7 @@ describe("emoji never leak into agent formats", () => {
     expect(out).not.toMatch(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u);
   });
 
-  it.each(["detail", "html"])("%s does use emoji", (format) => {
+  it.each(["md", "detail", "html"])("%s does use emoji", (format) => {
     const out = renderJobs([job()], format, EMPTY_OPTS);
     expect(out).toContain(SYMBOLS.remote);
   });
@@ -307,5 +307,43 @@ describe("A13: --limit 0 means none, not unlimited", () => {
       limit: 1,
     });
     expect(JSON.parse(out).count).toBe(1);
+  });
+});
+
+describe("md uses the same badges as detail", () => {
+  it("puts the posting badges on the role heading", () => {
+    const md = renderJobs(
+      [job({ remote: true, compensation: "$150k", posted_at: null })],
+      "md",
+      EMPTY_OPTS,
+    );
+    expect(md).toContain(`### ${SYMBOLS.remote} ${SYMBOLS.salary} [Infrastructure Engineer]`);
+  });
+
+  it("leaves the heading plain when a role has no badge", () => {
+    const md = renderJobs(
+      [job({ remote: false, compensation: null, posted_at: null })],
+      "md",
+      EMPTY_OPTS,
+    );
+    const heading = md.split("\n").find((line) => line.startsWith("### "));
+    expect(heading).toBe("### [Infrastructure Engineer](https://jobs.ashbyhq.com/openai/abc)");
+  });
+
+  it("explains the badges in a legend when there are roles, and not otherwise", () => {
+    expect(renderJobs([job()], "md", EMPTY_OPTS)).toContain("pay listed");
+    expect(renderJobs([], "md", EMPTY_OPTS)).not.toContain("pay listed");
+  });
+
+  it("marks a company that is hiring recently, as detail does", async () => {
+    const { summarizeHiring } = await import("../src/hiring-signal.js");
+    const signal = summarizeHiring(
+      "Cohere",
+      [{ company: "Cohere", ats: "ashby", slug: "cohere", job_count: 1, url: "" }],
+      [job({ posted_at: new Date().toISOString() })],
+      { recentDays: 30 },
+    );
+    expect(renderHiring([signal], "md", [], [])).toContain(`## Cohere ${SYMBOLS.hot}`);
+    expect(renderHiring([signal], "detail", [], [])).toContain(SYMBOLS.hot);
   });
 });
