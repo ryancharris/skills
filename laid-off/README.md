@@ -63,7 +63,7 @@ code, so it cannot drift. The ones you will reach for first:
 | `--check` | Report whether a company is hiring (repeatable) |
 | `--title` | Job title; expands to synonyms (repeatable) |
 | `--remote` | Remote roles only |
-| `--format` | `json` (default), `json-compact`, or `md` |
+| `--format` | See *Output formats* below |
 | `--limit` | Max results to print (default 50) |
 
 Filtering also takes `--location`, `--seniority`, `--keyword`,
@@ -101,6 +101,26 @@ domain returns nothing, so it is reachable only by slug probing. Same for iCIMS
 and Workday, which remain unsupported. Workable is not supported either: its
 careers pages are JS-rendered and its widget API returns an empty `jobs` list
 for every account tested, with no public jobs endpoint.
+
+## Output formats
+
+| Format | For | What you get |
+|---|---|---|
+| `json` | agents | full structured result (default) |
+| `json-compact` | agents | same, with empty fields dropped |
+| `md` | humans | one line per role, easy to scan 50 results |
+| `detail` | humans | one block per role, with emoji and a copyable link |
+| `html` | humans | standalone page to send to someone |
+
+Emoji appear only in `detail` and `html`. `json`, `json-compact` and `md` stay
+plain: an agent parses JSON, and `md` is the compact format for scanning.
+
+```bash
+node dist/main.js --company OpenAI --remote --title "infrastructure security" --format detail
+node dist/main.js --company Cohere --title platform --format html > jobs.html
+```
+
+`html` output is self-contained: no scripts, no external assets, works offline.
 
 ## Known limitations
 
