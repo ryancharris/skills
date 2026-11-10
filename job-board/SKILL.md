@@ -8,7 +8,7 @@ metadata:
   upstream-idea: "site:<ats-domain> boolean job search"
 ---
 
-# Laid-off
+# Job board
 
 Find live job postings on **company ATS boards** instead of job aggregators.
 
@@ -33,7 +33,7 @@ below before running anything.
 Large enterprises (Amazon, Google, Meta, Microsoft) have no supported board, but
 they **do** work when `JOB_BOARD_SEARCH_API_KEY` is set: the search fallback returns real
 postings from ATS-hosted boards at those companies' peers. Without a key you get
-a ready-made query to run yourself, not an empty result.
+a ready-made query for the user to run, not an empty result.
 
 Tell the user which case they are in **before** they invest effort, and offer the
 fallbacks in *Known limitations* rather than running a search that returns nothing.
@@ -243,12 +243,24 @@ Diagnose a zero result from `meta`:
 ```
 
 - `raw postings: 0`, `live boards: 0` → the company has no supported ATS board
-  (common for enterprises; see below). Use the offered `site:` queries.
+  (common for enterprises; see below). Give the user the offered `site:` queries;
+  do not run them yourself.
 - `raw postings > 0`, `matched postings: 0` → the boards had jobs, but the
   profile excluded them all. Widen `--title`/`--location` or drop filters.
 - `partial: true` (in `--check`) → the board reports more roles than were read;
   never quote `open_roles` as a total.
 - `unknown: true` (in `--check`) → no board found; do not report "not hiring".
+
+**When a company cannot be read** (`unknown: true`, `no_key`, `no_board`, or no
+board in `--check`):
+
+- Reply with this sentence, filled in: "I could not check <company> with this
+  skill, so I cannot say whether it is hiring."
+- Then stop. Do not add a hiring opinion, a "yes" or "no", general context about
+  the company, or any hiring trend. Those come from memory, not from a board.
+- Do not fill the gap yourself: no web search, and no fetching its careers site.
+- Offer the options instead: a search key (`JOB_BOARD_SEARCH_API_KEY`), the
+  `site:` queries for the user to run, or the careers URL if the user pastes it.
 
 ## Known limitations
 
