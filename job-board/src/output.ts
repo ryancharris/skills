@@ -8,7 +8,7 @@
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, hiringBadge, jobBadges } from "./format-detail.js";
 import type { HiringSignal } from "./hiring-signal.js";
-import { daysSince, parseIso, type Board, type Job, type PartialBoard } from "./models.js";
+import { daysSince, parseIso, resultHeadline, unreadableCompanies, type Board, type Job, type PartialBoard } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 
 // --------------------------------------------------------------------- dedupe
@@ -243,8 +243,7 @@ export function toMarkdown(jobs: Job[], options: MarkdownOptions = {}): string {
   const where =
     companies.slice(0, 4).join(", ") +
     (companies.length > 4 ? ` +${companies.length - 4} more` : "");
-  const noun = jobs.length === 1 ? "role" : "roles";
-  const headline = `# ${jobs.length} ${noun}${where ? ` at ${where}` : ""}`;
+  const headline = `# ${resultHeadline(jobs.length, where, unreadableCompanies(jobs.length, options.emptyReason))}`;
 
   const lines: string[] = [headline, ""];
   for (const note of options.notes ?? []) lines.push(note, "");
