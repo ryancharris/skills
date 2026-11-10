@@ -144,9 +144,13 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
 From `skills/laid-off/`, after `npm install`:
 
 ```bash
-npm test                    # 147 tests, NEVER touches the network
-npm run test:live           # 163 tests, real APIs, opt-in
+npm test                    # unit, format, cache and end-to-end tests; NO network
+npm run test:live           # real ATS APIs, opt-in
 ```
+
+The end-to-end tests (`tests-ts/e2e.test.ts`) run the built `dist/main.js` against a
+synthetic board served by a preload module, so they exercise the shipped build with
+no network and no API keys.
 
 **`npm test` can never make a live API call.** That is enforced, not assumed:
 
