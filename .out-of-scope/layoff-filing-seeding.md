@@ -1,6 +1,6 @@
 # Seeding searches from layoff filings
 
-**Rejected.** `laid-off` does not build its company list from WARN Act filings or a
+**Rejected.** `job-board` does not build its company list from WARN Act filings or a
 layoff tracker.
 
 ## What was tried
@@ -24,4 +24,4 @@ hiring, and for what. `references/layoff-data.md` in the skill documents the
 filing data as a name generator only, with the caveats.
 
 Source of the removed behaviour: the "Why not seed from layoff filings" section of
-`laid-off/SKILL.md`, and the history in `laid-off/CHANGELOG.md`.
+`job-board/SKILL.md`, and the history in `job-board/CHANGELOG.md`.

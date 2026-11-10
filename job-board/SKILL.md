@@ -1,5 +1,5 @@
 ---
-name: laid-off
+name: job-board
 description: After a layoff, find open roles or check if a named company is still hiring, by reading its ATS job board directly (Greenhouse, Lever, Ashby, SmartRecruiters). Needs company names; not for discovery.
 license: MIT
 compatibility: Node.js 20+ (no runtime dependencies). Optional LAID_OFF_SEARCH_API_KEY for search-engine fallback.
@@ -321,7 +321,7 @@ Tuning, all under the same prefix:
 ```bash
 export LAID_OFF_HTTP_TIMEOUT=20         # seconds, must be positive
 export LAID_OFF_CACHE_TTL=300           # seconds to reuse ATS responses; 0 = off
-export LAID_OFF_CACHE_DIR=~/.cache/jobsearch
+export LAID_OFF_CACHE_DIR=~/.cache/job-board
 ```
 
 The former names (`SEARCH_API_KEY`, `JOBSEARCH_SEARCH_PROVIDER`,

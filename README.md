@@ -12,7 +12,7 @@ plus any scripts, references, and assets it needs.
 
 | Skill | Description |
 |---|---|
-| [`laid-off`](laid-off/) | Find live job postings by querying company ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters) directly, and check whether a company is still hiring after a layoff. |
+| [`job-board`](job-board/) | Find live job postings by querying company ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters) directly, and check whether a company is still hiring after a layoff. |
 
 ## Layout
 
@@ -22,7 +22,7 @@ skills/
 ├── LICENSE                # MIT, covers the whole repo
 ├── README.md              # this file
 ├── .github/               # CI: tests, dist-in-sync, portability, SKILL.md validity
-├── laid-off/              # one skill per directory; self-contained
+├── job-board/              # one skill per directory; self-contained
 │   ├── SKILL.md           # required: frontmatter + instructions
 │   ├── dist/              # compiled JS -- what actually runs
 │   ├── src/               # TypeScript source
@@ -43,8 +43,8 @@ Four rules keep skills independent. They exist because the alternative was
 measured to break: a shared package name lets one skill shadow another's
 imports, and same-named test files collide in a runner's flat namespace.
 
-1. **Name the package after the directory.** `laid-off/` ships
-   `laid-off/src/`; skill `pdf-tools` ships `pdf-tools/src/`. Never import a
+1. **Name the package after the directory.** `job-board/` ships
+   `job-board/src/`; skill `pdf-tools` ships `pdf-tools/src/`. Never import a
    sibling skill's package — copy the helper instead.
 2. **Keep `description` under 200 characters.** It is paid on every model turn
    that considers loading the skill, so it must be tight: what it does, plus
@@ -54,10 +54,10 @@ imports, and same-named test files collide in a runner's flat namespace.
    the root.
 4. **Ship zero runtime dependencies.** Dev tooling (typescript, vitest, pytest)
    is fine and stays in the repo's ignore list. But a skill that needs a
-   third-party package at *runtime* stops being copyable on its own. `laid-off`
+   third-party package at *runtime* stops being copyable on its own. `job-board`
    compiles to dependency-free JavaScript for exactly this reason.
 
-A skill must work three ways, and `laid-off` is tested all three:
+A skill must work three ways, and `job-board` is tested all three:
 
 ```bash
 node /path/to/skill-name/dist/main.js                 # copied anywhere, no npm install
@@ -71,7 +71,7 @@ Skills are independent, so each may choose its own runtime:
 
 | Skill | Runtime | Test |
 |---|---|---|
-| `laid-off` | Node.js 20+ (TypeScript source, compiled) | `npm test` |
+| `job-board` | Node.js 20+ (TypeScript source, compiled) | `npm test` |
 | (future) | Python 3.10+ | `pytest` |
 
 There is no shared language requirement — only the rules above. Dev
@@ -102,8 +102,8 @@ JavaScript is what users run, so a stale build would ship code nobody reviewed.
 Each skill owns its tests:
 
 ```bash
-cd laid-off && npm test            # offline; never touches the network
-cd laid-off && npm run test:live   # real ATS APIs; opt-in
+cd job-board && npm test            # offline; never touches the network
+cd job-board && npm run test:live   # real ATS APIs; opt-in
 ```
 
 Test counts are not written here: they go stale. Run the commands to see them.
