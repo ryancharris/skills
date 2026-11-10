@@ -10,7 +10,7 @@
  * read as unserious.
  */
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
-import { daysSince, parseIso, partialLines } from "./models.js";
+import { daysSince, parseIso } from "./models.js";
 // ------------------------------------------------------------------- symbols
 /** A finding is "fresh" within this many days. */
 export const FRESH_DAYS = 14;
@@ -88,8 +88,8 @@ export function toDetail(jobs, options = {}) {
         lines.push(`_Showing the first ${shown.length}. Raise \`--limit\` for more._`);
         lines.push("");
     }
-    for (const line of partialLines(options.partialBoards ?? []))
-        lines.push(line, "");
+    for (const note of options.notes ?? [])
+        lines.push(note, "");
     if (shown.length === 0) {
         lines.push(...emptyBlock(options.emptyReason));
     }
@@ -185,10 +185,12 @@ function emptyBlock(reason) {
  * with a department table. The table body is emitted only when there are
  * departments, so an unreadable company collapses to its verdict line.
  */
-export function toHiringDetail(signals, queries = []) {
+export function toHiringDetail(signals, queries = [], notes = []) {
     const lines = [];
     lines.push(`# ${SYMBOLS.hot} Is this company hiring?`);
     lines.push("");
+    for (const note of notes)
+        lines.push(note, "");
     if (signals.length === 0) {
         lines.push("_No companies checked._");
         lines.push("");

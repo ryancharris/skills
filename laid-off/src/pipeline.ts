@@ -23,7 +23,7 @@ import {
 import { stripHtml } from "./html.js";
 import { summarizeHiring, type HiringSignal } from "./hiring-signal.js";
 import type { Board, Job, PartialBoard, SearchProfile } from "./models.js";
-import { makeJob } from "./models.js";
+import { makeJob, partialWarning } from "./models.js";
 import { dedupeJobs, toJson, toMarkdown } from "./output.js";
 import { buildProvider, SearchError, type SearchProvider } from "./search.js";
 
@@ -251,9 +251,7 @@ export async function runSearch(
   result.raw_count = raw.length;
   result.partial_boards = partialBoards(live, fetched);
   for (const p of result.partial_boards) {
-    result.warnings.push(
-      `${p.company}'s ${p.ats} board has ${p.reported} postings but only ${p.read} were read; results for this company are incomplete.`,
-    );
+    result.warnings.push(partialWarning(p));
   }
 
   // For companies with no live board, hand the agent a discovery query.

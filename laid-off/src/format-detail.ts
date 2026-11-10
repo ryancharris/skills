@@ -12,7 +12,7 @@
 
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 import type { HiringSignal } from "./hiring-signal.js";
-import { daysSince, parseIso, partialLines, type Board, type Job, type PartialBoard } from "./models.js";
+import { daysSince, parseIso, type Board, type Job } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 
 // ------------------------------------------------------------------- symbols
@@ -73,7 +73,8 @@ export interface DetailOptions {
   meta?: Record<string, unknown>;
   limit?: number | null;
   emptyReason?: EmptyReason | null;
-  partialBoards?: PartialBoard[];
+  /** Plain-text notes (partial reads, cache, warnings). */
+  notes?: string[];
 }
 
 /**
@@ -103,7 +104,7 @@ export function toDetail(jobs: Job[], options: DetailOptions = {}): string {
     lines.push("");
   }
 
-  for (const line of partialLines(options.partialBoards ?? [])) lines.push(line, "");
+  for (const note of options.notes ?? []) lines.push(note, "");
 
   if (shown.length === 0) {
     lines.push(...emptyBlock(options.emptyReason));
@@ -211,10 +212,11 @@ function emptyBlock(reason: EmptyReason | null | undefined): string[] {
  * with a department table. The table body is emitted only when there are
  * departments, so an unreadable company collapses to its verdict line.
  */
-export function toHiringDetail(signals: HiringSignal[], queries: string[] = []): string {
+export function toHiringDetail(signals: HiringSignal[], queries: string[] = [], notes: string[] = []): string {
   const lines: string[] = [];
   lines.push(`# ${SYMBOLS.hot} Is this company hiring?`);
   lines.push("");
+  for (const note of notes) lines.push(note, "");
 
   if (signals.length === 0) {
     lines.push("_No companies checked._");

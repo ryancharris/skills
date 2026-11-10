@@ -69,7 +69,8 @@ node "<skill-dir>/dist/main.js" --company Notion --list-boards
 node "<skill-dir>/dist/main.js" --company Stripe --title "chief of staff" --queries
 ```
 
-Output defaults to JSON. Formats: `json` (default), `json-compact`, `md`
+Output defaults to JSON. `md`, `detail` and `html` also state, in plain text, any
+partial read, cached data, and warnings, so a person sees what you are told. Formats: `json` (default), `json-compact`, `md`
 (concise), `detail` (one block per role, with emoji) and `html` (standalone
 page). See *Reading the results* for the JSON shape.
 

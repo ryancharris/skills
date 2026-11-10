@@ -8,7 +8,7 @@
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, hiringBadge, jobBadges } from "./format-detail.js";
 import type { HiringSignal } from "./hiring-signal.js";
-import { daysSince, parseIso, partialLines, type Board, type Job, type PartialBoard } from "./models.js";
+import { daysSince, parseIso, type Board, type Job, type PartialBoard } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 
 // --------------------------------------------------------------------- dedupe
@@ -213,7 +213,8 @@ export interface MarkdownOptions {
   limit?: number | null;
   /** Why the result is empty, so the remedy can be specific. */
   emptyReason?: EmptyReason | null;
-  partialBoards?: PartialBoard[];
+  /** Plain-text notes (partial reads, cache, warnings) for the human formats. */
+  notes?: string[];
 }
 
 /**
@@ -246,7 +247,7 @@ export function toMarkdown(jobs: Job[], options: MarkdownOptions = {}): string {
   const headline = `# ${jobs.length} ${noun}${where ? ` at ${where}` : ""}`;
 
   const lines: string[] = [headline, ""];
-  for (const line of partialLines(options.partialBoards ?? [])) lines.push(line, "");
+  for (const note of options.notes ?? []) lines.push(note, "");
 
   if (shown.length < jobs.length) {
     lines.push(`_Showing the first ${shown.length}. Raise \`--limit\` for more._`);
@@ -345,8 +346,9 @@ export function toMarkdown(jobs: Job[], options: MarkdownOptions = {}): string {
 }
 
 /** Human-readable hiring report. */
-export function toHiringMarkdown(signals: HiringSignal[], queries: string[] = []): string {
+export function toHiringMarkdown(signals: HiringSignal[], queries: string[] = [], notes: string[] = []): string {
   const lines: string[] = ["# Is this company hiring?", ""];
+  for (const note of notes) lines.push(note, "");
 
   if (signals.length === 0) lines.push("_No companies checked._");
 
