@@ -13,9 +13,9 @@ import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring
 import { daysSince, parseIso, partialLines } from "./models.js";
 // ------------------------------------------------------------------- symbols
 /** A finding is "fresh" within this many days. */
-const FRESH_DAYS = 14;
+export const FRESH_DAYS = 14;
 /** Beyond this, a posting is likely stale or reposted. */
-const STALE_DAYS = 180;
+export const STALE_DAYS = 180;
 export const SYMBOLS = {
     remote: "🌍",
     salary: "💰",
@@ -24,6 +24,12 @@ export const SYMBOLS = {
     hot: "🔥",
     unreadable: "🚫",
 };
+/** The badge for a company's hiring signal: unreadable, hiring recently, or none. */
+export function hiringBadge(signal) {
+    if (signal.unknown)
+        return SYMBOLS.unreadable;
+    return signal.hiring_recently ? SYMBOLS.hot : "";
+}
 /** Signals worth marking on one posting, in priority order. */
 export function jobBadges(job, now = new Date()) {
     const badges = [];
@@ -186,11 +192,7 @@ export function toHiringDetail(signals, queries = []) {
         lines.push("");
     }
     for (const signal of signals) {
-        const badge = signal.unknown
-            ? SYMBOLS.unreadable
-            : signal.hiring_recently
-                ? SYMBOLS.hot
-                : "";
+        const badge = hiringBadge(signal);
         lines.push(rule());
         lines.push(`### ${displayCompany(signal.company)}${badge ? `  ${badge}` : ""}`);
         lines.push("");
