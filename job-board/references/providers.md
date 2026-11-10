@@ -87,13 +87,15 @@ Results at `web.results[]` with `url`, `title`, `description`.
 
 ## Adding a provider
 
-Implement `SearchProvider` in `jobsearch/search/__init__.py`:
+Extend `SearchProvider` in `src/search.ts`:
 
-```python
-class MyProvider(SearchProvider):
-    name = "myprovider"
-    def search(self, query: str, limit: int = 20) -> list[SearchResult]: ...
+```ts
+export class MyProvider extends SearchProvider {
+  readonly name = "myprovider";
+  async search(query: string, limit = 20): Promise<SearchResult[]> { /* ... */ }
+}
 ```
 
-Then register it in `build_provider()`. Keep the `SearchError` contract: raise
-on failure, never return a silent empty list.
+Then add the name to `SUPPORTED_PROVIDERS` in `src/config.ts`, and add a branch to
+`buildProvider()` in `src/search.ts`. Keep the `SearchError` contract: throw on failure,
+never return a silent empty list.

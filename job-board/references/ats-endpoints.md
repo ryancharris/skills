@@ -3,7 +3,7 @@
 All endpoints are public and unauthenticated. Verified 2026-11-08.
 
 A **User-Agent header is mandatory** for Ashby (403 without one). The skill's
-`http.py` always sends one.
+`src/http.ts` always sends one.
 
 ## Greenhouse
 
@@ -97,8 +97,11 @@ GET https://api.smartrecruiters.com/v1/companies/{slug}/postings?limit=100
 
 - Unknown slug → **HTTP 200 with `totalFound: 0`** — the status code is *not* a
   validity signal. Use `totalFound > 0`.
-- Paginated: `limit` caps the page (100), `totalFound` is the true size.
-- Public board host moved: `jobs.smartrecruiters.com` → **`careers.smartrecruiters.com`** (301)
+- Paginated: `limit` caps the page (100), `totalFound` is the true size. The skill
+  reads at most 10 pages (1,000 postings); a larger board is flagged `partial`.
+- Public board host moved: `jobs.smartrecruiters.com` → **`careers.smartrecruiters.com`** (301).
+  Checked: the board root redirects; a job link on `jobs.` still returns 200, which is what
+  the skill emits.
 - Slugs are often suffixed (`Ubisoft2`, not `Ubisoft`).
 - Payload:
 
