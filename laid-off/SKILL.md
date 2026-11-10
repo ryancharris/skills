@@ -155,7 +155,13 @@ mode. Parse `jobs` for `--company`, and `signals` for `--check`.
 ```json
 {
   "generated_at": "2026-11-09T...",
+  "fetched_at": "2026-11-09T...",
+  "cached": false,
   "count": 37,
+  "total": 37,
+  "truncated": false,
+  "partial": false,
+  "partial_boards": [],
   "meta": {"companies searched": 1, "live boards": 1, "raw postings": 767,
            "matched postings": 37, "returned": 37, "queries offered": 8},
   "warnings": ["..."],
@@ -254,9 +260,10 @@ Diagnose a zero result from `meta`:
 - **`--check` cannot read enterprises.** A large employer with a bespoke career
   site returns `unknown: true` and a discovery query, not `0 open roles`. Never
   report "not hiring" from an unknown signal.
-- **Boards paginate.** SmartRecruiters is fetched one 100-job page; its
-  `job_count` reports the true `totalFound`. `--check` flags this as
-  `partial: true` and says "partial: board reports N" rather than understating.
+- **Boards paginate, up to a limit.** SmartRecruiters is read 100 postings per
+  request, up to 1,000 per board. A larger board is read partially: `partial: true`
+  and `partial_boards` name it, in both role search and `--check`, and its total
+  is a lower bound. Say "at least N", never "N".
 - **Seniority is title-only.** Ramp, for example, puts no seniority in its
   titles (all 29 engineer roles are unmarked), so `--seniority senior` correctly
   returns nothing. An empty seniority result means the board does not encode it,
