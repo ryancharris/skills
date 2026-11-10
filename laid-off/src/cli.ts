@@ -19,6 +19,7 @@ import { toDetail, toHiringDetail } from "./format-detail.js";
 import { toHiringHtml, toHtml } from "./format-html.js";
 import { checkHiring, meta, runSearch } from "./pipeline.js";
 import { clear as clearCache } from "./cache.js";
+import { cacheFields, trackProvenance, type Provenance } from "./provenance.js";
 
 export const EXIT_OK = 0;
 export const EXIT_USAGE = 2;
@@ -382,24 +383,28 @@ export async function main(argv: string[]): Promise<number> {
       return EXIT_OK;
     }
 
-    const result = await checkHiring(opts.check, {
-      recentDays: opts.recentDays,
-      maxCompanies: opts.maxCompanies,
-      config,
-    });
+    const { value: result, provenance } = await trackProvenance(() =>
+      checkHiring(opts.check, {
+        recentDays: opts.recentDays,
+        maxCompanies: opts.maxCompanies,
+        config,
+      }),
+    );
     for (const warning of result.warnings) process.stderr.write(`warning: ${warning}\n`);
 
     process.stdout.write(
-      renderHiring(result.signals, opts.format, result.queries, result.warnings) + "\n",
+      renderHiring(result.signals, opts.format, result.queries, result.warnings, provenance) + "\n",
     );
     return EXIT_OK;
   }
 
-  const result = await runSearch(profileFrom(opts), {
-    companies: opts.company,
-    maxCompanies: opts.maxCompanies,
-    config,
-  });
+  const { value: result, provenance } = await trackProvenance(() =>
+    runSearch(profileFrom(opts), {
+      companies: opts.company,
+      maxCompanies: opts.maxCompanies,
+      config,
+    }),
+  );
   for (const warning of result.warnings) process.stderr.write(`warning: ${warning}\n`);
 
   if (opts.listBoards) {
@@ -423,6 +428,7 @@ export async function main(argv: string[]): Promise<number> {
       limit: opts.limit,
       emptyReason: result.empty_reason,
       partialBoards: result.partial_boards,
+      provenance,
     }) + "\n",
   );
   return EXIT_OK;
@@ -439,6 +445,7 @@ export function renderHiring(
   format: string,
   queries: string[],
   warnings: string[],
+  provenance?: Provenance,
 ): string {
   switch (format) {
     case "html":
@@ -450,7 +457,7 @@ export function renderHiring(
     case "json-compact":
     case "json":
     default:
-      return toHiringJson(signals, { queries, warnings });
+      return toHiringJson(signals, { queries, warnings, ...cacheFields(provenance) });
   }
 }
 
@@ -463,6 +470,7 @@ export interface RenderOptions {
   limit: number | null;
   emptyReason: EmptyReason | null;
   partialBoards: PartialBoard[];
+  provenance?: Provenance;
 }
 
 /** Render a role search in the requested format. */
@@ -484,9 +492,9 @@ export function renderJobs(jobs: Job[], format: string, opts: RenderOptions): st
     case "md":
       return toMarkdown(jobs, shared);
     case "json-compact":
-      return toJson(shown, { ...shared, queries: opts.queries, warnings: opts.warnings, total: jobs.length, compact: true });
+      return toJson(shown, { ...shared, queries: opts.queries, warnings: opts.warnings, total: jobs.length, compact: true, ...cacheFields(opts.provenance) });
     case "json":
     default:
-      return toJson(shown, { ...shared, queries: opts.queries, warnings: opts.warnings, total: jobs.length });
+      return toJson(shown, { ...shared, queries: opts.queries, warnings: opts.warnings, total: jobs.length, ...cacheFields(opts.provenance) });
   }
 }

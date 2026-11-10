@@ -28,17 +28,29 @@ function pathOf(cacheDir: string, url: string): string {
   return join(cacheDir, `${keyOf(url)}.json`);
 }
 
-/** Return the cached payload for `url`, or null on miss/expiry/any error. */
-export async function get(url: string, { ttl, cacheDir }: CacheOptions): Promise<unknown | null> {
+/**
+ * Return the cached payload and when it was stored (ms since epoch), or null on
+ * miss, expiry, or any error.
+ */
+export async function lookup(
+  url: string,
+  { ttl, cacheDir }: CacheOptions,
+): Promise<{ payload: unknown; storedAt: number } | null> {
   if (ttl <= 0 || !cacheDir) return null;
   const path = pathOf(cacheDir, url);
   try {
     const info = await stat(path);
     if (Date.now() / 1000 - info.mtimeMs / 1000 > ttl) return null;
-    return JSON.parse(await readFile(path, "utf8"));
+    return { payload: JSON.parse(await readFile(path, "utf8")), storedAt: info.mtimeMs };
   } catch {
     return null;
   }
+}
+
+/** Return the cached payload for `url`, or null on miss/expiry/any error. */
+export async function get(url: string, options: CacheOptions): Promise<unknown | null> {
+  const hit = await lookup(url, options);
+  return hit === null ? null : hit.payload;
 }
 
 /** Store `payload` for `url`. Silently does nothing on any failure. */
