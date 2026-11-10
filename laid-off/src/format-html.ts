@@ -120,12 +120,11 @@ export function toHtml(jobs: Job[], options: HtmlOptions = {}): string {
     if (age) rows.push(["Posted", escapeHtml(age)]);
 
     parts.push('<article class="job">');
-    parts.push(
-      `<h2><a href="${escapeHtml(job.url)}" rel="noopener noreferrer">` +
-        `${escapeHtml(job.title)}</a>` +
-        (badges ? `<span class="badges">${badges}</span>` : "") +
-        "</h2>",
-    );
+    const titleHtml = escapeHtml(job.title);
+    const link = job.url
+      ? `<a href="${escapeHtml(job.url)}" rel="noopener noreferrer">${titleHtml}</a>`
+      : titleHtml;
+    parts.push(`<h2>${link}${badges ? `<span class="badges">${badges}</span>` : ""}</h2>`);
     parts.push("<dl>");
     for (const [label, value] of rows) {
       parts.push(`<dt>${label}</dt><dd>${value}</dd>`);
