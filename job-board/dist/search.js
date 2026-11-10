@@ -37,10 +37,10 @@ function kagiHttpError(err) {
         /* body was not JSON */
     }
     if (code === "general.no_authorization_provided" || err.status === 401) {
-        return "Kagi rejected the request: no API key sent. Export LAID_OFF_SEARCH_API_KEY.";
+        return "Kagi rejected the request: no API key sent. Export JOB_BOARD_SEARCH_API_KEY.";
     }
     if (code === "general.invalid_token" || (err.status === 400 && message)) {
-        return ("Kagi rejected the API key (invalid_token). Check that LAID_OFF_SEARCH_API_KEY " +
+        return ("Kagi rejected the API key (invalid_token). Check that JOB_BOARD_SEARCH_API_KEY " +
             "is complete and has no extra spaces.");
     }
     if (err.status === 402 || message.toLowerCase().includes("insufficient")) {
@@ -59,8 +59,8 @@ export class KagiProvider extends SearchProvider {
     constructor(apiKey, timeout = 20_000) {
         super();
         if (!apiKey) {
-            throw new SearchError("LAID_OFF_SEARCH_API_KEY is not set. Create a Kagi key at " +
-                "https://kagi.com/settings/api and export LAID_OFF_SEARCH_API_KEY=your-key");
+            throw new SearchError("JOB_BOARD_SEARCH_API_KEY is not set. Create a Kagi key at " +
+                "https://kagi.com/settings/api and export JOB_BOARD_SEARCH_API_KEY=your-key");
         }
         this.apiKey = apiKey;
         this.timeout = timeout;
@@ -123,8 +123,8 @@ export class BraveProvider extends SearchProvider {
     constructor(apiKey, timeout = 20_000) {
         super();
         if (!apiKey) {
-            throw new SearchError("LAID_OFF_SEARCH_API_KEY is not set. Create a Brave key at " +
-                "https://api.search.brave.com/ and export LAID_OFF_SEARCH_API_KEY=your-key");
+            throw new SearchError("JOB_BOARD_SEARCH_API_KEY is not set. Create a Brave key at " +
+                "https://api.search.brave.com/ and export JOB_BOARD_SEARCH_API_KEY=your-key");
         }
         this.apiKey = apiKey;
         this.timeout = timeout;
@@ -141,7 +141,7 @@ export class BraveProvider extends SearchProvider {
         catch (err) {
             if (err instanceof HttpError) {
                 if (err.status === 401 || err.status === 403) {
-                    throw new SearchError("Brave rejected the API key. Check LAID_OFF_SEARCH_API_KEY.");
+                    throw new SearchError("Brave rejected the API key. Check JOB_BOARD_SEARCH_API_KEY.");
                 }
                 if (err.status === 429) {
                     throw new SearchError("Brave rate limit hit. Retry shortly.");
@@ -162,7 +162,7 @@ export class BraveProvider extends SearchProvider {
 /**
  * Instantiate the configured search provider.
  *
- * One key serves whichever backend is selected (LAID_OFF_SEARCH_API_KEY), so switching
+ * One key serves whichever backend is selected (JOB_BOARD_SEARCH_API_KEY), so switching
  * providers is a one-variable change.
  */
 export function buildProvider(config) {
@@ -171,5 +171,5 @@ export function buildProvider(config) {
         return new KagiProvider(config.search_api_key, config.http_timeout * 1000);
     if (name === "brave")
         return new BraveProvider(config.search_api_key, config.http_timeout * 1000);
-    throw new SearchError(`Unknown search provider '${name}'. Supported: kagi, brave. Set LAID_OFF_SEARCH_PROVIDER.`);
+    throw new SearchError(`Unknown search provider '${name}'. Supported: kagi, brave. Set JOB_BOARD_SEARCH_PROVIDER.`);
 }

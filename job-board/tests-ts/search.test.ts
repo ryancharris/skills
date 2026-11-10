@@ -49,29 +49,47 @@ describe("config", () => {
     expect(cfg.search_api_key).toBeNull();
   });
 
-  it("reads LAID_OFF_SEARCH_API_KEY", () => {
-    const cfg = configFromEnv({ LAID_OFF_SEARCH_API_KEY: "k" });
+  it("reads JOB_BOARD_SEARCH_API_KEY without a warning", () => {
+    const cfg = configFromEnv({ JOB_BOARD_SEARCH_API_KEY: "k" });
     expect(cfg.search_api_key).toBe("k");
     expect(cfg.warnings).toEqual([]);
   });
 
-  it("still accepts the legacy SEARCH_API_KEY but warns", () => {
-    // A real key was configured under this name before the rename. Dropping it
+  it("still accepts LAID_OFF_SEARCH_API_KEY and SEARCH_API_KEY, with a warning each", () => {
+    // Real keys were configured under these names before the renames. Dropping one
     // silently would look identical to "no key set".
-    const cfg = configFromEnv({ SEARCH_API_KEY: "legacy" });
-    expect(cfg.search_api_key).toBe("legacy");
-    expect(cfg.warnings).toHaveLength(1);
-    expect(cfg.warnings[0]).toContain("SEARCH_API_KEY is deprecated");
-    expect(cfg.warnings[0]).toContain("LAID_OFF_SEARCH_API_KEY");
+    const former = configFromEnv({ LAID_OFF_SEARCH_API_KEY: "a" });
+    expect(former.search_api_key).toBe("a");
+    expect(former.warnings).toEqual([
+      "LAID_OFF_SEARCH_API_KEY is deprecated and will be removed; rename it to JOB_BOARD_SEARCH_API_KEY.",
+    ]);
+
+    const legacy = configFromEnv({ SEARCH_API_KEY: "legacy" });
+    expect(legacy.search_api_key).toBe("legacy");
+    expect(legacy.warnings[0]).toContain("SEARCH_API_KEY is deprecated");
+    expect(legacy.warnings[0]).toContain("JOB_BOARD_SEARCH_API_KEY");
   });
 
-  it("prefers the new name when both are set, without warning", () => {
+  it("prefers the current name and warns about every former name that is set", () => {
     const cfg = configFromEnv({
+      JOB_BOARD_SEARCH_API_KEY: "new",
       LAID_OFF_SEARCH_API_KEY: "new",
-      SEARCH_API_KEY: "legacy",
     });
     expect(cfg.search_api_key).toBe("new");
-    expect(cfg.warnings).toEqual([]);
+    expect(cfg.warnings).toHaveLength(1);
+    expect(cfg.error).toBeNull();
+  });
+
+  it("is a fatal error when two key names disagree, and never prints either key", () => {
+    const cfg = configFromEnv({
+      JOB_BOARD_SEARCH_API_KEY: "secret-one",
+      LAID_OFF_SEARCH_API_KEY: "secret-two",
+    });
+    expect(cfg.error).toContain("different values");
+    expect(cfg.error).toContain("JOB_BOARD_SEARCH_API_KEY");
+    expect(cfg.error).toContain("LAID_OFF_SEARCH_API_KEY");
+    expect(cfg.error).not.toContain("secret-one");
+    expect(cfg.error).not.toContain("secret-two");
   });
 
   it("has no key and no warning when neither is set", () => {
@@ -80,26 +98,15 @@ describe("config", () => {
     expect(cfg.warnings).toEqual([]);
   });
 
-  it("ignores legacy provider key vars", () => {
+  it("ignores provider-specific key names", () => {
     const cfg = configFromEnv({ KAGI_API_KEY: "k", BRAVE_API_KEY: "b" });
     expect(cfg.search_api_key).toBeNull();
-  });
-
-  it("meters timeouts and cache settings", () => {
-    const cfg = configFromEnv({
-      JOBSEARCH_HTTP_TIMEOUT: "5",
-      JOBSEARCH_CACHE_TTL: "300",
-      JOBSEARCH_CACHE_DIR: "/tmp/x",
-    });
-    expect(cfg.http_timeout).toBe(5);
-    expect(cfg.cache_ttl).toBe(300);
-    expect(cfg.cache_dir).toBe("/tmp/x");
   });
 });
 
 describe("search provider variable", () => {
-  it("reads LAID_OFF_SEARCH_PROVIDER", () => {
-    const cfg = configFromEnv({ LAID_OFF_SEARCH_PROVIDER: "brave" });
+  it("reads JOB_BOARD_SEARCH_PROVIDER", () => {
+    const cfg = configFromEnv({ JOB_BOARD_SEARCH_PROVIDER: "brave" });
     expect(cfg.search_provider).toBe("brave");
     expect(cfg.warnings).toEqual([]);
     expect(cfg.error).toBeNull();
@@ -110,49 +117,51 @@ describe("search provider variable", () => {
   });
 
   it("is case-insensitive", () => {
-    expect(configFromEnv({ LAID_OFF_SEARCH_PROVIDER: "Brave" }).search_provider).toBe("brave");
+    expect(configFromEnv({ JOB_BOARD_SEARCH_PROVIDER: "Brave" }).search_provider).toBe("brave");
   });
 
-  it("still accepts the legacy JOBSEARCH_SEARCH_PROVIDER but warns", () => {
-    // It lived under a different prefix from the API key, so remembering one
-    // gave no hint of the other.
-    const cfg = configFromEnv({ JOBSEARCH_SEARCH_PROVIDER: "brave" });
-    expect(cfg.search_provider).toBe("brave");
-    expect(cfg.warnings).toHaveLength(1);
-    expect(cfg.warnings[0]).toContain("JOBSEARCH_SEARCH_PROVIDER is deprecated");
-    expect(cfg.warnings[0]).toContain("LAID_OFF_SEARCH_PROVIDER");
+  it("still accepts LAID_OFF_SEARCH_PROVIDER and JOBSEARCH_SEARCH_PROVIDER, with warnings", () => {
+    const former = configFromEnv({ LAID_OFF_SEARCH_PROVIDER: "brave" });
+    expect(former.search_provider).toBe("brave");
+    expect(former.warnings).toHaveLength(1);
+    expect(former.warnings[0]).toContain("LAID_OFF_SEARCH_PROVIDER is deprecated");
+    expect(former.warnings[0]).toContain("JOB_BOARD_SEARCH_PROVIDER");
+
+    const legacy = configFromEnv({ JOBSEARCH_SEARCH_PROVIDER: "brave" });
+    expect(legacy.search_provider).toBe("brave");
+    expect(legacy.warnings[0]).toContain("JOBSEARCH_SEARCH_PROVIDER is deprecated");
   });
 
-  it("prefers the new name when both agree, without warning", () => {
+  it("uses the current name without a warning when a former name agrees with it", () => {
     const cfg = configFromEnv({
+      JOB_BOARD_SEARCH_PROVIDER: "brave",
       LAID_OFF_SEARCH_PROVIDER: "brave",
-      JOBSEARCH_SEARCH_PROVIDER: "brave",
     });
     expect(cfg.search_provider).toBe("brave");
-    expect(cfg.warnings).toEqual([]);
+    expect(cfg.warnings).toHaveLength(1);
     expect(cfg.error).toBeNull();
   });
 
-  it("is a fatal error when both are set and disagree", () => {
+  it("is a fatal error when two provider names disagree", () => {
     const cfg = configFromEnv({
-      LAID_OFF_SEARCH_PROVIDER: "brave",
-      JOBSEARCH_SEARCH_PROVIDER: "kagi",
+      JOB_BOARD_SEARCH_PROVIDER: "brave",
+      LAID_OFF_SEARCH_PROVIDER: "kagi",
     });
-    expect(cfg.error).toContain("disagree");
-    expect(cfg.error).toContain("kagi");
-    expect(cfg.error).toContain("brave");
+    expect(cfg.error).toContain("different values");
+    expect(cfg.error).toContain("JOB_BOARD_SEARCH_PROVIDER");
+    expect(cfg.error).toContain("LAID_OFF_SEARCH_PROVIDER");
   });
 
   it("rejects an unknown provider instead of silently falling back", () => {
     // Falling back would send searches to the wrong engine and bill the wrong
     // account, so this must be an error, not a default.
-    const cfg = configFromEnv({ LAID_OFF_SEARCH_PROVIDER: "nonsense" });
+    const cfg = configFromEnv({ JOB_BOARD_SEARCH_PROVIDER: "nonsense" });
     expect(cfg.error).toContain("Unknown search provider");
-    expect(cfg.error).toContain("LAID_OFF_SEARCH_PROVIDER");
+    expect(cfg.error).toContain("JOB_BOARD_SEARCH_PROVIDER");
     expect(cfg.error).toContain("kagi, brave");
   });
 
-  it("collects warnings from both key and provider together", () => {
+  it("collects warnings from the key and the provider together", () => {
     const cfg = configFromEnv({
       SEARCH_API_KEY: "k",
       JOBSEARCH_SEARCH_PROVIDER: "brave",
@@ -169,15 +178,15 @@ describe("buildProvider", () => {
   });
 
   it("selects brave", () => {
-    const provider = search.buildProvider({ ...configFromEnv({ LAID_OFF_SEARCH_API_KEY: "b" }), search_provider: "brave" });
+    const provider = search.buildProvider({ ...configFromEnv({ JOB_BOARD_SEARCH_API_KEY: "b" }), search_provider: "brave" });
     expect(provider.name).toBe("brave");
   });
 
   it("one key reaches either provider", () => {
-    const kagi = search.buildProvider(configFromEnv({ LAID_OFF_SEARCH_API_KEY: "test-key" }));
+    const kagi = search.buildProvider(configFromEnv({ JOB_BOARD_SEARCH_API_KEY: "test-key" }));
     expect(kagi.name).toBe("kagi");
     const brave = search.buildProvider({
-      ...configFromEnv({ LAID_OFF_SEARCH_API_KEY: "test-key" }),
+      ...configFromEnv({ JOB_BOARD_SEARCH_API_KEY: "test-key" }),
       search_provider: "brave",
     });
     expect(brave.name).toBe("brave");
@@ -186,7 +195,7 @@ describe("buildProvider", () => {
 
 describe("KagiProvider", () => {
   it("requires a key", () => {
-    expect(() => new search.KagiProvider(null)).toThrow(/LAID_OFF_SEARCH_API_KEY/);
+    expect(() => new search.KagiProvider(null)).toThrow(/JOB_BOARD_SEARCH_API_KEY/);
   });
 
   it("parses the live v1 shape", async () => {
@@ -261,7 +270,7 @@ describe("KagiProvider", () => {
     vi.spyOn(await import("../src/http.js"), "postJson").mockRejectedValue(
       new HttpError("u", 401, ""),
     );
-    await expect(new search.KagiProvider("k").search("q")).rejects.toThrow(/no API key sent.*LAID_OFF_SEARCH_API_KEY/);
+    await expect(new search.KagiProvider("k").search("q")).rejects.toThrow(/no API key sent.*JOB_BOARD_SEARCH_API_KEY/);
     vi.restoreAllMocks();
   });
 
@@ -273,7 +282,7 @@ describe("KagiProvider", () => {
     });
     vi.spyOn(await import("../src/http.js"), "postJson").mockRejectedValue(new HttpError("u", 400, body));
     const err = await new search.KagiProvider("k").search("q").catch((e: Error) => e);
-    expect(err.message).toContain("LAID_OFF_SEARCH_API_KEY");
+    expect(err.message).toContain("JOB_BOARD_SEARCH_API_KEY");
     expect(err.message).not.toContain("{");
     vi.restoreAllMocks();
   });
@@ -293,7 +302,7 @@ describe("KagiProvider", () => {
 
 describe("BraveProvider", () => {
   it("requires a key", () => {
-    expect(() => new search.BraveProvider(null)).toThrow(/LAID_OFF_SEARCH_API_KEY/);
+    expect(() => new search.BraveProvider(null)).toThrow(/JOB_BOARD_SEARCH_API_KEY/);
   });
 
   it("rejects an unauthorised key clearly", async () => {
@@ -312,12 +321,12 @@ describe("BraveProvider", () => {
   });
 });
 
-describe("tunable variables share the LAID_OFF_ prefix", () => {
-  it("reads the new names", () => {
+describe("tunable variables use the JOB_BOARD_ prefix", () => {
+  it("reads the current names", () => {
     const cfg = configFromEnv({
-      LAID_OFF_HTTP_TIMEOUT: "7",
-      LAID_OFF_CACHE_TTL: "120",
-      LAID_OFF_CACHE_DIR: "/tmp/c",
+      JOB_BOARD_HTTP_TIMEOUT: "7",
+      JOB_BOARD_CACHE_TTL: "120",
+      JOB_BOARD_CACHE_DIR: "/tmp/c",
     });
     expect(cfg.http_timeout).toBe(7);
     expect(cfg.cache_ttl).toBe(120);
@@ -330,58 +339,64 @@ describe("tunable variables share the LAID_OFF_ prefix", () => {
     const cfg = configFromEnv({});
     expect(cfg.http_timeout).toBe(20);
     expect(cfg.cache_ttl).toBe(0);
-    expect(cfg.cache_dir).toContain(".cache");
+    expect(cfg.cache_dir).toContain(".cache/job-board");
   });
 
-  it("still accepts each legacy name, with a warning naming both", () => {
+  it("still accepts each former name, with a warning naming both", () => {
     const cases: Array<[Record<string, string>, string, string]> = [
-      [{ JOBSEARCH_HTTP_TIMEOUT: "7" }, "JOBSEARCH_HTTP_TIMEOUT", "LAID_OFF_HTTP_TIMEOUT"],
-      [{ JOBSEARCH_CACHE_TTL: "60" }, "JOBSEARCH_CACHE_TTL", "LAID_OFF_CACHE_TTL"],
-      [{ JOBSEARCH_CACHE_DIR: "/tmp/x" }, "JOBSEARCH_CACHE_DIR", "LAID_OFF_CACHE_DIR"],
+      [{ LAID_OFF_HTTP_TIMEOUT: "7" }, "LAID_OFF_HTTP_TIMEOUT", "JOB_BOARD_HTTP_TIMEOUT"],
+      [{ JOBSEARCH_HTTP_TIMEOUT: "7" }, "JOBSEARCH_HTTP_TIMEOUT", "JOB_BOARD_HTTP_TIMEOUT"],
+      [{ LAID_OFF_CACHE_TTL: "60" }, "LAID_OFF_CACHE_TTL", "JOB_BOARD_CACHE_TTL"],
+      [{ JOBSEARCH_CACHE_TTL: "60" }, "JOBSEARCH_CACHE_TTL", "JOB_BOARD_CACHE_TTL"],
+      [{ LAID_OFF_CACHE_DIR: "/tmp/x" }, "LAID_OFF_CACHE_DIR", "JOB_BOARD_CACHE_DIR"],
+      [{ JOBSEARCH_CACHE_DIR: "/tmp/x" }, "JOBSEARCH_CACHE_DIR", "JOB_BOARD_CACHE_DIR"],
     ];
-    for (const [env, legacy, current] of cases) {
+    for (const [env, former, current] of cases) {
       const cfg = configFromEnv(env);
       expect(cfg.error).toBeNull();
-      expect(cfg.warnings.some((w) => w.includes(legacy) && w.includes(current))).toBe(true);
+      expect(cfg.warnings).toEqual([
+        `${former} is deprecated and will be removed; rename it to ${current}.`,
+      ]);
     }
   });
 
-  it("prefers the new name when both agree", () => {
-    const cfg = configFromEnv({ LAID_OFF_HTTP_TIMEOUT: "9", JOBSEARCH_HTTP_TIMEOUT: "9" });
+  it("uses the current name when a former name agrees, and warns about the former", () => {
+    const cfg = configFromEnv({ JOB_BOARD_HTTP_TIMEOUT: "9", LAID_OFF_HTTP_TIMEOUT: "9" });
     expect(cfg.http_timeout).toBe(9);
-    expect(cfg.warnings).toEqual([]);
+    expect(cfg.warnings).toHaveLength(1);
+    expect(cfg.error).toBeNull();
   });
 
-  it("errors when old and new disagree", () => {
-    const cfg = configFromEnv({ LAID_OFF_CACHE_TTL: "60", JOBSEARCH_CACHE_TTL: "30" });
-    expect(cfg.error).toContain("disagree");
-    expect(cfg.error).toContain("LAID_OFF_CACHE_TTL");
+  it("errors when names disagree", () => {
+    const cfg = configFromEnv({ JOB_BOARD_CACHE_TTL: "60", LAID_OFF_CACHE_TTL: "30" });
+    expect(cfg.error).toContain("different values");
+    expect(cfg.error).toContain("JOB_BOARD_CACHE_TTL");
   });
 
   it("rejects a non-numeric timeout instead of producing NaN", () => {
     // Number("abc") is NaN, which used to surface far from its cause as an
     // AbortSignal failure mid-request.
-    const cfg = configFromEnv({ LAID_OFF_HTTP_TIMEOUT: "abc" });
-    expect(cfg.error).toContain("LAID_OFF_HTTP_TIMEOUT");
+    const cfg = configFromEnv({ JOB_BOARD_HTTP_TIMEOUT: "abc" });
+    expect(cfg.error).toContain("JOB_BOARD_HTTP_TIMEOUT");
     expect(cfg.error).toContain("positive number");
     expect(Number.isNaN(cfg.http_timeout)).toBe(false);
   });
 
   it("rejects a zero or negative timeout", () => {
     for (const bad of ["0", "-1"]) {
-      const cfg = configFromEnv({ LAID_OFF_HTTP_TIMEOUT: bad });
+      const cfg = configFromEnv({ JOB_BOARD_HTTP_TIMEOUT: bad });
       expect(cfg.error).toContain("positive number");
     }
   });
 
   it("allows a zero cache ttl, which means disabled", () => {
-    const cfg = configFromEnv({ LAID_OFF_CACHE_TTL: "0" });
+    const cfg = configFromEnv({ JOB_BOARD_CACHE_TTL: "0" });
     expect(cfg.cache_ttl).toBe(0);
     expect(cfg.error).toBeNull();
   });
 
   it("rejects a negative cache ttl", () => {
-    const cfg = configFromEnv({ LAID_OFF_CACHE_TTL: "-5" });
+    const cfg = configFromEnv({ JOB_BOARD_CACHE_TTL: "-5" });
     expect(cfg.error).toContain("non-negative");
   });
 

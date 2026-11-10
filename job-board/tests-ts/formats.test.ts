@@ -123,12 +123,12 @@ describe("toDetail", () => {
       emptyReason: {
         kind: "no_key",
         provider: "kagi",
-        variable: "LAID_OFF_SEARCH_API_KEY",
+        variable: "JOB_BOARD_SEARCH_API_KEY",
         companies: ["Amazon"],
       },
     });
     expect(out).toContain(SYMBOLS.unreadable);
-    expect(out).toContain("LAID_OFF_SEARCH_API_KEY");
+    expect(out).toContain("JOB_BOARD_SEARCH_API_KEY");
     expect(out).not.toContain("widening titles");
   });
 });

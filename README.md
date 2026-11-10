@@ -90,7 +90,7 @@ toolchain cannot affect another's.
 | `SKILL.md is valid` | Frontmatter has a loadable `name` and a non-empty `description`; a skill missing either is never routed to |
 
 **CI never touches a live API.** Live-API tests live under
-`tests-ts/live/`, require `JOBSEARCH_LIVE_TESTS=1`, and need `LAID_OFF_SEARCH_API_KEY`;
+`tests-ts/live/`, require `JOBSEARCH_LIVE_TESTS=1`, and need `JOB_BOARD_SEARCH_API_KEY`;
 none of that is set in CI, and `tests-ts/setup.ts` blocks outbound requests in
 every non-live run. Those tests are for deliberate manual runs.
 

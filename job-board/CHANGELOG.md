@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+**Environment variables now use the `JOB_BOARD_` prefix.** Every setting moved:
+`JOB_BOARD_SEARCH_API_KEY`, `JOB_BOARD_SEARCH_PROVIDER`, `JOB_BOARD_HTTP_TIMEOUT`,
+`JOB_BOARD_CACHE_TTL`, `JOB_BOARD_CACHE_DIR`. The former names still work and print a
+deprecation warning: `LAID_OFF_*`, `JOBSEARCH_*` and `SEARCH_API_KEY`. This supersedes
+the earlier note that `LAID_OFF_*` would stay.
+
+**Conflicting names are an error that never prints a value.** If two names for one
+setting are set to different values, the run stops (exit 2) and names the variables.
+The old error printed both values, which for the API key meant printing the secret.
+The API key previously had no conflict check; it now has one.
+
 **SmartRecruiters links.** Job links stay on `jobs.smartrecruiters.com`. Only the board root
 moved to `careers.`; a `careers.` job link redirects back to the board. The reference said
 otherwise and is corrected.

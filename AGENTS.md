@@ -17,8 +17,8 @@ are recorded in `.out-of-scope/`. Read those before proposing a change.
   in `job-board/`, and commit both. CI fails on drift.
 - **Paths in docs.** Write the CLI as `<skill-dir>/dist/main.js`, never a bare
   `dist/main.js`. The validator fails on a bare path.
-- **Settings use the `LAID_OFF_` prefix.** That prefix is the skill's former name, kept
-  so existing environment setups keep working. Old names still work and warn. The
+- **Settings use the `JOB_BOARD_` prefix,** matching the skill's name. Former names
+  (`LAID_OFF_*`, `JOBSEARCH_*`, `SEARCH_API_KEY`) still work and warn. The
   test-harness flag `JOBSEARCH_LIVE_TESTS` is intentionally unchanged.
 - **Emoji.** `json` and `json-compact` never contain emoji. `md`, `detail` and
   `html` may.
