@@ -189,6 +189,11 @@ mode. Parse `jobs` for `--company`, and `signals` for `--check`.
 stops at 1,000). `partial_boards` names each one with `read` and `reported`. Then
 the count is a lower bound: say "at least N", never "N".
 
+`cached` is `true` when any board response came from the `--cache-ttl` cache, and
+`fetched_at` is the oldest fetch time among the responses used (ISO 8601). A cached
+result may be old: give the user the `fetched_at` time (for example "as of 14:05"),
+and never present cached data as just checked.
+
 `empty_reason` is `null` unless the result is empty, and then names the cause so
 you can give the right advice instead of "try widening the filters":
 

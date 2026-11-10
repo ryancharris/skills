@@ -7,6 +7,7 @@
  */
 import { DEFAULT_UA } from "./config.js";
 import * as cache from "./cache.js";
+import { recordRead } from "./provenance.js";
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 /**
  * A request failed, or returned something we could not use.
@@ -104,9 +105,11 @@ export async function request(url, options = {}) {
 export async function getJson(url, options = {}) {
     const { cacheTtl = 0, cacheDir = "", ...rest } = options;
     if (cacheTtl > 0) {
-        const hit = await cache.get(url, { ttl: cacheTtl, cacheDir });
-        if (hit !== null)
-            return hit;
+        const hit = await cache.lookup(url, { ttl: cacheTtl, cacheDir });
+        if (hit !== null) {
+            recordRead({ cached: true, at: hit.storedAt });
+            return hit.payload;
+        }
     }
     const { status, body } = await request(url, rest);
     let parsed;
@@ -116,6 +119,7 @@ export async function getJson(url, options = {}) {
     catch {
         throw new HttpError(url, status, body.slice(0, 200), "parse");
     }
+    recordRead({ cached: false, at: Date.now() });
     if (cacheTtl > 0) {
         await cache.put(url, parsed, { cacheDir });
     }
