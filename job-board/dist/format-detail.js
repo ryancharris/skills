@@ -10,7 +10,7 @@
  * read as unserious.
  */
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
-import { daysSince, parseIso } from "./models.js";
+import { daysSince, parseIso, resultHeadline, unreadableCompanies } from "./models.js";
 // ------------------------------------------------------------------- symbols
 /** A finding is "fresh" within this many days. */
 export const FRESH_DAYS = 14;
@@ -80,9 +80,9 @@ export function toDetail(jobs, options = {}) {
     const shown = limit !== null ? jobs.slice(0, limit) : jobs;
     const companies = [...new Set(jobs.map((j) => displayCompany(j.company)).filter(Boolean))].sort();
     const where = companies.slice(0, 4).join(", ") + (companies.length > 4 ? ` +${companies.length - 4} more` : "");
-    const noun = jobs.length === 1 ? "role" : "roles";
+    const unreadable = unreadableCompanies(jobs.length, options.emptyReason);
     const lines = [];
-    lines.push(`# ${SYMBOLS.hot} ${jobs.length} ${noun}${where ? ` at ${where}` : ""}`);
+    lines.push(`# ${unreadable ? SYMBOLS.unreadable : SYMBOLS.hot} ${resultHeadline(jobs.length, where, unreadable)}`);
     lines.push("");
     if (shown.length < jobs.length) {
         lines.push(`_Showing the first ${shown.length}. Raise \`--limit\` for more._`);

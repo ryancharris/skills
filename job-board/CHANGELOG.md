@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+**The headline no longer says "0 roles" for a company whose board was not read.** An unreadable
+company (no key, or no supported board) showed "# 0 roles" in markdown and "0 roles" in the
+other human formats. That reads as "Amazon has no roles", which is not known. The headline now
+says the board could not be read. A filtered result keeps "0 roles", since roles existed.
+
 **Environment variables now use the `JOB_BOARD_` prefix.** Every setting moved:
 `JOB_BOARD_SEARCH_API_KEY`, `JOB_BOARD_SEARCH_PROVIDER`, `JOB_BOARD_HTTP_TIMEOUT`,
 `JOB_BOARD_CACHE_TTL`, `JOB_BOARD_CACHE_DIR`. The former names still work and print a

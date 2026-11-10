@@ -196,3 +196,29 @@ export function httpUrl(url: string): string {
   const trimmed = url.trim();
   return /^https?:\/\//i.test(trimmed) ? trimmed : "";
 }
+
+/**
+ * Companies whose board could not be read, when a run found nothing for that
+ * reason. A headline of "0 roles" would then state a fact about the company that
+ * is false: nothing was read. Null for every other case, including "filtered",
+ * where roles existed and none matched, so "0 roles" is accurate.
+ */
+export function unreadableCompanies(
+  count: number,
+  reason: { kind: string; companies?: string[] } | null | undefined,
+): string[] | null {
+  if (count !== 0 || !reason) return null;
+  if (reason.kind !== "no_key" && reason.kind !== "no_board") return null;
+  return reason.companies && reason.companies.length > 0 ? reason.companies : null;
+}
+
+/** The headline for a result: a count, or what could not be read. */
+export function resultHeadline(count: number, where: string, unreadable: string[] | null): string {
+  if (unreadable) {
+    const names = unreadable.join(", ");
+    return `Could not read the job board${unreadable.length > 1 ? "s" : ""} for ${names}`;
+  }
+  const noun = count === 1 ? "role" : "roles";
+  return `${count} ${noun}${where ? ` at ${where}` : ""}`;
+}
+
