@@ -240,7 +240,7 @@ export function toHiringHtml(signals: HiringSignal[], queries: string[] = [], no
   }
 
   if (queries.length > 0) {
-    parts.push('<p class="meta">Next step: search for the careers page yourself —');
+    parts.push('<p class="meta">Next step for the user: search for the careers page —');
     parts.push(`<code>${escapeHtml(queries[0] as string)}</code></p>`);
   }
 
