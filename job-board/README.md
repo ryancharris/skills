@@ -80,17 +80,17 @@ reference, including `--queries`, `--list-boards` and the cache flags, see
 ## Configuration
 
 ```bash
-# Every user-facing setting shares a LAID_OFF_ prefix. The key is only needed
+# Every user-facing setting shares the JOB_BOARD_ prefix. The key is only needed
 # for the search fallback; a company with a readable ATS board works without one.
-export LAID_OFF_SEARCH_API_KEY=...
-export LAID_OFF_SEARCH_PROVIDER=kagi     # kagi (default) or brave
+export JOB_BOARD_SEARCH_API_KEY=...
+export JOB_BOARD_SEARCH_PROVIDER=kagi     # kagi (default) or brave
 
-export LAID_OFF_HTTP_TIMEOUT=20
+export JOB_BOARD_HTTP_TIMEOUT=20
 
 # Optional response cache. Off by default: stale job data is a correctness
 # risk, so opt in with a short TTL when you are running repeated searches.
-export LAID_OFF_CACHE_TTL=300           # seconds; 0 disables
-export LAID_OFF_CACHE_DIR=~/.cache/jobsearch
+export JOB_BOARD_CACHE_TTL=300           # seconds; 0 disables
+export JOB_BOARD_CACHE_DIR=~/.cache/jobsearch
 ```
 
 Caching is read-through and fails safe: any cache error falls back to a normal

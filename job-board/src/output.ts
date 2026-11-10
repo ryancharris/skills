@@ -275,7 +275,7 @@ export function toMarkdown(jobs: Job[], options: MarkdownOptions = {}): string {
       lines.push(
         `No job board found for ${reason.companies.join(", ")}. Large employers use ` +
           `custom careers sites; try a smaller company, or set ` +
-          `\`LAID_OFF_SEARCH_API_KEY\` to search indexed boards.`,
+          `\`JOB_BOARD_SEARCH_API_KEY\` to search indexed boards.`,
       );
     } else if (reason?.kind === "filtered") {
       lines.push(

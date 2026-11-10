@@ -539,13 +539,13 @@ describe("empty-state messages", () => {
       emptyReason: {
         kind: "no_key",
         provider: "kagi",
-        variable: "LAID_OFF_SEARCH_API_KEY",
+        variable: "JOB_BOARD_SEARCH_API_KEY",
         companies: ["Amazon"],
       },
     });
     expect(md).toContain("No roles found for **Amazon**");
     expect(md).toContain("cannot read directly");
-    expect(md).toContain("LAID_OFF_SEARCH_API_KEY");
+    expect(md).toContain("JOB_BOARD_SEARCH_API_KEY");
     expect(md).toContain("provider: kagi");
     expect(md).not.toContain("widening titles");
   });
@@ -555,7 +555,7 @@ describe("empty-state messages", () => {
       emptyReason: {
         kind: "no_key",
         provider: "brave",
-        variable: "LAID_OFF_SEARCH_API_KEY",
+        variable: "JOB_BOARD_SEARCH_API_KEY",
         companies: ["Amazon", "Google"],
       },
     });
@@ -569,7 +569,7 @@ describe("empty-state messages", () => {
       emptyReason: { kind: "no_board", companies: ["Acme"] },
     });
     expect(md).toContain("No job board found for Acme");
-    expect(md).toContain("LAID_OFF_SEARCH_API_KEY");
+    expect(md).toContain("JOB_BOARD_SEARCH_API_KEY");
   });
 
   it("explains a filtered-out result with the real count", () => {
@@ -595,12 +595,12 @@ describe("empty_reason in JSON", () => {
         emptyReason: {
           kind: "no_key",
           provider: "kagi",
-          variable: "LAID_OFF_SEARCH_API_KEY",
+          variable: "JOB_BOARD_SEARCH_API_KEY",
           companies: ["Amazon"],
         },
       }),
     );
     expect(payload.empty_reason.kind).toBe("no_key");
-    expect(payload.empty_reason.variable).toBe("LAID_OFF_SEARCH_API_KEY");
+    expect(payload.empty_reason.variable).toBe("JOB_BOARD_SEARCH_API_KEY");
   });
 });
