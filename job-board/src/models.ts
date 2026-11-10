@@ -79,7 +79,7 @@ export function makeJob(
     company: oneLine(partial.company),
     url: httpUrl(partial.url),
     source: partial.source,
-    location: oneLine(partial.location ?? ""),
+    location: tidyLocation(partial.location ?? ""),
     remote: partial.remote ?? null,
     department: oneLine(partial.department ?? ""),
     employment_type: oneLine(partial.employment_type ?? ""),
@@ -184,6 +184,20 @@ export const SNIPPET_MAX = 300;
  * Collapse all whitespace (newlines included) so the text stays on one line,
  * then cap its length in characters. Over the cap, the text is cut with an ellipsis.
  */
+/**
+ * Tidy a location from an ATS: drop empty comma-separated parts and collapse
+ * whitespace. SmartRecruiters sends "Hyderabad, , India" for a city with no
+ * region; this returns "Hyderabad, India". Other parts are left as the ATS sent
+ * them.
+ */
+export function tidyLocation(text: string): string {
+  return oneLine(text)
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part !== "")
+    .join(", ");
+}
+
 export function oneLine(text: string, max = Infinity): string {
   const flat = text.replace(/\s+/g, " ").trim();
   const chars = [...flat];

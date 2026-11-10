@@ -153,9 +153,9 @@ function emptyBlock(reason) {
         return [
             `${SYMBOLS.unreadable} No roles found for **${who}**. ` +
                 `${plural ? "These companies use" : "This company uses"} a careers site this ` +
-                `skill cannot read directly, and the search fallback needs an API key.`,
+                `skill cannot read directly.`,
             "",
-            `Export \`${reason.variable}\` (provider: ${reason.provider}) and re-run.`,
+            `Set \`${reason.variable}\` (provider: ${reason.provider}) and re-run to search indexed job boards instead.`,
             "",
         ];
     }

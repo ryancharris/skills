@@ -10,6 +10,8 @@
 
 import { describe, expect, it } from "vitest";
 
+import { makeJob, tidyLocation } from "../src/models.js";
+
 import { toDetail } from "../src/format-detail.js";
 import { toHtml } from "../src/format-html.js";
 import { httpUrl, makeJob, oneLine, SNIPPET_MAX, TITLE_MAX } from "../src/models.js";
@@ -118,3 +120,29 @@ describe("HTML and detail output", () => {
     expect(toDetail([job()], {})).toContain("🔗 https://jobs.example/1");
   });
 });
+
+describe("locations from ATS boards", () => {
+  it("drops an empty region from a comma list", () => {
+    expect(tidyLocation("Hyderabad, , India")).toBe("Hyderabad, India");
+    expect(tidyLocation("Austin,,  ,TX")).toBe("Austin, TX");
+  });
+
+  it("leaves a complete location exactly as sent", () => {
+    expect(tidyLocation("Santa Clara, CALIFORNIA, United States")).toBe(
+      "Santa Clara, CALIFORNIA, United States",
+    );
+    expect(tidyLocation("")).toBe("");
+  });
+
+  it("is applied to every job at ingestion", () => {
+    const job = makeJob({
+      title: "Engineer",
+      company: "Acme",
+      url: "https://jobs.example/1",
+      source: "smartrecruiters",
+      location: "Hyderabad, , India",
+    });
+    expect(job.location).toBe("Hyderabad, India");
+  });
+});
+
