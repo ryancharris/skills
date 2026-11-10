@@ -21,7 +21,7 @@ skills/
 ├── .gitignore             # repo-wide; ignores every skill's toolchain dirs
 ├── LICENSE                # MIT, covers the whole repo
 ├── README.md              # this file
-├── .github/               # CI: tests, dist-in-sync, portability, SKILL.md validity
+├── .github/               # CI: tests, dist matches src, portability, SKILL.md validity
 ├── job-board/              # one skill per directory; self-contained
 │   ├── SKILL.md           # required: frontmatter + instructions
 │   ├── dist/              # compiled JS -- what actually runs
@@ -84,9 +84,9 @@ toolchain cannot affect another's.
 
 | Job | What it proves |
 |---|---|
-| `test (node 20/22/24)` | Typecheck + the offline suite passes on the declared minimum and newer runtimes |
+| `test (node 20)`, `test (node 22)`, `test (node 24)` | Typecheck + the offline suite passes on the declared minimum and newer runtimes |
 | `dist matches src` | Committed `dist/` was rebuilt after the last `src/` change, so shipped code matches source |
-| `runs standalone` | The skill executes with **no `node_modules`** — the property that lets a harness load it without `npm install` |
+| `runs standalone (no node_modules)` | The skill executes with **no `node_modules`** — the property that lets a harness load it without `npm install` |
 | `SKILL.md is valid` | Frontmatter has a loadable `name` and a non-empty `description`; a skill missing either is never routed to |
 
 **CI never touches a live API.** Live-API tests live under
