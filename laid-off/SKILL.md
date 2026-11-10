@@ -121,6 +121,12 @@ Do not run a search. Ask one question, offering the three viable routes:
 Be explicit that open-ended discovery is out of scope for this skill. Do not
 improvise a company list and present it as comprehensive.
 
+**Never choose companies yourself, even to be helpful.** That covers names from
+memory, names from a web search, and placeholders such as "Example". Ask the question
+in your reply, as plain text, and stop until the user answers. Do not use a question
+tool for this: in a non-interactive run it returns nothing, which is when agents start
+guessing.
+
 ## Asking the user for inputs
 
 Before running, establish the user's search profile. Ask concisely, and only for
