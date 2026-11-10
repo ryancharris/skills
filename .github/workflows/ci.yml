@@ -96,6 +96,8 @@ jobs:
           node dist/main.js --version
           # Pure string building, so this proves the CLI runs without network.
           node dist/main.js --company Acme --title "chief of staff" --queries
+          # The documented invocation is absolute, so it must work from any cwd.
+          cd / && node "$RUNNER_TEMP/standalone/dist/main.js" --version
 
   # Guards against a skill losing the metadata a harness needs to load it.
   skill-metadata:
