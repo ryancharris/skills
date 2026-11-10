@@ -11,6 +11,8 @@
  *   - `description` present, non-empty, <=1024 chars (and warn above 200, the
  *     point at which routing cost grows for no benefit)
  *   - directory name matches `name` (portability convention across harnesses)
+ *   - every CLI command in SKILL.md is written as <skill-dir>/dist/main.js, so
+ *     it works from any working directory, not only the skill directory
  */
 
 import { readFileSync } from "node:fs";
@@ -74,6 +76,14 @@ if (!match) {
     }
   }
 }
+
+// A bare `node dist/main.js` only works from inside the skill directory, so every
+// command example must use the <skill-dir> placeholder and work from any cwd.
+text.split(/\r?\n/).forEach((line, i) => {
+  if (line.includes("dist/main.js") && !line.includes("<skill-dir>/dist/main.js")) {
+    errors.push(`SKILL.md line ${i + 1}: write the CLI path as <skill-dir>/dist/main.js (a bare dist/main.js depends on the working directory).`);
+  }
+});
 
 for (const warning of warnings) console.warn(`warning: ${warning}`);
 for (const error of errors) console.error(`::error::${error}`);
