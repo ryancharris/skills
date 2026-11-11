@@ -5,16 +5,16 @@ this file). Keep it to rules an agent could otherwise break.
 
 ## What this repo is
 
-A collection of Agent Skills. Today it holds one skill, `job-board/`, which finds
+A collection of Agent Skills. Today it holds one skill, `skills/productivity/job-board/`, which finds
 open roles at named companies by reading their ATS boards. Ideas already rejected
 are listed under "Already decided" in `SCOPE.md`. Read those before proposing a change.
 
 ## Constraints (do not break)
 
-- **Zero runtime dependencies.** `job-board/` ships compiled JavaScript in `dist/`
+- **Zero runtime dependencies.** `skills/productivity/job-board/` ships compiled JavaScript in `dist/`
   and runs with no `npm install`. Dev dependencies are fine. Node 20+.
 - **`dist/` is committed and must match `src/`.** Edit `src/`, run `npm run build`
-  in `job-board/`, and commit both. CI fails on drift.
+  in `skills/productivity/job-board/`, and commit both. CI fails on drift.
 - **Paths in docs.** Write the CLI as `<skill-dir>/dist/main.js`, never a bare
   `dist/main.js`. The validator fails on a bare path.
 - **Settings use the `JOB_BOARD_` prefix,** matching the skill's name. Former names
@@ -41,13 +41,13 @@ are listed under "Already decided" in `SCOPE.md`. Read those before proposing a 
 - No direct pushes to `main`. One change per PR. CI must pass before merge.
 - Do not commit scratch files, session notes, logs, generated outputs, or API keys.
 - User-visible changes get an entry under "Unreleased" in
-  `job-board/CHANGELOG.md`.
+  `skills/productivity/job-board/CHANGELOG.md`.
 - Before calling a fix done, run the documented command exactly as written. A
   passing unit test is not the same thing.
 
 ## Docs
 
-- `job-board/SKILL.md` is read by the agent. Keep it true to the code. JSON examples
+- `skills/productivity/job-board/SKILL.md` is read by the agent. Keep it true to the code. JSON examples
   must list the keys `toJson` actually emits.
-- Install commands live in `job-board/README.md`. The root README must agree with
+- Install commands live in `skills/productivity/job-board/README.md`. The root README must agree with
   them.
