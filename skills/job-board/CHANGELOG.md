@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**For a company the skill cannot read, the output now gives the sentence to quote about hiring.** The line used to guess why a board is missing ("most likely a large company") and to suggest a search. It now states what was checked, and quotes the answer: "I could not check <company> with this skill, so I cannot say whether it is hiring." On opencode, the runs that added an unsupported hiring claim fell from 8 of 16 to 5 of 48. pi did not change.
+
 **Docs: measured limit on agent hiring claims.** The README now records how often agents add unsupported hiring statements about a company the skill cannot read, and the rule that stopped it in pi. Opencode is unchanged by any rule tested.
 
 **The skill description now says what to do with no company named.** Before, a generic 'find companies hiring' request sometimes ran a web search before the skill loaded (1 in 8, then 6 in 32 runs with the old wording). The description now says to ask the user for names and not to web-search. Measured with 32 runs per version on opencode (0 of 32 failures, against 6 of 32 before) and 6 on pi; layoff routing held (opencode: 11 of 11 runs used the CLI, 10 of 11 with `--check ServiceNow`; pi: 8 of 8 with `--check ServiceNow`).

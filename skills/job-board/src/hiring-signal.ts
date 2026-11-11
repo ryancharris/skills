@@ -112,12 +112,13 @@ export function verdict(signal: HiringSignal): string {
   const { company } = signal;
 
   if (signal.unknown) {
-    // Two very different causes: a real enterprise on a bespoke career site, or
-    // a name that does not exist. Say both, don't guess.
+    // Facts only: the tool did not read a board, and it does not guess why. The quoted
+    // sentence is the answer about hiring for this company. Measured on opencode (round
+    // 19, 48 runs): runs with an unsupported hiring claim fell from 8 of 16 to 5 of 48.
     return (
-      `${company}: no job board found. Most likely a large company with its own ` +
-      `careers site, or the name didn't match. Check the spelling, or search for ` +
-      `its careers page.`
+      `${company}: no job board found on the supported platforms. Check the company ` +
+      `name. Answer about hiring, quoted exactly: "I could not check ${company} with ` +
+      `this skill, so I cannot say whether it is hiring."`
     );
   }
   if (signal.open_roles === 0) {
