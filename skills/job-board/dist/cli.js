@@ -1,7 +1,7 @@
 /**
  * Command-line interface.
  *
- * Ported from jobsearch/cli.py. Flags, exit codes and defaults must match.
+ * Ported from the earlier Python implementation (removed; see CHANGELOG). Flags, exit codes and defaults must match.
  *
  * NOTE ON `%`: Python's argparse crashed on a literal '%' in help text. Node has
  * no such trap, but `--help` is still covered by a test because an outage there
