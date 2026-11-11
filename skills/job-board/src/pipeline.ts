@@ -281,6 +281,12 @@ export async function runSearch(
     }
   } else {
     result.jobs = await searchFallback(profile, result, config, options.provider ?? null, options.searchLimit ?? 15);
+    // The fallback query does not name the company, so its results are other companies'
+    // roles. Say so, for each named company that has no readable board.
+    const unreadable = result.companies.filter((c) => !live.some((b) => b.company === c));
+    if (result.jobs.length > 0 && unreadable.length > 0) {
+      result.warnings.push(peerWarning(unreadable, result.jobs.length));
+    }
     if (result.jobs.length === 0 && result.empty_reason === null && live.length === 0) {
       result.empty_reason = { kind: "no_board", companies: result.companies };
     }
@@ -397,6 +403,20 @@ const AT = /\s+(?:at|@)\s+(.+)$/i;
  * ATS slugs make poor display names ("andurilindustries", "sodali_co"), so
  * prefer the title, which usually ends "... at <Company>".
  */
+/**
+ * Warning for results from the search fallback when a named company has no readable board.
+ * The fallback query is not restricted to the named company, so these may be other companies'
+ * roles, and the output must not present them as the named company's postings.
+ */
+export function peerWarning(companies: string[], count: number): string {
+  const names = companies.join(", ");
+  return (
+    `No readable job board for ${names}. The ${count} result(s) below came from a general ` +
+    `search of ATS boards. They were not filtered to ${names}, so they may be roles at ` +
+    `other companies. Check the company on its own careers site.`
+  );
+}
+
 export function companyFromUrl(url: string, title = ""): string {
   const match = AT.exec(title ?? "");
   if (match?.[1]) {

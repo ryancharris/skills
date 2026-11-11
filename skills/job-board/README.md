@@ -124,7 +124,7 @@ works with any provider you choose with `JOB_BOARD_SEARCH_PROVIDER`.
 
 | Provider | `JOB_BOARD_SEARCH_PROVIDER` | Get a key | What has been verified |
 |---|---|---|---|
-| Kagi (the example, default) | `kagi` | https://kagi.com/settings/api | A search with a real key ran in an earlier round (Amazon: 33 roles from ATS boards) |
+| Kagi (the example, default) | `kagi` | https://kagi.com/settings/api | A search with a real key ran in an earlier round, for `--company Amazon`: 33 roles at other companies on ATS boards (the output warns that they are not Amazon's) |
 | Brave | `brave` | https://api.search.brave.com/ | Endpoint, header and response shape against Brave's documentation, and tests. A bad key is rejected (HTTP 422). A search with a real key has not been run. |
 | Exa | `exa` | https://dashboard.exa.ai/api-keys | One real search ran with a key (the live test, one query; it returned usable results). Also checked: Exa's documented endpoint and header, and a bad key is rejected (HTTP 401). Without a key Exa answers HTTP 402 (payment), so a key is required. |
 
