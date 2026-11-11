@@ -1,0 +1,17 @@
+{
+  "name": "ryancharris-skills",
+  "owner": {
+    "name": "Ryan Harris"
+  },
+  "metadata": {
+    "description": "Skills by Ryan Harris for finding open roles on company ATS job boards."
+  },
+  "plugins": [
+    {
+      "name": "job-board",
+      "source": "./",
+      "description": "Find open roles at named companies from their ATS job boards, or check whether a company is still hiring after a layoff.",
+      "version": "2.0.0"
+    }
+  ]
+}
