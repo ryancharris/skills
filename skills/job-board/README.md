@@ -19,20 +19,20 @@ instead of scraping aggregators.
 Requires **Node.js 20+**. No runtime dependencies: build once, then the
 compiled JavaScript runs anywhere Node does.
 
-This skill is the `skills/productivity/job-board/` folder of this repo. Run these from the repo root:
+This skill is the `skills/job-board/` folder of this repo. Run these from the repo root:
 
 ```bash
 # symlink so the harness picks it up and the repo stays the source of truth
-ln -s "$PWD/skills/productivity/job-board" ~/.agents/skills/job-board
+ln -s "$PWD/skills/job-board" ~/.agents/skills/job-board
 
 # or copy just this skill
-cp -r skills/productivity/job-board ~/.agents/skills/
+cp -r skills/job-board ~/.agents/skills/
 ```
 
 pi and opencode discover `~/.agents/skills/` (both verified by listing the skill
 in each). Claude Code reads `~/.claude/skills/`; that path is not yet verified on
 this machine. Or run `node dist/main.js` from inside the skill directory. From anywhere else,
-use the absolute path (`node /path/to/skills/productivity/job-board/dist/main.js ...`). No install or
+use the absolute path (`node /path/to/skills/job-board/dist/main.js ...`). No install or
 `PYTHONPATH` is needed.
 
 ### Claude Code plugin
@@ -167,7 +167,7 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
 
 ## Tests
 
-From the skill directory (`skills/productivity/job-board/` in this repo), after `npm install`:
+From the skill directory (`skills/job-board/` in this repo), after `npm install`:
 
 ```bash
 npm test                    # unit, format, cache and end-to-end tests; NO network
@@ -196,7 +196,7 @@ never CI.
 
 ## Layout
 
-In this repo: `skills/productivity/job-board/`. Everything below is relative to that
+In this repo: `skills/job-board/`. Everything below is relative to that
 directory, which is also the skill root a harness loads.
 
 ```

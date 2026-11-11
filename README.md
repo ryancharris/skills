@@ -12,7 +12,7 @@ plus any scripts, references, and assets it needs.
 
 | Skill | Description |
 |---|---|
-| [`job-board`](skills/productivity/job-board/) | Find live job postings by querying company ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters) directly, and check whether a company is still hiring after a layoff. |
+| [`job-board`](skills/job-board/) | Find live job postings by querying company ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters) directly, and check whether a company is still hiring after a layoff. |
 
 ## Layout
 
@@ -25,19 +25,17 @@ skills/
 ├── .claude-plugin/        # Claude Code plugin + marketplace manifests
 ├── package.json           # pi package manifest; declares the skills (no dependencies)
 ├── skills/
-│   ├── productivity/      # a category; skills are grouped by kind of work
-│   │   └── job-board/     # one skill per directory; self-contained
-│   │       ├── SKILL.md           # required: frontmatter + instructions
-│   │       ├── dist/              # compiled JS -- what actually runs
-│   │       ├── src/               # TypeScript source
-│   │       ├── tests-ts/          # unit, mocked, live, parity
-│   │       ├── references/        # detailed docs loaded on demand
-│   │       ├── package.json       # dev-only deps; zero runtime deps
-│   │       ├── tsconfig.json
-│   │       └── README.md
-│   └── <category>/
-│       └── <next-skill>/
-│           └── SKILL.md
+│   ├── job-board/         # one skill per directory; self-contained
+│   │   ├── SKILL.md           # required: frontmatter + instructions
+│   │   ├── dist/              # compiled JS -- what actually runs
+│   │   ├── src/               # TypeScript source
+│   │   ├── tests-ts/          # unit, mocked, live, parity
+│   │   ├── references/        # detailed docs loaded on demand
+│   │   ├── package.json       # dev-only deps; zero runtime deps
+│   │   ├── tsconfig.json
+│   │   └── README.md
+│   └── <next-skill>/
+│       └── SKILL.md
 ```
 
 Skills are discovered recursively, so nesting is fine. The Claude Code plugin and the pi
@@ -51,7 +49,7 @@ measured to break: a shared package name lets one skill shadow another's
 imports, and same-named test files collide in a runner's flat namespace.
 
 1. **Name the package after the directory.** `job-board` ships
-   `skills/productivity/job-board/src/`; skill `pdf-tools` ships `skills/<category>/pdf-tools/src/`. Never import a
+   `skills/job-board/src/`; skill `pdf-tools` ships `skills/pdf-tools/src/`. Never import a
    sibling skill's package — copy the helper instead.
 2. **Keep `description` under 200 characters.** It is paid on every model turn
    that considers loading the skill, so it must be tight: what it does, plus
