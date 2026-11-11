@@ -51,11 +51,11 @@ known case, along with JS-rendered custom career sites.
 
 - **It breaks the zero-dependency rule.** A headless browser is a third-party runtime
   dependency. Rule 4 in the root README says a skill that needs one at runtime stops
-  being copyable on its own, which is why `skills/productivity/job-board/dist/` exists.
+  being copyable on its own, which is why `skills/job-board/dist/` exists.
 - **Workable has no usable endpoint.** Its careers pages are JS-rendered, and the
   widget API returned an empty job list for every account tested, with no public jobs
   endpoint. The accounts are listed in
-  [`skills/productivity/job-board/references/ats-endpoints.md`](skills/productivity/job-board/references/ats-endpoints.md).
+  [`skills/job-board/references/ats-endpoints.md`](skills/job-board/references/ats-endpoints.md).
 
 The skill reports the company as unreadable, names the platform, and hands over a
 discovery query. It never reports "not hiring" from a board it could not read.
@@ -78,10 +78,10 @@ companies). It was removed after measurement:
    look-alikes that identity verification later rejected.
 
 `--check` starts from a company the user cares about and asks whether it is still
-hiring, and for what. `skills/productivity/job-board/references/layoff-data.md` documents the filing data
+hiring, and for what. `skills/job-board/references/layoff-data.md` documents the filing data
 as a name generator only, with the caveats.
 
-The removed behaviour is described in the history of `skills/productivity/job-board/CHANGELOG.md`.
+The removed behaviour is described in the history of `skills/job-board/CHANGELOG.md`.
 
 ### Scraping LinkedIn or job aggregators
 

@@ -9,6 +9,6 @@
   "repository": "https://github.com/ryancharris/skills",
   "license": "MIT",
   "skills": [
-    "./skills/productivity/job-board"
+    "./skills/job-board"
   ]
 }
