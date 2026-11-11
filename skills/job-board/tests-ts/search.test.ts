@@ -412,3 +412,107 @@ describe("tunable variables use the JOB_BOARD_ prefix", () => {
     expect(cfg.error).toBeNull();
   });
 });
+
+/**
+ * BraveProvider against the contract in Brave's documentation
+ * (api-dashboard.search.brave.com, web search, checked 2026-11-11):
+ *   GET https://api.search.brave.com/res/v1/web/search?q=...&count=N   (count: max 20)
+ *   header X-Subscription-Token: <key>
+ *   response {"web": {"results": [{"title", "url", "description"}]}}
+ * No request is sent: getJson is replaced at the module boundary.
+ */
+describe("BraveProvider contract", () => {
+  const DOCS_PAYLOAD = {
+    web: {
+      results: [
+        { title: "Chief of Staff", url: "https://jobs.ashbyhq.com/acme/1", description: "Acme is hiring.", extra_snippets: ["x"] },
+        { title: "Platform Engineer", url: "https://boards.greenhouse.io/acme/2", description: "Second." },
+      ],
+    },
+  };
+
+  it("sends the query, the count and the documented key header to the documented endpoint", async () => {
+    const http = await import("../src/http.js");
+    const spy = vi.spyOn(http, "getJson").mockResolvedValue(DOCS_PAYLOAD);
+    await new search.BraveProvider("test-key").search("chief of staff", 5);
+    expect(spy).toHaveBeenCalledOnce();
+    const [url, opts] = spy.mock.calls[0] as [string, { headers: Record<string, string> }];
+    expect(url.startsWith("https://api.search.brave.com/res/v1/web/search?")).toBe(true);
+    expect(url).toContain("q=chief%20of%20staff");
+    expect(url).toContain("count=5");
+    expect(opts.headers["X-Subscription-Token"]).toBe("test-key");
+    vi.restoreAllMocks();
+  });
+
+  it("caps count at 20, the documented maximum", async () => {
+    const http = await import("../src/http.js");
+    const spy = vi.spyOn(http, "getJson").mockResolvedValue({ web: { results: [] } });
+    await new search.BraveProvider("k").search("q", 50);
+    expect((spy.mock.calls[0] as [string])[0]).toContain("count=20");
+    vi.restoreAllMocks();
+  });
+
+  it("maps web.results to url, title and snippet from description", async () => {
+    vi.spyOn(await import("../src/http.js"), "getJson").mockResolvedValue(DOCS_PAYLOAD);
+    const out = await new search.BraveProvider("k").search("q");
+    expect(out).toEqual([
+      { url: "https://jobs.ashbyhq.com/acme/1", title: "Chief of Staff", snippet: "Acme is hiring." },
+      { url: "https://boards.greenhouse.io/acme/2", title: "Platform Engineer", snippet: "Second." },
+    ]);
+    vi.restoreAllMocks();
+  });
+
+  it("respects the caller's limit", async () => {
+    vi.spyOn(await import("../src/http.js"), "getJson").mockResolvedValue(DOCS_PAYLOAD);
+    expect(await new search.BraveProvider("k").search("q", 1)).toHaveLength(1);
+    vi.restoreAllMocks();
+  });
+
+  it("returns no results for a payload without web.results, rather than guessing", async () => {
+    vi.spyOn(await import("../src/http.js"), "getJson").mockResolvedValue({ query: { original: "q" } });
+    expect(await new search.BraveProvider("k").search("q")).toEqual([]);
+    vi.restoreAllMocks();
+  });
+
+  it("says the key was rejected for 401 and 403, without echoing the key", async () => {
+    for (const status of [401, 403]) {
+      vi.spyOn(await import("../src/http.js"), "getJson").mockRejectedValue(
+        new HttpError("https://api.search.brave.com/res/v1/web/search", status, "bad token", "status"),
+      );
+      const err = await new search.BraveProvider("secret-value").search("q").catch((e: Error) => e);
+      expect((err as Error).message).toMatch(/Brave rejected the API key/);
+      expect((err as Error).message).not.toContain("secret-value");
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("says the key was rejected for Brave's real bad-token reply (422 SUBSCRIPTION_TOKEN_INVALID)", async () => {
+    // Observed: https://api.search.brave.com/res/v1/web/search with a made-up key returns
+    // HTTP 422 with {"error":{"code":"SUBSCRIPTION_TOKEN_INVALID",...,"meta":{"component":"authentication"}}}
+    const body = '{"error":{"code":"SUBSCRIPTION_TOKEN_INVALID","detail":"The provided subscription token is invalid."}}';
+    vi.spyOn(await import("../src/http.js"), "getJson").mockRejectedValue(
+      new HttpError("https://api.search.brave.com/res/v1/web/search", 422, body, "status"),
+    );
+    const err = await new search.BraveProvider("secret-value").search("q").catch((e: Error) => e);
+    expect((err as Error).message).toMatch(/Brave rejected the API key/);
+    expect((err as Error).message).not.toContain("secret-value");
+    vi.restoreAllMocks();
+  });
+
+  it("does not call a different 422 a rejected key", async () => {
+    vi.spyOn(await import("../src/http.js"), "getJson").mockRejectedValue(
+      new HttpError("https://api.search.brave.com/res/v1/web/search", 422, '{"error":{"code":"VALIDATION"}}', "status"),
+    );
+    await expect(new search.BraveProvider("k").search("q")).rejects.toThrow(/Brave search failed: HTTP 422/);
+    vi.restoreAllMocks();
+  });
+
+  it("says a rate limit was hit for 429", async () => {
+    vi.spyOn(await import("../src/http.js"), "getJson").mockRejectedValue(
+      new HttpError("https://api.search.brave.com/res/v1/web/search", 429, "", "status"),
+    );
+    await expect(new search.BraveProvider("k").search("q")).rejects.toThrow(/rate limit/);
+    vi.restoreAllMocks();
+  });
+});
+
