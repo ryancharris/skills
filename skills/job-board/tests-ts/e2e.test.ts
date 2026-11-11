@@ -63,6 +63,27 @@ function runCli(args: string[], total: number, cacheDir?: string): Promise<Run> 
 
 describe("end to end through the built CLI (synthetic board, no network)", () => {
   it(
+    "says the filtered-empty advice once in every format",
+    async () => {
+      // The board has five postings, none matching the title: a filtered result.
+      // The advice comes from the warnings block only. Repeating it in the body
+      // printed the same finding twice.
+      for (const format of ["md", "detail", "html"]) {
+        const run = await runCli(["--company", "Acme", "--title", "zzz nonexistent", "--format", format], 5);
+        expect(run.code).toBe(0);
+        expect(run.stdout.split("none matched").length - 1, format).toBe(1);
+      }
+      const json = await runCli(
+        ["--company", "Acme", "--title", "zzz nonexistent", "--format", "json-compact"],
+        5,
+      );
+      const warnings = JSON.parse(json.stdout).warnings as string[];
+      expect(warnings.filter((w) => w.includes("none matched"))).toHaveLength(1);
+    },
+    TIMEOUT,
+  );
+
+  it(
     "flags a board larger than the read limit as partial",
     async () => {
       const run = await runCli(["--company", "Acme", "--title", "engineer", "--format", "json-compact", "--limit", "2"], 1500);

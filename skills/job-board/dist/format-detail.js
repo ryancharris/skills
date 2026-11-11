@@ -169,11 +169,9 @@ function emptyBlock(reason) {
         ];
     }
     if (reason?.kind === "filtered") {
-        return [
-            `${reason.raw} open roles were found, but none matched. Try a broader ` +
-                "`--title`, another `--location`, or drop `--remote`/`--max-age-days`.",
-            "",
-        ];
+        // The advice is in the warnings block, from the pipeline. Repeating it printed the
+        // same finding twice.
+        return [];
     }
     return ["_No postings matched. Try widening titles/locations or dropping filters._", ""];
 }

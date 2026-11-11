@@ -572,10 +572,14 @@ describe("empty-state messages", () => {
     expect(md).toContain("JOB_BOARD_SEARCH_API_KEY");
   });
 
-  it("explains a filtered-out result with the real count", () => {
-    const md = toMarkdown([], { emptyReason: { kind: "filtered", raw: 124 } });
+  it("explains a filtered-out result once, from the warning the pipeline supplies", () => {
+    // The pipeline always adds this warning for a filtered result. The renderer must
+    // not add a second copy of the same advice.
+    const warning =
+      "124 open roles were found, but none matched your filters. Try a broader --title.";
+    const md = toMarkdown([], { emptyReason: { kind: "filtered", raw: 124 }, notes: [warning] });
+    expect(md.split("none matched").length - 1).toBe(1);
     expect(md).toContain("124 open roles were found");
-    expect(md).toContain("--title");
   });
 
   it("falls back to generic advice when no reason is known", () => {
