@@ -30,7 +30,7 @@ export const SETTINGS = {
         former: ["LAID_OFF_CACHE_DIR", "JOBSEARCH_CACHE_DIR"],
     },
 };
-export const SUPPORTED_PROVIDERS = ["kagi", "brave"];
+export const SUPPORTED_PROVIDERS = ["kagi", "brave", "exa"];
 /**
  * Read one setting.
  *

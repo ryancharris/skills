@@ -39,7 +39,7 @@ export const SETTINGS = {
   },
 } as const satisfies Record<string, Setting>;
 
-export const SUPPORTED_PROVIDERS = ["kagi", "brave"] as const;
+export const SUPPORTED_PROVIDERS = ["kagi", "brave", "exa"] as const;
 
 /** Result of reading one setting. */
 export interface SettingRead {

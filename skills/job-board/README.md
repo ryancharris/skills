@@ -106,7 +106,7 @@ reference, including `--queries`, `--list-boards` and the cache flags, see
 # Every user-facing setting shares the JOB_BOARD_ prefix. The key is only needed
 # for the search fallback; a company with a readable ATS board works without one.
 export JOB_BOARD_SEARCH_API_KEY=...
-export JOB_BOARD_SEARCH_PROVIDER=kagi     # kagi (default) or brave
+export JOB_BOARD_SEARCH_PROVIDER=kagi     # the example; or brave, or exa (table below)
 
 export JOB_BOARD_HTTP_TIMEOUT=20
 
@@ -115,6 +115,20 @@ export JOB_BOARD_HTTP_TIMEOUT=20
 export JOB_BOARD_CACHE_TTL=300           # seconds; 0 disables
 export JOB_BOARD_CACHE_DIR=~/.cache/job-board
 ```
+
+### Search providers
+
+The search fallback (used for companies with no readable board) needs one key,
+`JOB_BOARD_SEARCH_API_KEY`, and a provider. Kagi is the example above. The same key
+works with any provider you choose with `JOB_BOARD_SEARCH_PROVIDER`.
+
+| Provider | `JOB_BOARD_SEARCH_PROVIDER` | Get a key | What has been verified |
+|---|---|---|---|
+| Kagi (the example, default) | `kagi` | https://kagi.com/settings/api | A search with a real key ran in an earlier round (Amazon: 33 roles from ATS boards) |
+| Brave | `brave` | https://api.search.brave.com/ | Endpoint, header and response shape against Brave's documentation, and tests. A bad key is rejected (HTTP 422). A search with a real key has not been run. |
+| Exa | `exa` | https://dashboard.exa.ai/api-keys | Endpoint, header and response shape against Exa's documentation, and tests. A bad key is rejected (HTTP 401). Without a key Exa answers HTTP 402 (payment), so a key is required. A search with a real key has not been run. |
+
+An unknown provider name is an error (exit 2), not a silent fallback.
 
 Caching is read-through and fails safe: any cache error falls back to a normal
 request. Only GETs are cached — the search API is billed per call and is never
@@ -233,7 +247,7 @@ src/                  # TypeScript source
   discovery.ts        # company -> live boards
   filtering.ts        # profile expansion + filtering + ranking
   hiring-signal.ts    # "is it still hiring?" + why the WARN feed was dropped
-  search.ts           # pluggable search providers (Kagi, Brave)
+  search.ts           # pluggable search providers (Kagi, Brave, Exa)
   output.ts           # dedupe + JSON/Markdown
   http.ts / cache.ts  # fetch + retries, optional TTL cache
   html.ts             # entity decoding (Node has no built-in decoder)

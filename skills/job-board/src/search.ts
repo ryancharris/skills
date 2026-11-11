@@ -195,6 +195,77 @@ export class BraveProvider extends SearchProvider {
 }
 
 /**
+ * Exa (https://docs.exa.ai, search endpoint, checked 2026-11-11).
+ *   POST https://api.exa.ai/search, header x-api-key, JSON body
+ *   { query, type: "auto", numResults (1..100), contents: { highlights: true } }
+ *   response { results: [{ title, url, highlights: [string], summary?, text? }] }
+ * Observed with made-up keys: no key -> 402 X402_PAYMENT_REQUIRED (the request asks to be
+ * paid per call); bad key -> 401 INVALID_API_KEY. This provider never sends a request
+ * without a key, so the 402 path cannot be reached through the skill.
+ */
+export class ExaProvider extends SearchProvider {
+  readonly name = "exa";
+  private readonly ENDPOINT = "https://api.exa.ai/search";
+  private readonly apiKey: string;
+  private readonly timeout: number;
+
+  constructor(apiKey: string | null | undefined, timeout = 20_000) {
+    super();
+    if (!apiKey) {
+      throw new SearchError("JOB_BOARD_SEARCH_API_KEY is not set (Exa keys: https://dashboard.exa.ai/api-keys)");
+    }
+    this.apiKey = apiKey;
+    this.timeout = timeout;
+  }
+
+  async search(query: string, limit = 20): Promise<SearchResult[]> {
+    let payload: unknown;
+    try {
+      ({ payload } = await postJson(
+        this.ENDPOINT,
+        {
+          query,
+          type: "auto",
+          numResults: Math.min(Math.max(limit, 1), 20),
+          contents: { highlights: true },
+        },
+        { headers: { "x-api-key": this.apiKey, Accept: "application/json" }, timeout: this.timeout },
+      ));
+    } catch (err) {
+      if (err instanceof HttpError) {
+        const body = err.body ?? "";
+        if (err.status === 401 || err.status === 403 || /INVALID_API_KEY/.test(body)) {
+          throw new SearchError("Exa rejected the API key. Check JOB_BOARD_SEARCH_API_KEY.");
+        }
+        if (err.status === 402 || /X402_PAYMENT_REQUIRED/.test(body)) {
+          throw new SearchError("Exa wants payment for this request. Check that JOB_BOARD_SEARCH_API_KEY is set and has credit.");
+        }
+        if (err.status === 429) throw new SearchError("Exa rate limit hit. Retry shortly.");
+        throw new SearchError(`Exa search failed: HTTP ${err.status}`);
+      }
+      throw new SearchError(`Exa search failed: ${(err as Error)?.message ?? String(err)}`);
+    }
+
+    const results = (payload as { results?: unknown[] } | null)?.results;
+    const items = Array.isArray(results) ? (results as Record<string, unknown>[]) : [];
+    return items.slice(0, limit).map((item) => ({
+      url: typeof item.url === "string" ? item.url : "",
+      title: typeof item.title === "string" ? item.title : "",
+      snippet: exaSnippet(item),
+    }));
+  }
+}
+
+/** The first highlight, else the summary, else the start of the text. */
+function exaSnippet(item: Record<string, unknown>): string {
+  const h = item.highlights;
+  if (Array.isArray(h) && typeof h[0] === "string") return h[0];
+  if (typeof item.summary === "string") return item.summary;
+  if (typeof item.text === "string") return item.text.slice(0, 300);
+  return "";
+}
+
+/**
  * Instantiate the configured search provider.
  *
  * One key serves whichever backend is selected (JOB_BOARD_SEARCH_API_KEY), so switching
@@ -204,7 +275,8 @@ export function buildProvider(config: Config): SearchProvider {
   const name = config.search_provider;
   if (name === "kagi") return new KagiProvider(config.search_api_key, config.http_timeout * 1000);
   if (name === "brave") return new BraveProvider(config.search_api_key, config.http_timeout * 1000);
+  if (name === "exa") return new ExaProvider(config.search_api_key, config.http_timeout * 1000);
   throw new SearchError(
-    `Unknown search provider '${name}'. Supported: kagi, brave. Set JOB_BOARD_SEARCH_PROVIDER.`,
+    `Unknown search provider '${name}'. Supported: kagi, brave, exa. Set JOB_BOARD_SEARCH_PROVIDER.`,
   );
 }

@@ -38,6 +38,7 @@ const LIVE_HOSTS = [
   "bamboohr.com",
   "kagi.com",
   "api.search.brave.com",
+  "api.exa.ai",
 ];
 
 /** Hosts that must NEVER be contacted, even in live mode (search engines/ATS UIs). */

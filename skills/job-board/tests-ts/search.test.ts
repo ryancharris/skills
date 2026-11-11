@@ -516,3 +516,93 @@ describe("BraveProvider contract", () => {
   });
 });
 
+/**
+ * ExaProvider against the contract in Exa's documentation (docs.exa.ai, search,
+ * checked 2026-11-11): POST https://api.exa.ai/search, header x-api-key, body
+ * { query, type: "auto", numResults, contents: { highlights: true } }, response
+ * { results: [{ title, url, highlights: [string], summary?, text? }] }.
+ * No request is sent: postJson is replaced at the module boundary.
+ */
+describe("ExaProvider contract", () => {
+  const DOCS_PAYLOAD = {
+    results: [
+      { title: "Chief of Staff", url: "https://jobs.ashbyhq.com/acme/1", highlights: ["Acme is hiring a CoS."], id: "x" },
+      { title: "Platform Engineer", url: "https://boards.greenhouse.io/acme/2", summary: "Second summary.", text: "x" },
+    ],
+  };
+
+  it("requires a key, and says where to get one", () => {
+    expect(() => new search.ExaProvider(null)).toThrow(/JOB_BOARD_SEARCH_API_KEY.*dashboard\.exa\.ai/);
+  });
+
+  it("posts the query to the documented endpoint with the key header and highlights on", async () => {
+    const http = await import("../src/http.js");
+    const spy = vi.spyOn(http, "postJson").mockResolvedValue({ status: 200, payload: DOCS_PAYLOAD });
+    await new search.ExaProvider("test-key").search("chief of staff", 5);
+    expect(spy).toHaveBeenCalledOnce();
+    const [url, body, opts] = spy.mock.calls[0] as [string, Record<string, unknown>, { headers: Record<string, string> }];
+    expect(url).toBe("https://api.exa.ai/search");
+    expect(body).toEqual({ query: "chief of staff", type: "auto", numResults: 5, contents: { highlights: true } });
+    expect(opts.headers["x-api-key"]).toBe("test-key");
+    vi.restoreAllMocks();
+  });
+
+  it("caps numResults at 20, below the documented maximum of 100", async () => {
+    const http = await import("../src/http.js");
+    const spy = vi.spyOn(http, "postJson").mockResolvedValue({ status: 200, payload: { results: [] } });
+    await new search.ExaProvider("k").search("q", 50);
+    expect((spy.mock.calls[0] as [string, { numResults: number }])[1].numResults).toBe(20);
+    vi.restoreAllMocks();
+  });
+
+  it("maps results to url, title and a snippet: highlight first, then summary", async () => {
+    vi.spyOn(await import("../src/http.js"), "postJson").mockResolvedValue({ status: 200, payload: DOCS_PAYLOAD });
+    expect(await new search.ExaProvider("k").search("q")).toEqual([
+      { url: "https://jobs.ashbyhq.com/acme/1", title: "Chief of Staff", snippet: "Acme is hiring a CoS." },
+      { url: "https://boards.greenhouse.io/acme/2", title: "Platform Engineer", snippet: "Second summary." },
+    ]);
+    vi.restoreAllMocks();
+  });
+
+  it("respects the caller's limit and tolerates an empty or odd payload", async () => {
+    vi.spyOn(await import("../src/http.js"), "postJson").mockResolvedValue({ status: 200, payload: DOCS_PAYLOAD });
+    expect(await new search.ExaProvider("k").search("q", 1)).toHaveLength(1);
+    vi.restoreAllMocks();
+    vi.spyOn(await import("../src/http.js"), "postJson").mockResolvedValue({ status: 200, payload: { nope: 1 } });
+    expect(await new search.ExaProvider("k").search("q")).toEqual([]);
+    vi.restoreAllMocks();
+  });
+
+  it("says the key was rejected for a 401 INVALID_API_KEY, without echoing the key", async () => {
+    const body = '{"requestId":"r","error":"Invalid API key.","tag":"INVALID_API_KEY"}';
+    vi.spyOn(await import("../src/http.js"), "postJson").mockRejectedValue(
+      new HttpError("https://api.exa.ai/search", 401, body, "status"),
+    );
+    const err = await new search.ExaProvider("secret-value").search("q").catch((e: Error) => e);
+    expect((err as Error).message).toMatch(/Exa rejected the API key/);
+    expect((err as Error).message).not.toContain("secret-value");
+    vi.restoreAllMocks();
+  });
+
+  it("explains a 402 X402_PAYMENT_REQUIRED reply, rather than reporting a generic failure", async () => {
+    vi.spyOn(await import("../src/http.js"), "postJson").mockRejectedValue(
+      new HttpError("https://api.exa.ai/search", 402, '{"tag":"X402_PAYMENT_REQUIRED"}', "status"),
+    );
+    await expect(new search.ExaProvider("k").search("q")).rejects.toThrow(/Exa wants payment/);
+    vi.restoreAllMocks();
+  });
+
+  it("says a rate limit was hit for 429", async () => {
+    vi.spyOn(await import("../src/http.js"), "postJson").mockRejectedValue(
+      new HttpError("https://api.exa.ai/search", 429, "", "status"),
+    );
+    await expect(new search.ExaProvider("k").search("q")).rejects.toThrow(/rate limit/);
+    vi.restoreAllMocks();
+  });
+
+  it("is selected by JOB_BOARD_SEARCH_PROVIDER=exa and uses the one shared key", () => {
+    const provider = search.buildProvider({ ...configFromEnv({ JOB_BOARD_SEARCH_API_KEY: "e" }), search_provider: "exa" });
+    expect(provider.name).toBe("exa");
+  });
+});
+
