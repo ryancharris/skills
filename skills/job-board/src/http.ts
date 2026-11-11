@@ -1,7 +1,7 @@
 /**
  * HTTP client with retries, built on Node's native fetch.
  *
- * Ported from jobsearch/http.py. Node 20+ supplies `fetch` and
+ * Ported from the earlier Python implementation (removed; see CHANGELOG). Node 20+ supplies `fetch` and
  * `AbortSignal.timeout`, so this stays dependency-free -- the property that lets
  * the skill run with no `npm install`.
  */

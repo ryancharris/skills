@@ -1,7 +1,7 @@
 /**
  * Search-engine providers.
  *
- * Ported from jobsearch/search/__init__.py. The Kagi response shape is captured
+ * Ported from the earlier Python implementation (removed; see CHANGELOG). The Kagi response shape is captured
  * from the LIVE v1 API, not inferred:
  *
  *   {"meta": {...}, "data": {"search": [{"url","title","snippet","time","props"}]}}

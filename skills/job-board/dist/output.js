@@ -1,7 +1,7 @@
 /**
  * Serialization: dedupe plus JSON and Markdown renderers.
  *
- * Ported from jobsearch/output.py. The JSON key set and ordering are part of the
+ * Ported from the earlier Python implementation (removed; see CHANGELOG). The JSON key set and ordering are part of the
  * public contract an agent parses, so they must match the Python output.
  */
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";

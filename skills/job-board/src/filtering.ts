@@ -1,7 +1,7 @@
 /**
  * Search-profile expansion and job filtering.
  *
- * Ported from jobsearch/filtering.py. The word-boundary matching is load-bearing:
+ * Ported from the earlier Python implementation (removed; see CHANGELOG). The word-boundary matching is load-bearing:
  * plain substring tests made the synonym "PM" match the "pm" inside
  * "Develo**pm**ent", so a search for "product manager" returned Business
  * Development roles, and keyword "go" matched "MongoDB".

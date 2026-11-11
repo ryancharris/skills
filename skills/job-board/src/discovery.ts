@@ -1,7 +1,7 @@
 /**
  * Slug discovery: map a company name to live ATS board(s).
  *
- * Ported from jobsearch/discovery.py. Two behaviours are non-obvious and must
+ * Ported from the earlier Python implementation (removed; see CHANGELOG). Two behaviours are non-obvious and must
  * not regress:
  *
  *  - Diacritics fold to ASCII, so "Société Générale" -> slug `societegenerale`.
