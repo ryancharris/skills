@@ -39,6 +39,8 @@ are listed under "Already decided" in `SCOPE.md`. Read those before proposing a 
 
 - Contribution rules and the acceptance bar are in `CONTRIBUTING.md` and `SCOPE.md`.
 - No direct pushes to `main`. One change per PR. CI must pass before merge.
+- Merge with `gh pr merge <N> --merge --author-email 4997781+ryancharris@users.noreply.github.com`,
+  so the merge commit does not carry a personal email.
 - Do not commit scratch files, session notes, logs, generated outputs, or API keys.
 - User-visible changes get an entry under "Unreleased" in
   `skills/job-board/CHANGELOG.md`.
