@@ -5,7 +5,7 @@
  * public contract an agent parses, so they must match the Python output.
  */
 
-import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
+import { displayCompany, friendlyDepartment, isPartial, signalToDict, verdict } from "./hiring-signal.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, hiringBadge, jobBadges } from "./format-detail.js";
 import type { HiringSignal } from "./hiring-signal.js";
 import { daysSince, parseIso, resultHeadline, unreadableCompanies, type Board, type Job, type PartialBoard } from "./models.js";
@@ -184,23 +184,9 @@ export function toHiringJson(signals: HiringSignal[], options: HiringJsonOptions
     truncated: false,
     warnings,
     queries,
-    signals: signals.map((s) => ({
-      company: s.company,
-      open_roles: s.open_roles,
-      board_count: s.board_count,
-      recent_roles: s.recent_roles,
-      recent_days: s.recent_days,
-      hiring_recently: s.hiring_recently,
-      top_departments: s.top_departments.map((d) => ({
-        department: d.department,
-        open_roles: d.open_roles,
-      })),
-      boards: s.boards.map((b) => ({ ...b })),
-      unknown: s.unknown,
-      partial: isPartial(s),
-      board_reported_roles: s.board_reported_roles,
-      verdict: verdict(s),
-    })),
+    // One definition of a signal's JSON: signalToDict. toHiringJson used to repeat it
+    // here, and the two drifted (unknown counts were 0 in the CLI but null in the dict).
+    signals: signals.map((s) => signalToDict(s)),
   };
   return JSON.stringify(payload, null, 2);
 }
