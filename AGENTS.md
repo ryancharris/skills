@@ -7,7 +7,7 @@ this file). Keep it to rules an agent could otherwise break.
 
 A collection of Agent Skills. Today it holds one skill, `job-board/`, which finds
 open roles at named companies by reading their ATS boards. Ideas already rejected
-are recorded in `.out-of-scope/`. Read those before proposing a change.
+are listed under "Already decided" in `SCOPE.md`. Read those before proposing a change.
 
 ## Constraints (do not break)
 
