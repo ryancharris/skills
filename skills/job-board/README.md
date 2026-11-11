@@ -212,6 +212,17 @@ npm test                    # unit, format, cache and end-to-end tests; NO netwo
 npm run test:live           # real ATS APIs, opt-in
 ```
 
+To run one real search each on Brave and Exa (each is billed to its key), set the key
+for that provider in its own variable and run the live suite. Without a key the test is
+skipped and says so:
+
+```bash
+LIVE_BRAVE_API_KEY=... LIVE_EXA_API_KEY=... npm run test:live
+```
+
+The keys use their own variables, so a key you set for the skill (for example Kagi) is
+never spent by these tests.
+
 The end-to-end tests (`tests-ts/e2e.test.ts`) run the built `dist/main.js` against a
 synthetic board served by a preload module, so they exercise the shipped build with
 no network and no API keys.
