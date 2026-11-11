@@ -27,6 +27,8 @@ ln -s "$PWD/skills/job-board" ~/.agents/skills/job-board
 
 # or copy just this skill
 cp -r skills/job-board ~/.agents/skills/
+# If you ran `npm install` in the repo, the copy includes its node_modules (dev tools,
+# about 50 MB). Copy from a fresh clone, or delete node_modules from the copy.
 ```
 
 pi and opencode discover `~/.agents/skills/` (both verified by listing the skill
@@ -59,11 +61,11 @@ copy. Keep one of the two.
 
 ## Use
 
-The examples below assume you are in the skill directory (`cd job-board`). For
+The examples below assume you are in the skill directory (`cd skills/job-board`). For
 an agent harness, see the path rule in `SKILL.md`.
 
 ```bash
-# Roles at companies you name
+# Roles at companies you name (JSON by default, for agents; add --format md for a readable report)
 node dist/main.js --company Stripe --company Ramp --title "software engineer"
 
 # Is this company still hiring after its layoff, and for what?
