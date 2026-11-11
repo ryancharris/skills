@@ -11,7 +11,7 @@
  */
 import { displayCompany } from "./hiring-signal.js";
 import { resultHeadline, unreadableCompanies } from "./models.js";
-import { SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
+import { FRESH_DAYS, STALE_DAYS, SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
 import { friendlyDepartment, verdict } from "./hiring-signal.js";
 const ESCAPES = {
     "&": "&amp;",
@@ -130,7 +130,7 @@ export function toHtml(jobs, options = {}) {
             `${boardText ? `Boards read: ${boardText}` : ""}</p>`);
     }
     parts.push(`<p class="legend">${SYMBOLS.remote} remote · ${SYMBOLS.salary} pay listed · ` +
-        `${SYMBOLS.fresh} new · ${SYMBOLS.stale} possibly stale</p>`);
+        `${SYMBOLS.fresh} under ${FRESH_DAYS}d · ${SYMBOLS.stale} over ${STALE_DAYS}d</p>`);
     parts.push("</body>");
     parts.push("</html>");
     return parts.join("\n");

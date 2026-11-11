@@ -18,9 +18,10 @@ import {
   rankJobs,
   titleContains,
 } from "../src/filtering.js";
-import { displayCompany, friendlyDepartment, summarizeHiring, verdict } from "../src/hiring-signal.js";
+import { displayCompany, friendlyDepartment, signalToDict, summarizeHiring, verdict } from "../src/hiring-signal.js";
 import { daysSince, makeJob, parseIso, type Board, type Job, emptyProfile } from "../src/models.js";
 import { dedupeJobs, toHiringJson, toHiringMarkdown, toJson, toMarkdown } from "../src/output.js";
+import { toHtml } from "../src/format-html.js";
 
 // Truthy for a fixed instant so date maths is deterministic.
 const NOW = new Date("2026-11-09T12:00:00Z");
@@ -608,3 +609,31 @@ describe("empty_reason in JSON", () => {
     expect(payload.empty_reason.variable).toBe("JOB_BOARD_SEARCH_API_KEY");
   });
 });
+
+describe("a company that was never read", () => {
+  it("reports its counts as null in JSON, not zero, and not 'not hiring'", () => {
+    const d = signalToDict(summarizeHiring("Amazon", [], []));
+    expect(d.unknown).toBe(true);
+    expect(d.open_roles).toBeNull();
+    expect(d.recent_roles).toBeNull();
+    expect(d.hiring_recently).toBeNull();
+    expect(d.board_count).toBe(0);
+  });
+
+  it("keeps real counts for a company that was read", () => {
+    const d = signalToDict(summarizeHiring("Acme", [{ company: "Acme", ats: "ashby", slug: "acme", job_count: 5, url: "" }], []));
+    expect(d.unknown).toBe(false);
+    expect(d.open_roles).toBe(0);
+    expect(d.hiring_recently).toBe(false);
+  });
+});
+
+describe("HTML legend", () => {
+  it("states the same day thresholds as the markdown and detail formats", () => {
+    const html = toHtml([job()]);
+    expect(html).toContain("under 14d");
+    expect(html).toContain("over 180d");
+    expect(html).not.toContain("possibly stale");
+  });
+});
+
