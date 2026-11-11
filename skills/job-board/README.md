@@ -166,6 +166,24 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
   1,000 postings. A larger board is reported as `partial` in both role search and
   `--check`, with its true total, so the count is never silently understated.
 - Measured discovery rate on 26 modern tech companies: **85%**.
+- **Agents can still add hiring context from memory.** For a company the skill
+  cannot read (Amazon, no key), agents sometimes write "yes, still hiring" or
+  "large companies typically keep hiring". Measured on the neutral prompt "I was just
+  laid off from Amazon. Is Amazon still hiring?", 16 runs per harness:
+  - pi, without a rule: 6 of 16 runs made such a claim. With the rule below: **0 of 16**.
+  - opencode, without a rule: 8 of 16. With the rule below: 7 of 16, and with a
+    stronger wording 8 of 16. **No rule changed opencode's behaviour.**
+  - The skill's own wording did not change it either (three versions tested).
+
+  If you want the pi behaviour, add this to your own `AGENTS.md`:
+
+  ```markdown
+  # Hiring claims
+
+  Do not state whether a company is hiring, and do not describe hiring trends, unless a
+  tool you ran in this session returned that data. If a tool could not read the company,
+  say so and stop. Do not fill the gap from memory or from web results.
+  ```
 
 ## Tests
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**Docs: measured limit on agent hiring claims.** The README now records how often agents add unsupported hiring statements about a company the skill cannot read, and the rule that stopped it in pi. Opencode is unchanged by any rule tested.
+
 **The skill description now says what to do with no company named.** Before, a generic 'find companies hiring' request sometimes ran a web search before the skill loaded (1 in 8, then 6 in 32 runs with the old wording). The description now says to ask the user for names and not to web-search. Measured with 32 runs per version on opencode (0 of 32 failures, against 6 of 32 before) and 6 on pi; layoff routing held (opencode: 11 of 11 runs used the CLI, 10 of 11 with `--check ServiceNow`; pi: 8 of 8 with `--check ServiceNow`).
 
 **Brave: a rejected key is reported as a rejected key.** Brave answers a bad token with HTTP 422 and code `SUBSCRIPTION_TOKEN_INVALID`, not 401. Before, the message was 'Brave search failed: HTTP 422'. The contract (endpoint, header, response shape) is now tested against Brave's documentation. A successful search with a real Brave key has not been run.
