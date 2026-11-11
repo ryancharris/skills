@@ -30,14 +30,14 @@ cp -r skills/job-board ~/.agents/skills/
 ```
 
 pi and opencode discover `~/.agents/skills/` (both verified by listing the skill
-in each). Claude Code reads `~/.claude/skills/`; that path is not yet verified on
-this machine. Or run `node dist/main.js` from inside the skill directory. From anywhere else,
+in each). Claude Code reads `~/.claude/skills/` (its skills docs say so; not tested on this
+machine). Or run `node dist/main.js` from inside the skill directory. From anywhere else,
 use the absolute path (`node /path/to/skills/job-board/dist/main.js ...`). No install or
 `PYTHONPATH` is needed.
 
 ### Claude Code plugin
 
-This repo is a Claude Code plugin marketplace. Claude Code 2.1.275 or later:
+This repo is a Claude Code plugin marketplace. Tested with Claude Code 2.1.308:
 
 ```bash
 claude plugin marketplace add ryancharris/skills

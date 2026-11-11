@@ -12,7 +12,30 @@ plus any scripts, references, and assets it needs.
 
 | Skill | Description |
 |---|---|
-| [`job-board`](skills/job-board/) | Find live job postings by querying company ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters) directly, and check whether a company is still hiring after a layoff. |
+| [`job-board`](skills/job-board/) | Find live job postings by querying company ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters, BambooHR) directly, and check whether a company is still hiring after a layoff. |
+
+It needs company names: it cannot find companies that are hiring. Large employers with
+their own career sites (Amazon, Google, Meta) need a search key; see the skill README.
+
+## Install job-board
+
+Requires Node.js 20+. No runtime dependencies.
+
+Claude Code:
+
+```bash
+claude plugin marketplace add ryancharris/skills
+claude plugin install job-board@ryancharris-skills
+```
+
+pi:
+
+```bash
+pi install git:github.com/ryancharris/skills
+```
+
+Both need the repo to be public, or GitHub access to it. Other options (symlink, copy,
+or running the CLI directly) are in [`skills/job-board/README.md`](skills/job-board/README.md).
 
 ## Layout
 
@@ -38,7 +61,7 @@ skills/
 │       └── SKILL.md
 ```
 
-Skills are discovered recursively, so nesting is fine. The Claude Code plugin and the pi
+The Claude Code plugin and the pi
 package each list skill paths in their manifests (`.claude-plugin/plugin.json` and
 `package.json`), so a new skill must be added to both.
 
@@ -48,8 +71,8 @@ Four rules keep skills independent. They exist because the alternative was
 measured to break: a shared package name lets one skill shadow another's
 imports, and same-named test files collide in a runner's flat namespace.
 
-1. **Name the package after the directory.** `job-board` ships
-   `skills/job-board/src/`; skill `pdf-tools` ships `skills/pdf-tools/src/`. Never import a
+1. **Name the package after the directory.** The `job-board` skill's package is
+   `job-board-skill`; the skill ships its source in `skills/job-board/src/`. Never import a
    sibling skill's package — copy the helper instead.
 2. **Keep `description` under 200 characters.** It is paid on every model turn
    that considers loading the skill, so it must be tight: what it does, plus
@@ -95,7 +118,7 @@ toolchain cannot affect another's.
 | `SKILL.md is valid` | Frontmatter has a loadable `name` and a non-empty `description`; a skill missing either is never routed to |
 
 **CI never touches a live API.** Live-API tests live under
-`tests-ts/live/`, require `JOBSEARCH_LIVE_TESTS=1`, and need `JOB_BOARD_SEARCH_API_KEY`;
+`tests-ts/live/`, require `JOBSEARCH_LIVE_TESTS=1` (the flag keeps its former name; see [`AGENTS.md`](AGENTS.md)), and need `JOB_BOARD_SEARCH_API_KEY`;
 none of that is set in CI, and `tests-ts/setup.ts` blocks outbound requests in
 every non-live run. Those tests are for deliberate manual runs.
 
