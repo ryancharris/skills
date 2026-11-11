@@ -2,14 +2,14 @@
   "name": "ryancharris-skills",
   "version": "2.0.0",
   "private": true,
-  "description": "Skills by Ryan Harris. The job-board skill is in skills/productivity/job-board/.",
+  "description": "Skills by Ryan Harris. The job-board skill is in skills/job-board/.",
   "license": "MIT",
   "keywords": [
     "pi-package"
   ],
   "pi": {
     "skills": [
-      "./skills/productivity/job-board"
+      "./skills/job-board"
     ]
   }
 }
