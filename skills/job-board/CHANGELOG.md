@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**JSON change: a company that was never read has `null` counts.** For `--check` with `unknown: true`, `open_roles`, `recent_roles` and `hiring_recently` were `0` and `false`. Both read as an answer: zero roles, not hiring. They are now `null`. `board_count` is still `0`, which is a real count. The HTML legend uses the same day thresholds as the other formats.
+
 **Docs: the test commands and the example directory are fixed.** The root README and the skill README still said `cd job-board` after the move. The skill README now notes that a copy includes `node_modules` if you ran `npm install`, and that the first example prints JSON.
 
 **A filtered-empty result says its advice once.** Markdown, detail and HTML printed "N open roles were found, but none matched" twice, once from the warnings block and once in the body. The warning is kept; the body copy is gone. The empty line that followed it is gone too.
