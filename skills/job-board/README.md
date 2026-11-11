@@ -192,6 +192,10 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
     opencode, runs with an unsupported hiring claim fell from 8 of 16 to 5 of 48
     (three batches; the middle batch was 4 of 16). Web searches fell from 4 of 16 to
     1 of 48. pi was unchanged (6 of 16), so pi still needs the rule above.
+  - **What did not reduce it further:** adding "with nothing added" to the quoted
+    sentence (4 of 32), and adding the AGENTS rule on top of the quoted sentence
+    (5 of 16). The residual on opencode is about 10%, and no variant tested has
+    reached zero.
 
   If you want the pi behaviour, add this to your own `AGENTS.md`:
 
