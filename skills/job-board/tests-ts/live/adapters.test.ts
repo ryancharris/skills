@@ -37,10 +37,14 @@ describe("adapters", () => {
     expect(jobs.some((j) => j.company === "Stripe")).toBe(true);
   });
 
-  it("Greenhouse labels every posting with a department", async () => {
+  // The contract (SKILL.md, "Departments are vendor-specific"): every posting is kept;
+  // one without a department carries an empty string, which the summary groups as
+  // "unspecified". It is not dropped. Stripe had one unlabelled posting on 2026-11-11,
+  // so 'every posting has a department' was a stale expectation.
+  it("Greenhouse keeps every posting; a missing department is an empty string, not a drop", async () => {
     const jobs = await new GreenhouseAdapter(TIMEOUT).fetch("stripe");
-    const unlabeled = jobs.filter((j) => !j.department);
-    expect(unlabeled).toHaveLength(0);
+    expect(jobs.length).toBeGreaterThan(100);
+    expect(jobs.every((j) => typeof j.department === "string")).toBe(true);
     expect(new Set(jobs.map((j) => j.department)).size).toBeGreaterThanOrEqual(2);
   });
 
