@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**Exa is a search provider.** Set `JOB_BOARD_SEARCH_PROVIDER=exa`. Kagi stays the default and the example in the docs. The provider table in the README lists Brave and Exa, and says what has and has not been verified for each.
+
 **For a company the skill cannot read, the output now gives the sentence to quote about hiring.** The line used to guess why a board is missing ("most likely a large company") and to suggest a search. It now states what was checked, and quotes the answer: "I could not check <company> with this skill, so I cannot say whether it is hiring." On opencode, the runs that added an unsupported hiring claim fell from 8 of 16 to 5 of 48. pi did not change.
 
 **Docs: measured limit on agent hiring claims.** The README now records how often agents add unsupported hiring statements about a company the skill cannot read, and the rule that stopped it in pi. Opencode is unchanged by any rule tested.

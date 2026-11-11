@@ -320,11 +320,11 @@ remembering one gives the other:
 
 ```bash
 export JOB_BOARD_SEARCH_API_KEY=...      # the key
-export JOB_BOARD_SEARCH_PROVIDER=kagi    # kagi (default) or brave
+export JOB_BOARD_SEARCH_PROVIDER=kagi    # kagi (default), brave, or exa
 ```
 
-Key URLs: Kagi https://kagi.com/settings/api · Brave
-https://api.search.brave.com/
+Key URLs: Kagi https://kagi.com/settings/api · Brave https://api.search.brave.com/
+· Exa https://dashboard.exa.ai/api-keys
 
 An unknown provider is a hard error (exit 2), not a silent fallback — searching
 with the wrong engine would bill the wrong account. The same applies if two names
@@ -349,5 +349,5 @@ See `references/providers.md` for the exact API contracts.
 ## Reference files
 
 - `references/ats-endpoints.md` — verified endpoints and payload shapes.
-- `references/providers.md` — Kagi/Brave API contracts and error codes.
+- `references/providers.md` — Kagi, Brave and Exa API contracts and error codes.
 - `references/layoff-data.md` — WARN dataset schema and caveats.

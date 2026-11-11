@@ -11,7 +11,7 @@ switching backends is a one-variable change:
 
 ```bash
 export JOB_BOARD_SEARCH_API_KEY=...      # your key, for whichever provider
-export JOB_BOARD_SEARCH_PROVIDER=kagi    # kagi (default) or brave
+export JOB_BOARD_SEARCH_PROVIDER=kagi    # kagi (default), brave, or exa
 ```
 
 An unknown provider fails with exit 2 rather than falling back to kagi: a silent
@@ -84,6 +84,30 @@ Accept: application/json
 ```
 
 Results at `web.results[]` with `url`, `title`, `description`.
+
+A bad token is answered with HTTP 422 and code `SUBSCRIPTION_TOKEN_INVALID` (observed
+with a made-up key). The provider maps that to "Brave rejected the API key".
+
+## Exa
+
+Documented at https://docs.exa.ai (search endpoint):
+
+```
+POST https://api.exa.ai/search
+x-api-key: $JOB_BOARD_SEARCH_API_KEY
+Content-Type: application/json
+
+{"query": "...", "type": "auto", "numResults": 20, "contents": {"highlights": true}}
+```
+
+Results at `results[]` with `url`, `title`, and `highlights` (an array of strings); the
+snippet is the first highlight, else `summary`, else the start of `text`. `numResults`
+is capped at 20 here; the documented maximum is 100.
+
+Observed with made-up keys: a bad key gets HTTP 401 with `tag: INVALID_API_KEY`; no key
+gets HTTP 402 with `tag: X402_PAYMENT_REQUIRED`, which asks the caller to pay per request.
+The provider never sends a request without a key, so the 402 path is not reachable
+through the skill.
 
 ## Adding a provider
 
