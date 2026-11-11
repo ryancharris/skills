@@ -35,6 +35,28 @@ this machine. Or run `node dist/main.js` from inside the skill directory. From a
 use the absolute path (`node /path/to/skills/productivity/job-board/dist/main.js ...`). No install or
 `PYTHONPATH` is needed.
 
+### Claude Code plugin
+
+This repo is a Claude Code plugin marketplace. Claude Code 2.1.275 or later:
+
+```bash
+claude plugin marketplace add ryancharris/skills
+claude plugin install job-board@ryancharris-skills
+```
+
+### pi package
+
+This repo is also a pi package. The skill is declared in the root `package.json`:
+
+```bash
+pi install git:github.com/ryancharris/skills
+pi list                 # confirm; pi remove git:github.com/ryancharris/skills to undo
+```
+
+Both routes need the repo to be public, or GitHub access to it. If the skill is also
+symlinked into `~/.agents/skills/`, pi loads that copy in preference to the package
+copy. Keep one of the two.
+
 ## Use
 
 The examples below assume you are in the skill directory (`cd job-board`). For

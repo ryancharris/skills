@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-**The skill moved to `skills/productivity/job-board/`.** The repo now groups skills by category, as `mattpocock/skills` does. If you symlinked the skill into `~/.agents/skills/job-board`, repoint it to the new folder. Nothing else changes for users.
+**The skill moved to `skills/productivity/job-board/`.** The repo now follows the layout of `mattpocock/skills`: skills sit under a category folder, and the Claude Code plugin and pi package list each skill's path. If you symlinked the skill into `~/.agents/skills/job-board`, repoint it to the new folder. Nothing else changes for users.
+
+**Installable from Claude Code and pi.** The repo root is now a Claude Code plugin marketplace and a pi package. `claude plugin marketplace add ryancharris/skills`, then `claude plugin install job-board@ryancharris-skills`; or `pi install git:github.com/ryancharris/skills`. The plugin root is the repo root, so no npm install runs on install.
 
 **Less repetition when a key is missing, and tidier locations.** The missing-key advice was said
 three times in the unreadable-company output. It is now said once: the warning names the variable and
