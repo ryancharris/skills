@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**Brave: a rejected key is reported as a rejected key.** Brave answers a bad token with HTTP 422 and code `SUBSCRIPTION_TOKEN_INVALID`, not 401. Before, the message was 'Brave search failed: HTTP 422'. The contract (endpoint, header, response shape) is now tested against Brave's documentation. A successful search with a real Brave key has not been run.
+
 **JSON change: a company that was never read has `null` counts.** For `--check` with `unknown: true`, `open_roles`, `recent_roles` and `hiring_recently` were `0` and `false`. Both read as an answer: zero roles, not hiring. They are now `null`. `board_count` is still `0`, which is a real count. The HTML legend uses the same day thresholds as the other formats.
 
 **Docs: the test commands and the example directory are fixed.** The root README and the skill README still said `cd job-board` after the move. The skill README now notes that a copy includes `node_modules` if you ran `npm install`, and that the first example prints JSON.

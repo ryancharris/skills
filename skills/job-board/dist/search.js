@@ -138,9 +138,14 @@ export class BraveProvider extends SearchProvider {
         }
         catch (err) {
             if (err instanceof HttpError) {
-                if (err.status === 401 || err.status === 403) {
+                // Brave answers a bad token with HTTP 422 and code SUBSCRIPTION_TOKEN_INVALID
+                // (observed 2026-11-11 with a made-up key). 401/403 are kept for safety.
+                const badToken = /SUBSCRIPTION_TOKEN_INVALID/.test(err.body);
+                if (err.status === 401 || err.status === 403 || badToken) {
                     throw new SearchError("Brave rejected the API key. Check JOB_BOARD_SEARCH_API_KEY.");
                 }
+                // 429 is the standard HTTP rate-limit status; Brave's own docs were not readable
+                // (client-rendered), so this one is not verified against Brave.
                 if (err.status === 429) {
                     throw new SearchError("Brave rate limit hit. Retry shortly.");
                 }
