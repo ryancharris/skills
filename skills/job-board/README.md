@@ -126,7 +126,7 @@ works with any provider you choose with `JOB_BOARD_SEARCH_PROVIDER`.
 |---|---|---|---|
 | Kagi (the example, default) | `kagi` | https://kagi.com/settings/api | A search with a real key ran in an earlier round (Amazon: 33 roles from ATS boards) |
 | Brave | `brave` | https://api.search.brave.com/ | Endpoint, header and response shape against Brave's documentation, and tests. A bad key is rejected (HTTP 422). A search with a real key has not been run. |
-| Exa | `exa` | https://dashboard.exa.ai/api-keys | Endpoint, header and response shape against Exa's documentation, and tests. A bad key is rejected (HTTP 401). Without a key Exa answers HTTP 402 (payment), so a key is required. A search with a real key has not been run. |
+| Exa | `exa` | https://dashboard.exa.ai/api-keys | One real search ran with a key (the live test, one query; it returned usable results). Also checked: Exa's documented endpoint and header, and a bad key is rejected (HTTP 401). Without a key Exa answers HTTP 402 (payment), so a key is required. |
 
 An unknown provider name is an error (exit 2), not a silent fallback.
 
