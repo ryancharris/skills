@@ -207,13 +207,14 @@ export function toMarkdown(jobs, options = {}) {
                 `\`JOB_BOARD_SEARCH_API_KEY\` to search indexed boards.`);
         }
         else if (reason?.kind === "filtered") {
-            lines.push(`${reason.raw} open roles were found, but none matched. Try a broader ` +
-                `--title, another --location, or drop --remote/--max-age-days.`);
+            // The advice is already in the warnings block above, from the pipeline. Saying
+            // it again here printed the same finding twice.
         }
         else {
             lines.push("_No postings matched. Try widening titles/locations or dropping filters._");
         }
-        lines.push("");
+        if (reason?.kind !== "filtered")
+            lines.push("");
     }
     if (shown.length > 0) {
         lines.push(`_${SYMBOLS.remote} remote · ${SYMBOLS.salary} pay listed · ` +
