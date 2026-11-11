@@ -1,6 +1,6 @@
 ---
 name: job-board
-description: After a layoff, check if named companies are still hiring or find their open roles from their ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters). Does not search or find companies.
+description: After a layoff, check named companies' hiring on their ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters). With no company named, ask the user for names; do not web-search.
 license: MIT
 compatibility: Node.js 20+ (no runtime dependencies). Optional JOB_BOARD_SEARCH_API_KEY for search-engine fallback.
 metadata:
