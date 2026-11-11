@@ -74,8 +74,10 @@ describe("adapters", () => {
     expect(await new SmartRecruitersAdapter(TIMEOUT).isValidSlug("zzzznotarealcompany123456")).toBe(false);
   });
 
+  // Tenant chosen 2026-11-11: the old fixture ("test") now redirects to an HTML page.
+  // Re-check the tenant with curl before changing it again.
   it("BambooHR returns a real payload", async () => {
-    const jobs = await new BambooHRAdapter(TIMEOUT).fetch("test");
+    const jobs = await new BambooHRAdapter(TIMEOUT).fetch("walmart");
     expect(jobs.length).toBeGreaterThan(0);
     expect(jobs[0]?.source).toBe("bamboohr");
     expect(jobs.some((j) => j.department)).toBe(true);
