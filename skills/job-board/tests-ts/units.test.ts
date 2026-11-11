@@ -611,20 +611,25 @@ describe("empty_reason in JSON", () => {
 });
 
 describe("a company that was never read", () => {
-  it("reports its counts as null in JSON, not zero, and not 'not hiring'", () => {
-    const d = signalToDict(summarizeHiring("Amazon", [], []));
-    expect(d.unknown).toBe(true);
-    expect(d.open_roles).toBeNull();
-    expect(d.recent_roles).toBeNull();
-    expect(d.hiring_recently).toBeNull();
-    expect(d.board_count).toBe(0);
+  // These go through toHiringJson, the function the CLI calls for --check --format json.
+  // An earlier version tested signalToDict directly and passed while the CLI still
+  // printed zeros: the test checked a path no user reaches.
+  it("reports its counts as null in the CLI's JSON, not zero, and not 'not hiring'", () => {
+    const payload = JSON.parse(toHiringJson([summarizeHiring("Amazon", [], [])]));
+    const s = payload.signals[0];
+    expect(s.unknown).toBe(true);
+    expect(s.open_roles).toBeNull();
+    expect(s.recent_roles).toBeNull();
+    expect(s.hiring_recently).toBeNull();
+    expect(s.board_count).toBe(0);
   });
 
-  it("keeps real counts for a company that was read", () => {
-    const d = signalToDict(summarizeHiring("Acme", [{ company: "Acme", ats: "ashby", slug: "acme", job_count: 5, url: "" }], []));
-    expect(d.unknown).toBe(false);
-    expect(d.open_roles).toBe(0);
-    expect(d.hiring_recently).toBe(false);
+  it("keeps real counts in the CLI's JSON for a company that was read", () => {
+    const board = { company: "Acme", ats: "ashby", slug: "acme", job_count: 5, url: "" };
+    const s = JSON.parse(toHiringJson([summarizeHiring("Acme", [board], [])])).signals[0];
+    expect(s.unknown).toBe(false);
+    expect(s.open_roles).toBe(0);
+    expect(s.hiring_recently).toBe(false);
   });
 });
 
