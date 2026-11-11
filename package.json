@@ -10,6 +10,9 @@
   "pi": {
     "skills": [
       "./skills/job-board"
+    ],
+    "extensions": [
+      "./skills/job-board/pi/hiring-rule.ts"
     ]
   }
 }

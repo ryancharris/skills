@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**pi: the package now ships an extension that keeps the model from claiming a company is hiring when the skill could not read it.** After the skill's CLI runs in a pi session, the extension adds the rule to the model's later requests in that session. Measured on "I was just laid off from Amazon. Is Amazon still hiring?" (one model, 16 runs per arm, round 21): runs with a hiring claim fell from 6 of 16 to 0 of 16 (one-sided Fisher p = 0.009). Install with `pi install git:github.com/ryancharris/skills`; the symlink install gives the skill only. opencode is unchanged: a plugin for it measured 2 of 16 with and without the rule, so it was not shipped. See issue #57.
+
 **Exa is a search provider.** Set `JOB_BOARD_SEARCH_PROVIDER=exa`. Kagi stays the default and the example in the docs. The provider table in the README lists Brave and Exa, and says what has and has not been verified for each.
 
 **For a company the skill cannot read, the output now gives the sentence to quote about hiring.** The line used to guess why a board is missing ("most likely a large company") and to suggest a search. It now states what was checked, and quotes the answer: "I could not check <company> with this skill, so I cannot say whether it is hiring." On opencode, the runs that added an unsupported hiring claim fell from 8 of 16 to 5 of 48. pi did not change.
