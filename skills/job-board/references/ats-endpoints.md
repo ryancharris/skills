@@ -161,10 +161,13 @@ why the upstream advice to use them is misleading.
 
 ## Measured reliability
 
-Probing 26 modern tech companies (Stripe, Ramp, Notion, Figma, Databricks,
-Anthropic, OpenAI, …):
+Probing 26 tech company names, fixed before the run (`scripts/measure-discovery.mjs`,
+round 21; the names are in that file):
 
-- **22/26 (85%)** resolved to a live board.
-- Greenhouse 16, Ashby 7, **Lever 0**, SmartRecruiters 0.
+- **23/26 (88.5%; 95% interval 71–96%)** resolved to a live board. The misses (Rippling,
+  Monday.com, Wiz) have no board under the candidate slugs on any supported ATS.
+- 24 boards: Greenhouse 16, Ashby 7, SmartRecruiters 1 (Canva), **Lever 0**.
 - Some companies have a stale board on one ATS shadowing the real one
-  (`ramp`: greenhouse 1 job vs ashby 169). Rank boards by posting count.
+  (`ramp`: greenhouse 1 job vs ashby 176). Rank boards by posting count.
+- An earlier 22/26 figure used a sample that is not archived and cannot be reproduced;
+  it is replaced by this measurement.
