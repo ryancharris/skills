@@ -32,7 +32,8 @@ below before running anything.
 
 Large enterprises (Amazon, Google, Meta, Microsoft) have no supported board, but
 they **do** work when `JOB_BOARD_SEARCH_API_KEY` is set: the search fallback returns real
-postings from ATS-hosted boards at those companies' peers. Without a key you get
+postings from ATS-hosted boards at those companies' peers. The output warns that these
+may be other companies' roles, because the search does not filter to the named company. Without a key you get
 a ready-made query for the user to run, not an empty result.
 
 Tell the user which case they are in **before** they invest effort, and offer the
@@ -269,7 +270,8 @@ board in `--check`):
 - **Enterprises use bespoke career sites.** Amazon, Microsoft, Meta, Intel,
   Walmart and Google resolve on **none** of the supported ATSes, so direct board
   reading returns nothing. With `JOB_BOARD_SEARCH_API_KEY` set the search fallback fills
-  the gap (verified: Amazon → 33 Chief-of-Staff roles from ATS boards). Without
+  the gap. A search returned 33 Chief-of-Staff roles at other companies on ATS boards, not
+  Amazon's own postings, and the output now says so. Without
   a key, hand the user the generated `site:` query.
 - **BambooHR is supported but per-tenant.** `<company>.bamboohr.com/careers/list`
   returns JSON, so it works by slug probing only — never via `site:`.

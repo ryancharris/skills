@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**`--company` with no readable board: the output now says the results are not that company's postings.** The search fallback's query does not name the company, so `--company Amazon` returned roles at other companies on ATS boards with no warning. Those results are unchanged, and each one is now preceded by a warning naming the company and saying the roles may be at other companies. Covered by `tests-ts/fallback-peers.test.ts`.
+
 **pi: the package now ships an extension that keeps the model from claiming a company is hiring when the skill could not read it.** After the skill's CLI runs in a pi session, the extension adds the rule to the model's later requests in that session. Measured on "I was just laid off from Amazon. Is Amazon still hiring?" (one model, 16 runs per arm, round 21): runs with a hiring claim fell from 6 of 16 to 0 of 16 (one-sided Fisher p = 0.009). Install with `pi install git:github.com/ryancharris/skills`; the symlink install gives the skill only. opencode is unchanged: a plugin for it measured 2 of 16 with and without the rule, so it was not shipped. See issue #57.
 
 **Exa is a search provider.** Set `JOB_BOARD_SEARCH_PROVIDER=exa`. Kagi stays the default and the example in the docs. The provider table in the README lists Brave and Exa, and says what has and has not been verified for each.
