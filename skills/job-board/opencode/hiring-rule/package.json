@@ -1,8 +1,0 @@
-{
-  "name": "job-board-opencode-hiring-rule",
-  "version": "1.0.0",
-  "private": true,
-  "description": "opencode plugin: states the job-board hiring rule in the build agent's system prompt.",
-  "type": "module",
-  "main": "index.js"
-}
