@@ -179,7 +179,9 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
 - **Boards paginate**: SmartRecruiters returns 100 per page and the read stops at
   1,000 postings. A larger board is reported as `partial` in both role search and
   `--check`, with its true total, so the count is never silently understated.
-- Measured discovery rate on 26 modern tech companies: **85%**.
+- Measured discovery rate: **23 of 26 (88.5%; 95% interval 71–96%)** on a fixed sample of
+  26 tech company names, run with `scripts/measure-discovery.mjs` (round 21). The three
+  misses (Rippling, Monday.com, Wiz) have no board under the slugs the skill tries.
 - **Agents can still add hiring context from memory.** For a company the skill
   cannot read (Amazon, no key), agents sometimes write "yes, still hiring" or
   "large companies typically keep hiring". Measured on the neutral prompt "I was just
