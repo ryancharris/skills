@@ -144,13 +144,16 @@ export function verdict(signal: HiringSignal): string {
 }
 
 export function signalToDict(signal: HiringSignal): Record<string, unknown> {
+  // An unknown company was never read. Its counts are absent (null), not zero, and
+  // 'hiring_recently: false' would read as 'not hiring'. board_count stays a real count.
+  const unread = signal.unknown;
   return {
     company: signal.company,
-    open_roles: signal.open_roles,
+    open_roles: unread ? null : signal.open_roles,
     board_count: signal.board_count,
-    recent_roles: signal.recent_roles,
+    recent_roles: unread ? null : signal.recent_roles,
     recent_days: signal.recent_days,
-    hiring_recently: signal.hiring_recently,
+    hiring_recently: unread ? null : signal.hiring_recently,
     top_departments: signal.top_departments.map((d) => ({
       department: d.department,
       open_roles: d.open_roles,

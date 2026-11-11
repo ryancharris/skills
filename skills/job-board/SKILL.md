@@ -195,6 +195,8 @@ mode. Parse `jobs` for `--company`, and `signals` for `--check`.
 }
 ```
 
+For a company with `unknown: true`, `open_roles`, `recent_roles` and `hiring_recently` are `null`: no board was read, so there is no count and no hiring answer. `board_count: 0` is a real count.
+
 `count` is how many jobs are in this payload; `total` is how many matched before
 `--limit`. Check `truncated` before saying "there are N roles".
 

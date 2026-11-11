@@ -13,7 +13,7 @@
 import { displayCompany } from "./hiring-signal.js";
 import { parseIso, resultHeadline, unreadableCompanies, type Board, type Job } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
-import { SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
+import { FRESH_DAYS, STALE_DAYS, SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
 import type { HiringSignal } from "./hiring-signal.js";
 import { friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 
@@ -155,7 +155,7 @@ export function toHtml(jobs: Job[], options: HtmlOptions = {}): string {
 
   parts.push(
     `<p class="legend">${SYMBOLS.remote} remote · ${SYMBOLS.salary} pay listed · ` +
-      `${SYMBOLS.fresh} new · ${SYMBOLS.stale} possibly stale</p>`,
+      `${SYMBOLS.fresh} under ${FRESH_DAYS}d · ${SYMBOLS.stale} over ${STALE_DAYS}d</p>`,
   );
   parts.push("</body>");
   parts.push("</html>");
