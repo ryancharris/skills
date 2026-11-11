@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**Docs: the cache example now uses `~/.cache/job-board`** (it still said `~/.cache/jobsearch`). Source comments that pointed at the removed Python files now say so.
+
 **Docs: the root README now has install commands and lists BambooHR.** It also says that the skill needs company names, and that the Claude Code path is documented but not tested on the maintainer's machine. The Claude Code version is the one tested.
 
 **The skill moved to `skills/job-board/`.** The repo root is now the Claude Code plugin root and the pi package root, and each manifest lists the skill by path. If you symlinked the skill into `~/.agents/skills/job-board`, repoint it to the new folder. Nothing else changes for users.

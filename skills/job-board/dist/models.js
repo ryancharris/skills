@@ -1,7 +1,7 @@
 /**
  * Shared data types for the job-board skill.
  *
- * Ported from jobsearch/models.py. Field names are part of the public JSON
+ * Ported from the earlier Python implementation (removed; see CHANGELOG). Field names are part of the public JSON
  * contract, so they must match the Python implementation exactly.
  */
 export function emptyProfile() {

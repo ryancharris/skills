@@ -1,7 +1,7 @@
 /**
  * Live network tests against real ATS endpoints.
  *
- * Ported from tests/test_live.py. Run with JOBSEARCH_LIVE_TESTS=1.
+ * Ported from the earlier Python implementation (removed; see CHANGELOG). Run with JOBSEARCH_LIVE_TESTS=1.
  *
  * These exist because the vendor quirks that actually broke this skill (identity
  * collisions, Ashby's 403 without a User-Agent, SmartRecruiters' 200-on-missing-
