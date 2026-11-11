@@ -1,7 +1,7 @@
 /**
  * Post-layoff hiring signal: "they cut staff -- are they still hiring?"
  *
- * Ported from jobsearch/hiring_signal.py. The design rationale is preserved
+ * Ported from the earlier Python implementation (removed; see CHANGELOG). The design rationale is preserved
  * there and in references/layoff-data.md: an earlier version seeded searches
  * from WARN filings, which failed because WARN cannot express "tech" and its
  * largest filers resolve on none of the supported ATSes.

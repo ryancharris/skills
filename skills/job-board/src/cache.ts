@@ -1,7 +1,7 @@
 /**
  * On-disk response cache for ATS lookups.
  *
- * Ported from jobsearch/cache.py. Deliberately simple and opt-in:
+ * Ported from the earlier Python implementation (removed; see CHANGELOG). Deliberately simple and opt-in:
  *
  *  - Disabled by default (ttl 0), because stale data in a job search is a
  *    correctness risk and the caller should choose it explicitly.

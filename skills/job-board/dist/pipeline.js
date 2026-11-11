@@ -1,7 +1,7 @@
 /**
  * Pipeline orchestration: discover -> fetch -> filter -> rank -> emit.
  *
- * Ported from jobsearch/pipeline.py. Two behaviours here were bug fixes and must
+ * Ported from the earlier Python implementation (removed; see CHANGELOG). Two behaviours here were bug fixes and must
  * not regress:
  *
  *  - Boards are keyed by (company, ATS, slug). Keying on (company, slug) made
