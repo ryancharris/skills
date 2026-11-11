@@ -106,7 +106,8 @@ export function toHtml(jobs: Job[], options: HtmlOptions = {}): string {
   }
 
   if (shown.length === 0) {
-    parts.push(`<div class="empty">${emptyHtml(emptyReason)}</div>`);
+    const empty = emptyHtml(emptyReason);
+    if (empty) parts.push(`<div class="empty">${empty}</div>`);
   }
 
   for (const job of shown) {
@@ -180,10 +181,9 @@ function emptyHtml(reason: EmptyReason | null | undefined): string {
     );
   }
   if (reason?.kind === "filtered") {
-    return (
-      `${reason.raw} open roles were found, but none matched. Try a broader title, ` +
-      `another location, or drop the remote/age filters.`
-    );
+    // The advice is in the warnings block, from the pipeline. Repeating it printed the
+    // same finding twice.
+    return "";
   }
   return "No postings matched. Try widening titles/locations or dropping filters.";
 }

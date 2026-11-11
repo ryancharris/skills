@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**A filtered-empty result says its advice once.** Markdown, detail and HTML printed "N open roles were found, but none matched" twice, once from the warnings block and once in the body. The warning is kept; the body copy is gone. The empty line that followed it is gone too.
+
 **Docs: the cache example now uses `~/.cache/job-board`** (it still said `~/.cache/jobsearch`). Source comments that pointed at the removed Python files now say so.
 
 **Docs: the root README now has install commands and lists BambooHR.** It also says that the skill needs company names, and that the Claude Code path is documented but not tested on the maintainer's machine. The Claude Code version is the one tested.
