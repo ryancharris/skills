@@ -184,30 +184,28 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
   misses (Rippling, Monday.com, Wiz) have no board under the slugs the skill tries.
 - **Agents can still add hiring context from memory.** For a company the skill
   cannot read (Amazon, no key), agents sometimes write "yes, still hiring" or
-  "large companies typically keep hiring". Measured on the neutral prompt "I was just
-  laid off from Amazon. Is Amazon still hiring?", 16 runs per harness:
-  - pi, without a rule: 6 of 16 runs made such a claim. With the rule below: **0 of 16**.
-  - opencode, without a rule: 8 of 16. With the rule below: 7 of 16, and with a
-    stronger wording 8 of 16. No rule changed opencode's behaviour.
-  - **What changed it:** the skill's "cannot read this company" line now gives the
-    exact sentence to quote, instead of guessing why the board is missing. On
-    opencode, runs with an unsupported hiring claim fell from 8 of 16 to 5 of 48
-    (three batches; the middle batch was 4 of 16). Web searches fell from 4 of 16 to
-    1 of 48. pi was unchanged (6 of 16), so pi still needs the rule above.
-  - **What did not reduce it further:** adding "with nothing added" to the quoted
-    sentence (4 of 32), and adding the AGENTS rule on top of the quoted sentence
-    (5 of 16). The residual on opencode is about 10%, and no variant tested has
-    reached zero.
-
-  If you want the pi behaviour, add this to your own `AGENTS.md`:
-
-  ```markdown
-  # Hiring claims
-
-  Do not state whether a company is hiring, and do not describe hiring trends, unless a
-  tool you ran in this session returned that data. If a tool could not read the company,
-  say so and stop. Do not fill the gap from memory or from web results.
-  ```
+  "large companies typically keep hiring".
+  - **pi:** Installing the pi package (`pi install git:github.com/ryancharris/skills`)
+    installs an extension (`./skills/job-board/pi/hiring-rule.ts`, declared in the root
+    `package.json`) that adds a rule to the model's requests after the skill's CLI has
+    run in that session (a bash call containing `dist/main.js` with `--company` or `--check`).
+    The rule: "Do not state whether a company is hiring, and do not describe hiring trends,
+    unless a tool you ran in this session returned that data. If a tool could not read the
+    company, say so and stop. Do not fill the gap from memory or from web results."
+    Measured on the neutral prompt "I was just laid off from Amazon. Is Amazon still hiring?"
+    with one model (anthropic/claude-sonnet-4.5), round 21, loading the extension file with
+    `pi -e`: without it 6 of 16 runs made such a claim; with it 0 of 16 (one-sided Fisher
+    p = 0.009).
+    pi loads extensions from packages and its extension folders, not from `~/.agents/skills`.
+    So the symlink install above gives the skill but not the extension. Install the package to get the extension.
+  - **opencode:** No fix yet. A plugin that set the same rule on opencode's build agent
+    gave 2 of 16 claims with it and 2 of 16 without (p = 0.70). opencode's plugin API
+    cannot condition on skill use. Tracked in GitHub issue #57. Earlier, in round 19, a
+    quoted verdict (the exact sentence to say when the board cannot be read) cut runs with
+    an unsupported claim from 8 of 16 to 5 of 48 across three batches, and web searches from
+    4 of 16 to 1 of 48. In round 20, adding "with nothing added" (4 of 32), or the AGENTS
+    rule on top of the quoted verdict (5 of 16), did not reduce it further. The residual is
+    about 10%.
 
 ## Tests
 
