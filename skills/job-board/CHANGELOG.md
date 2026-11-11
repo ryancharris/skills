@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**Docs: the root README now has install commands and lists BambooHR.** It also says that the skill needs company names, and that the Claude Code path is documented but not tested on the maintainer's machine. The Claude Code version is the one tested.
+
 **The skill moved to `skills/job-board/`.** The repo root is now the Claude Code plugin root and the pi package root, and each manifest lists the skill by path. If you symlinked the skill into `~/.agents/skills/job-board`, repoint it to the new folder. Nothing else changes for users.
 
 **Installable from Claude Code and pi.** The repo root is now a Claude Code plugin marketplace and a pi package. `claude plugin marketplace add ryancharris/skills`, then `claude plugin install job-board@ryancharris-skills`; or `pi install git:github.com/ryancharris/skills`. The plugin root is the repo root, so no npm install runs on install.
