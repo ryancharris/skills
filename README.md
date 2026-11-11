@@ -130,8 +130,8 @@ JavaScript is what users run, so a stale build would ship code nobody reviewed.
 Each skill owns its tests:
 
 ```bash
-cd job-board && npm test            # offline; never touches the network
-cd job-board && npm run test:live   # real ATS APIs; opt-in
+cd skills/job-board && npm test       # offline; never touches the network
+cd skills/job-board && npm run test:live   # real ATS APIs; opt-in
 ```
 
 Test counts are not written here: they go stale. Run the commands to see them.

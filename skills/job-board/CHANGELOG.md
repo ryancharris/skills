@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**Docs: the test commands and the example directory are fixed.** The root README and the skill README still said `cd job-board` after the move. The skill README now notes that a copy includes `node_modules` if you ran `npm install`, and that the first example prints JSON.
+
 **A filtered-empty result says its advice once.** Markdown, detail and HTML printed "N open roles were found, but none matched" twice, once from the warnings block and once in the body. The warning is kept; the body copy is gone. The empty line that followed it is gone too.
 
 **Docs: the cache example now uses `~/.cache/job-board`** (it still said `~/.cache/jobsearch`). Source comments that pointed at the removed Python files now say so.
