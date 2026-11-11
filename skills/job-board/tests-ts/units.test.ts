@@ -113,6 +113,14 @@ describe("summarizeHiring", () => {
     expect(verdict(signal)).toContain("no job board found");
   });
 
+  it("gives the quoted answer for a company that was not read, and no guess about why", () => {
+    const text = verdict(summarizeHiring("Amazon", [], []));
+    expect(text).toContain(
+      'Answer about hiring, quoted exactly: "I could not check Amazon with this skill, so I cannot say whether it is hiring."',
+    );
+    expect(text).not.toMatch(/large company|search for|careers page\./i);
+  });
+
   it("keeps a live board that simply has no postings as unknown-but-reported", () => {
     const signal = summarizeHiring("Acme", [{ company: "Acme", ats: "ashby", slug: "acme", job_count: 5, url: "" }], []);
     expect(signal.board_count).toBe(1);

@@ -172,8 +172,12 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
   laid off from Amazon. Is Amazon still hiring?", 16 runs per harness:
   - pi, without a rule: 6 of 16 runs made such a claim. With the rule below: **0 of 16**.
   - opencode, without a rule: 8 of 16. With the rule below: 7 of 16, and with a
-    stronger wording 8 of 16. **No rule changed opencode's behaviour.**
-  - The skill's own wording did not change it either (three versions tested).
+    stronger wording 8 of 16. No rule changed opencode's behaviour.
+  - **What changed it:** the skill's "cannot read this company" line now gives the
+    exact sentence to quote, instead of guessing why the board is missing. On
+    opencode, runs with an unsupported hiring claim fell from 8 of 16 to 5 of 48
+    (three batches; the middle batch was 4 of 16). Web searches fell from 4 of 16 to
+    1 of 48. pi was unchanged (6 of 16), so pi still needs the rule above.
 
   If you want the pi behaviour, add this to your own `AGENTS.md`:
 
