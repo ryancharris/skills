@@ -22,6 +22,8 @@ skills/
 ├── LICENSE                # MIT, covers the whole repo
 ├── README.md              # this file
 ├── .github/               # CI: tests, dist matches src, portability, SKILL.md validity
+├── .claude-plugin/        # Claude Code plugin + marketplace manifests
+├── package.json           # pi package manifest; declares the skills (no dependencies)
 ├── skills/
 │   ├── productivity/      # a category; skills are grouped by kind of work
 │   │   └── job-board/     # one skill per directory; self-contained
@@ -38,7 +40,9 @@ skills/
 │           └── SKILL.md
 ```
 
-Skills are discovered recursively, so nesting is fine.
+Skills are discovered recursively, so nesting is fine. The Claude Code plugin and the pi
+package each list skill paths in their manifests (`.claude-plugin/plugin.json` and
+`package.json`), so a new skill must be added to both.
 
 ## Conventions for new skills
 

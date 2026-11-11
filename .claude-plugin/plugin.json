@@ -1,0 +1,14 @@
+{
+  "name": "job-board",
+  "version": "2.0.0",
+  "description": "Find open roles at named companies from their ATS job boards, or check whether a company is still hiring after a layoff.",
+  "author": {
+    "name": "Ryan Harris"
+  },
+  "homepage": "https://github.com/ryancharris/skills/tree/main/job-board",
+  "repository": "https://github.com/ryancharris/skills",
+  "license": "MIT",
+  "skills": [
+    "./skills/productivity/job-board"
+  ]
+}
