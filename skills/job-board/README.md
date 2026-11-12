@@ -124,11 +124,14 @@ works with any provider you choose with `JOB_BOARD_SEARCH_PROVIDER`.
 
 | Provider | `JOB_BOARD_SEARCH_PROVIDER` | Get a key | What has been verified |
 |---|---|---|---|
-| Kagi (the example, default) | `kagi` | https://kagi.com/settings/api | A search with a real key ran in an earlier round, for `--company Amazon`: 33 roles at other companies on ATS boards (the output warns that they are not Amazon's) |
+| Kagi (the example, default) | `kagi` | https://kagi.com/settings/api | Searched live on 2026-11-11, including `--company Amazon`: roles at other companies on ATS boards, with a warning that they are not Amazon's |
 | Brave | `brave` | https://api.search.brave.com/ | Endpoint, header and response shape against Brave's documentation, and tests. A bad key is rejected (HTTP 422). A search with a real key has not been run. |
 | Exa | `exa` | https://dashboard.exa.ai/api-keys | One real search ran with a key (the live test, one query; it returned usable results). Also checked: Exa's documented endpoint and header, and a bad key is rejected (HTTP 401). Without a key Exa answers HTTP 402 (payment), so a key is required. |
 
 An unknown provider name is an error (exit 2), not a silent fallback.
+
+Step-by-step setup for each key (where to create it, where to put the variables, and how to
+test it) is in the [root README](../../README.md#2-optional-add-a-search-key).
 
 Caching is read-through and fails safe: any cache error falls back to a normal
 request. Only GETs are cached — the search API is billed per call and is never
@@ -180,7 +183,7 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
   1,000 postings. A larger board is reported as `partial` in both role search and
   `--check`, with its true total, so the count is never silently understated.
 - Measured discovery rate: **23 of 26 (88.5%; 95% interval 71–96%)** on a fixed sample of
-  26 tech company names, run with `scripts/measure-discovery.mjs` (round 21). The three
+  26 tech company names, run with `scripts/measure-discovery.mjs` (2026-11-11). The three
   misses (Rippling, Monday.com, Wiz) have no board under the slugs the skill tries.
 - **Agents can still add hiring context from memory.** For a company the skill
   cannot read (Amazon, no key), agents sometimes write "yes, still hiring" or
@@ -193,17 +196,17 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
     unless a tool you ran in this session returned that data. If a tool could not read the
     company, say so and stop. Do not fill the gap from memory or from web results."
     Measured on the neutral prompt "I was just laid off from Amazon. Is Amazon still hiring?"
-    with one model (anthropic/claude-sonnet-4.5), round 21, loading the extension file with
+    with one model (anthropic/claude-sonnet-4.5), 2026-11-11, loading the extension file with
     `pi -e`: without it 6 of 16 runs made such a claim; with it 0 of 16 (one-sided Fisher
     p = 0.009).
     pi loads extensions from packages and its extension folders, not from `~/.agents/skills`.
     So the symlink install above gives the skill but not the extension. Install the package to get the extension.
   - **opencode:** No fix yet. A plugin that set the same rule on opencode's build agent
     gave 2 of 16 claims with it and 2 of 16 without (p = 0.70). opencode's plugin API
-    cannot condition on skill use. Tracked in GitHub issue #57. Earlier, in round 19, a
+    cannot condition on skill use. Tracked in GitHub issue #57. Earlier, a
     quoted verdict (the exact sentence to say when the board cannot be read) cut runs with
     an unsupported claim from 8 of 16 to 5 of 48 across three batches, and web searches from
-    4 of 16 to 1 of 48. In round 20, adding "with nothing added" (4 of 32), or the AGENTS
+    4 of 16 to 1 of 48. Later, adding "with nothing added" (4 of 32), or the AGENTS
     rule on top of the quoted verdict (5 of 16), did not reduce it further. The residual is
     about 10%.
 
