@@ -55,7 +55,7 @@ pi install git:github.com/ryancharris/skills
 pi list                 # confirm; pi remove git:github.com/ryancharris/skills to undo
 ```
 
-Both routes need the repo to be public, or GitHub access to it. If the skill is also
+Both routes work without a GitHub account now that the repo is public. If the skill is also
 symlinked into `~/.agents/skills/`, pi loads that copy in preference to the package
 copy. Keep one of the two.
 
