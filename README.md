@@ -1,43 +1,107 @@
 # Agent skills
 
-A collection of Agent Skills — self-contained directories that give coding
-agents (pi, Claude Code, and other harnesses) specialized instructions and
-supporting files for a particular kind of work.
+Agent Skills for coding agents (pi, Claude Code and other harnesses): self-contained
+directories with specialized instructions and supporting files for one kind of work.
 
-Each skill follows the [Agent Skills specification](https://agentskills.io/specification):
-a directory containing a `SKILL.md` with YAML frontmatter (`name`, `description`),
-plus any scripts, references, and assets it needs.
+## Installation (30-second setup)
 
-## Skills
+Requires Node.js 20+. Skills have no runtime dependencies.
 
-| Skill | Description |
-|---|---|
-| [`job-board`](skills/job-board/) | Find live job postings by querying company ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters, BambooHR) directly, and check whether a company is still hiring after a layoff. |
+### 1. Get the skill
 
-It needs company names: it cannot find companies that are hiring. Large employers with
-their own career sites (Amazon, Google, Meta) need a search key; see the skill README.
-
-## Install job-board
-
-Requires Node.js 20+. No runtime dependencies.
-
-Claude Code:
+<details>
+<summary><strong>Claude Code</strong></summary>
 
 ```bash
 claude plugin marketplace add ryancharris/skills
 claude plugin install job-board@ryancharris-skills
 ```
 
-pi:
+Installs for your user. Works without a GitHub account or SSH key (the repo is public).
+
+</details>
+
+<details>
+<summary><strong>pi</strong></summary>
 
 ```bash
 pi install git:github.com/ryancharris/skills
 ```
 
-Both work without a GitHub account or SSH key (the repo is public). Other options (symlink, copy,
-or running the CLI directly) are in [`skills/job-board/README.md`](skills/job-board/README.md).
+Installs the skill and pi's hiring-claims extension. Works without a GitHub account or SSH key.
+Remove with `pi remove git:github.com/ryancharris/skills`.
 
-## Layout
+</details>
+
+<details>
+<summary><strong>Any other agent, or editable files</strong> (manual updates)</summary>
+
+```bash
+git clone https://github.com/ryancharris/skills
+cd skills
+ln -s "$PWD/skills/job-board" ~/.agents/skills/job-board   # or: cp -r skills/job-board ~/.agents/skills/
+```
+
+pi and opencode read `~/.agents/skills/`. The symlink keeps the repo as the source of truth:
+run `git pull` to update. A symlinked skill does not load pi's extension; install the pi
+package for that (see the skill README).
+
+</details>
+
+### 2. Optional: add a search key
+
+You need a search key only for companies the skill cannot read directly (Amazon, Google,
+Meta and similar). Companies with a supported job board work without one.
+
+The skill uses one search provider at a time, chosen with `JOB_BOARD_SEARCH_PROVIDER`.
+
+| Provider | `JOB_BOARD_SEARCH_PROVIDER` | Get a key | Verified with a real key |
+|---|---|---|---|
+| Kagi (default) | `kagi` | https://kagi.com/settings/api | Yes, 2026-11-11 |
+| Exa | `exa` | https://dashboard.exa.ai/api-keys | Yes, one live query, 2026-11-11 |
+| Brave | `brave` | https://api.search.brave.com/ | Not yet ([issue #60](https://github.com/ryancharris/skills/issues/60)) |
+
+1. Create an account with the provider and create an API key in its dashboard (links above).
+2. Put the key and the provider in your shell profile (`~/.zshrc` or `~/.bashrc`), or in the environment your agent runs in:
+
+   ```bash
+   export JOB_BOARD_SEARCH_API_KEY="paste-your-key-here"
+   export JOB_BOARD_SEARCH_PROVIDER=kagi     # or exa, or brave
+   ```
+
+3. Open a new terminal, or run `source ~/.zshrc`, so the variables are set.
+
+To test a key, run one live query from the skill directory (it is billed to that key):
+
+```bash
+cd skills/job-board
+LIVE_KAGI_API_KEY="$JOB_BOARD_SEARCH_API_KEY" npm run test:live -- tests-ts/live/search.test.ts
+```
+
+Use `LIVE_EXA_API_KEY` or `LIVE_BRAVE_API_KEY` in place of `LIVE_KAGI_API_KEY` for the other providers.
+
+- An unknown provider name is an error, not a silent fallback.
+- Each search the skill runs for an unreadable company makes up to three billed searches on that account.
+- Keep the key out of chat, commits and shared files. The CLI never prints it.
+- Tuning variables and the rest of the configuration are in the [skill README](skills/job-board/README.md#search-providers).
+
+### 3. Ready
+
+Ask your agent for roles at companies you name, or run the CLI directly:
+
+```bash
+node skills/job-board/dist/main.js --company Stripe --title "software engineer" --format md
+```
+
+## Skills
+
+| Skill | What it does | README |
+|---|---|---|
+| `job-board` | Find live job postings by querying company ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters, BambooHR) directly, and check whether a company is still hiring after a layoff. It needs company names; it cannot find companies that are hiring. | [skills/job-board/README.md](skills/job-board/README.md) |
+
+## For contributors
+
+### Layout
 
 ```
 skills/
@@ -65,7 +129,7 @@ The Claude Code plugin and the pi
 package each list skill paths in their manifests (`.claude-plugin/plugin.json` and
 `package.json`), so a new skill must be added to both.
 
-## Conventions for new skills
+### Conventions for new skills
 
 Four rules keep skills independent. They exist because the alternative was
 measured to break: a shared package name lets one skill shadow another's
@@ -93,7 +157,7 @@ ln -s "$PWD/skill-name" ~/.agents/skills/skill-name  # symlinked into a harness
 cd skill-name && npm test                            # tests in isolation
 ```
 
-## Runtimes
+### Runtimes
 
 Skills are independent, so each may choose its own runtime:
 
@@ -106,7 +170,7 @@ There is no shared language requirement — only the rules above. Dev
 dependencies are installed per skill inside its own directory, so one skill's
 toolchain cannot affect another's.
 
-## Continuous integration
+### Continuous integration
 
 `.github/workflows/ci.yml` runs on every push and pull request. Four jobs:
 
@@ -117,15 +181,16 @@ toolchain cannot affect another's.
 | `runs standalone (no node_modules)` | The skill executes with **no `node_modules`** — the property that lets a harness load it without `npm install` |
 | `SKILL.md is valid` | Frontmatter has a loadable `name` and a non-empty `description`; a skill missing either is never routed to |
 
-**CI never touches a live API.** Live-API tests live under
-`tests-ts/live/`, require `JOBSEARCH_LIVE_TESTS=1` (the flag keeps its former name; see [`AGENTS.md`](AGENTS.md)), and need `JOB_BOARD_SEARCH_API_KEY`;
-none of that is set in CI, and `tests-ts/setup.ts` blocks outbound requests in
-every non-live run. Those tests are for deliberate manual runs.
+**CI never touches a live API.** Live tests live under `tests-ts/live/` and run only
+when `JOBSEARCH_LIVE_TESTS=1` is set (the flag keeps its former name; see [`AGENTS.md`](AGENTS.md)).
+The search tests also need their own `LIVE_<PROVIDER>_API_KEY` variable, and none of
+these is set in CI. `tests-ts/setup.ts` blocks outbound requests in every non-live run.
+Live tests are for deliberate manual runs.
 
 The `dist matches src` job matters because `dist/` is committed: the compiled
 JavaScript is what users run, so a stale build would ship code nobody reviewed.
 
-## Testing
+### Testing
 
 Each skill owns its tests:
 
@@ -136,12 +201,12 @@ cd skills/job-board && npm run test:live   # real ATS APIs; opt-in
 
 Test counts are not written here: they go stale. Run the commands to see them.
 
-## Contributing
+### Contributing
 
 Read [SCOPE.md](SCOPE.md) for the bar a change must clear, and
 [CONTRIBUTING.md](CONTRIBUTING.md) for how to file issues and pull requests.
 
-## Adding a skill
+### Adding a skill
 
 Create a directory whose name matches the skill's `name` frontmatter field, then
 add a `SKILL.md`:
