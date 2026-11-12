@@ -34,7 +34,7 @@ pi:
 pi install git:github.com/ryancharris/skills
 ```
 
-Both need the repo to be public, or GitHub access to it. Other options (symlink, copy,
+Both work without a GitHub account or SSH key (the repo is public). Other options (symlink, copy,
 or running the CLI directly) are in [`skills/job-board/README.md`](skills/job-board/README.md).
 
 ## Layout
