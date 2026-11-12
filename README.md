@@ -144,7 +144,7 @@ imports, and same-named test files collide in a runner's flat namespace.
 3. **Make test file names unique across the repo** (`cli.test.ts`, not
    `test.ts`). Test runners collect everything into one namespace when run from
    the root.
-4. **Ship zero runtime dependencies.** Dev tooling (typescript, vitest, pytest)
+4. **Ship zero runtime dependencies.** Dev tooling (typescript, vitest)
    is fine and stays in the repo's ignore list. But a skill that needs a
    third-party package at *runtime* stops being copyable on its own. `job-board`
    compiles to dependency-free JavaScript for exactly this reason.
