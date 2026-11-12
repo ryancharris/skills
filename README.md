@@ -164,7 +164,6 @@ Skills are independent, so each may choose its own runtime:
 | Skill | Runtime | Test |
 |---|---|---|
 | `job-board` | Node.js 20+ (TypeScript source, compiled) | `npm test` |
-| (future) | Python 3.10+ | `pytest` |
 
 There is no shared language requirement — only the rules above. Dev
 dependencies are installed per skill inside its own directory, so one skill's
