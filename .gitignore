@@ -30,3 +30,6 @@ coverage/
 
 # NOTE: `dist/` is intentionally NOT ignored. For a dependency-free skill the
 # compiled output is what users run, so it must be committed.
+
+# Locally installed agent skills (reinstall with the skills CLI; not part of this repo)
+.agents/
