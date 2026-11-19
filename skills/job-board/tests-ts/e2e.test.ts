@@ -100,6 +100,21 @@ describe("end to end through the built CLI (synthetic board, no network)", () =>
   );
 
   it(
+    "delivers all of a large output through a pipe",
+    async () => {
+      // execFile reads stdout through a pipe. The CLI used to call process.exit()
+      // with writes still queued, which cut the output at 64 KiB: invalid JSON.
+      const run = await runCli(["--company", "Acme", "--title", "engineer", "--format", "json", "--limit", "500"], 1000);
+      expect(run.code).toBe(0);
+      expect(run.stdout.length).toBeGreaterThan(65_536 * 2);
+      const out = JSON.parse(run.stdout);
+      expect(out.count).toBe(500);
+      expect(out.jobs).toHaveLength(500);
+    },
+    TIMEOUT,
+  );
+
+  it(
     "does not flag a board that was read in full",
     async () => {
       const run = await runCli(["--company", "Acme", "--title", "engineer", "--format", "json-compact"], 800);
