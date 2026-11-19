@@ -390,6 +390,7 @@ export async function main(argv) {
         warnings: result.warnings,
         limit: opts.limit,
         emptyReason: result.empty_reason,
+        unreadableCompanies: result.unreadable_companies,
         partialBoards: result.partial_boards,
         provenance,
     }) + "\n");
@@ -427,6 +428,7 @@ export function renderJobs(jobs, format, opts) {
         boards: opts.boards,
         meta: opts.meta,
         emptyReason: opts.emptyReason,
+        unreadableCompanies: opts.unreadableCompanies,
         queries: opts.queries,
         warnings: opts.warnings,
         partialBoards: opts.partialBoards,

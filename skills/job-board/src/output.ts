@@ -111,6 +111,8 @@ export interface JsonOptions {
   compact?: boolean;
   /** Machine-readable reason a result is empty; null when it is not. */
   emptyReason?: EmptyReason | null;
+  /** Named companies with no board; their postings were not read. */
+  unreadableCompanies?: string[];
   /** Boards read incompletely; `partial` in the output is true when any exist. */
   partialBoards?: PartialBoard[];
   /** True when any ATS response used came from the cache. */
@@ -158,6 +160,7 @@ export function toJson(jobs: Job[], options: JsonOptions = {}): string {
     warnings,
     // Structured so an agent need not parse the warning text to learn why.
     empty_reason: options.emptyReason ?? null,
+    unreadable_companies: options.unreadableCompanies ?? [],
     boards: boards.map((b) => ({ ...b })),
     queries,
     jobs: jobDicts,

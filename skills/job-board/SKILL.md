@@ -166,6 +166,7 @@ mode. Parse `jobs` for `--company`, and `signals` for `--check`.
            "matched postings": 37, "returned": 37, "queries offered": 8},
   "warnings": ["..."],
   "empty_reason": null,
+  "unreadable_companies": [],
   "boards": [{"company": "Cohere", "ats": "ashby", "slug": "cohere", "job_count": 124, "url": ""}],
   "queries": ["site:... \"title\" ..."],
   "jobs": [{"title": "...", "company": "...", "url": "...", "source": "ashby",
@@ -222,6 +223,13 @@ you can give the right advice instead of "try widening the filters":
 
 Never answer a `no_key` or `no_board` result with "no matching roles" — the
 roles were never read.
+
+`unreadable_companies` lists, in the order named, each company you named that has no
+board on a supported system. It is always present, and `[]` when every company was
+read. Its postings were NOT read: never say such a company has no roles, and never
+count it as a hit or a miss. When some other company was read, `warnings` also says
+so. Treat each name like any other unreadable company: tell the user, and offer its
+careers query from `queries` so they can find which system it uses.
 
 Always parse `warnings` — a thin result is explained there. Exit codes: `0` on
 success, `2` on a usage error (no target, or `--queries` without `--title`).

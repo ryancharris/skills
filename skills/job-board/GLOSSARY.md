@@ -15,7 +15,7 @@ One open position listed on a board. Prose and users say "role" for the same thi
 _Avoid_: job, listing, opening
 
 **Unreadable company**:
-A company the user named that has no board on any supported system, so nothing about its hiring can be said from it. An unreadable company never has "zero roles"; its roles were never read.
+A company the user named for which the skill found no board with postings on any supported system, so nothing about its hiring can be said from it. A board with no postings cannot be told apart from a name that has no board, so it counts as unreadable too. An unreadable company never has "zero roles"; its roles were never read.
 _Avoid_: unsupported company, company with no roles
 
 ### What the skill does

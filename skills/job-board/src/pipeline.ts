@@ -46,6 +46,11 @@ export interface RunResult {
    * Naming the cause here lets the renderer give the actual remedy.
    */
   empty_reason: EmptyReason | null;
+  /**
+   * Named companies with no board on a supported system, in the order named.
+   * Their postings were not read, so they say nothing about whether the company is hiring.
+   */
+  unreadable_companies: string[];
 }
 
 export type EmptyReason =
@@ -65,7 +70,25 @@ function emptyResult(): RunResult {
     matched_count: 0,
     partial_boards: [],
     empty_reason: null,
+    unreadable_companies: [],
   };
+}
+
+/** The named companies that have no board, in the order named. */
+export function findUnreadable(companies: string[], byCompany: Map<string, Board[]>): string[] {
+  return companies.filter((c) => (byCompany.get(c) ?? []).length === 0);
+}
+
+/**
+ * Warning for a role search where some named companies were read and others could not be.
+ * Without it the results look complete, and an unreadable company reads as "no roles".
+ */
+export function unreadableWarning(companies: string[]): string {
+  return (
+    `Could not read a board for ${companies.join(", ")}, so no postings from ` +
+    `${companies.length > 1 ? "them are" : "it are"} included in these results. ` +
+    `Do not read ${companies.length > 1 ? "their" : "its"} absence as "no roles".`
+  );
 }
 
 /**
@@ -245,6 +268,9 @@ export async function runSearch(
   if (!result.boards) result.boards = [];
   result.boards = boards;
 
+  const unreadable = findUnreadable(result.companies, byCompany);
+  result.unreadable_companies = unreadable;
+
   const live = boards.filter((b) => b.job_count > 0);
   const fetched = await fetchAll(live, adapters, config.http_timeout * 1000, result);
   const raw: Job[] = [...fetched.values()].flatMap((r) => r.jobs);
@@ -256,9 +282,7 @@ export async function runSearch(
 
   // For companies with no live board, hand the agent a discovery query.
   // Match on the name that was typed: a board's own `company` may be the vendor's name.
-  for (const name of result.companies) {
-    if ((byCompany.get(name) ?? []).length === 0) result.queries.push(buildDiscoveryQuery(name));
-  }
+  for (const name of unreadable) result.queries.push(buildDiscoveryQuery(name));
 
   // Offer boolean site: queries the agent can execute via the search API.
   if (profile.titles.length > 0) {
@@ -279,17 +303,24 @@ export async function runSearch(
           `Try a broader --title, a different --location, or remove --remote/--max-age-days.`,
       );
     }
-  } else {
+  }
+
+  let peerWarned = false;
+  if (raw.length === 0) {
     result.jobs = await searchFallback(profile, result, config, options.provider ?? null, options.searchLimit ?? 15);
     // The fallback query does not name the company, so its results are other companies'
     // roles. Say so, for each named company that has no readable board.
-    const unreadable = result.companies.filter((c) => !(byCompany.get(c) ?? []).some((b) => b.job_count > 0));
     if (result.jobs.length > 0 && unreadable.length > 0) {
       result.warnings.push(peerWarning(unreadable, result.jobs.length));
+      peerWarned = true;
     }
     if (result.jobs.length === 0 && result.empty_reason === null && live.length === 0) {
       result.empty_reason = { kind: "no_board", companies: result.companies };
     }
+  }
+
+  if (unreadable.length > 0 && unreadable.length < result.companies.length && !peerWarned) {
+    result.warnings.push(unreadableWarning(unreadable));
   }
 
   return result;

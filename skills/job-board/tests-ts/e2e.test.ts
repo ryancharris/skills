@@ -37,6 +37,7 @@ async function freshCacheDir(): Promise<string> {
 
 interface Run {
   stdout: string;
+  stderr: string;
   code: number;
 }
 
@@ -59,9 +60,9 @@ function runCli(
       process.execPath,
       ["--import", preload, cli, ...args],
       { env, timeout: 60_000 },
-      (error, stdout) => {
+      (error, stdout, stderr) => {
         const code = error && typeof error.code === "number" ? error.code : 0;
-        done({ stdout, code });
+        done({ stdout, stderr, code });
       },
     );
   });
@@ -229,6 +230,47 @@ describe("end to end through the built CLI (synthetic board, no network)", () =>
         );
       });
       expect(out).toMatch(/^job-board \d/);
+    },
+    TIMEOUT,
+  );
+  it(
+    "names a company with no board on stderr and in every format when another was read",
+    async () => {
+      const ashby = { FAKE_ASHBY_SLUG: "cohere" };
+      const base = ["--company", "Cohere", "--company", "Zzqx Holdings", "--title", "engineer"];
+      const notice = "Could not read a board for Zzqx Holdings";
+
+      const json = await runCli([...base, "--format", "json-compact"], 0, undefined, ashby);
+      expect(json.code).toBe(0);
+      const out = JSON.parse(json.stdout);
+      expect(out.unreadable_companies).toEqual(["Zzqx Holdings"]);
+      expect(out.count).toBe(3);
+      expect(out.warnings).toHaveLength(1);
+      expect(out.warnings[0]).toContain(notice);
+      expect(json.stderr).toBe(`warning: ${out.warnings[0]}\n`);
+
+      for (const format of ["md", "detail", "html"]) {
+        const run = await runCli([...base, "--format", format], 0, undefined, ashby);
+        expect(run.stdout.split(notice).length - 1, format).toBe(1);
+        expect(run.stderr, format).toContain(`warning: ${notice}`);
+      }
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "lists no unreadable company when every named company has a board",
+    async () => {
+      const run = await runCli(
+        ["--company", "Cohere", "--title", "engineer", "--format", "json-compact"],
+        0,
+        undefined,
+        { FAKE_ASHBY_SLUG: "cohere" },
+      );
+      const out = JSON.parse(run.stdout);
+      expect(out.unreadable_companies).toEqual([]);
+      expect(out.warnings).toEqual([]);
+      expect(run.stderr).toBe("");
     },
     TIMEOUT,
   );
