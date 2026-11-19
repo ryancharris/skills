@@ -7,7 +7,7 @@
  * earlier build. `--help` is covered by a test because an outage there breaks
  * every invocation, not just the help path.
  */
-import { configFromEnv } from "./config.js";
+import { configFromEnv, VERSION } from "./config.js";
 import { buildSiteQuery, expandTitles } from "./filtering.js";
 import { sharedDomainSiteTargets } from "./ats.js";
 import { emptyProfile, noteLines } from "./models.js";
@@ -273,7 +273,7 @@ export async function main(argv) {
         return EXIT_OK;
     }
     if (opts.version) {
-        process.stdout.write("job-board 2.1.1\n");
+        process.stdout.write(`job-board ${VERSION}\n`);
         return EXIT_OK;
     }
     // Load config first: cache maintenance must work without a search target.
