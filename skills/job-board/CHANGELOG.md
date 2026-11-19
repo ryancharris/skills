@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**Piped output is no longer cut off at 64 KiB.** The CLI called `process.exit()` while writes to a pipe were still queued, so an agent reading a large result (for example `--company Stripe --title engineer --limit 500`, about 70 KB) got truncated, invalid JSON. It now sets the exit code and lets the output drain. Exit codes are unchanged, and a reader that closes early (`| head`) still ends quietly. Covered by `tests-ts/e2e.test.ts`.
+
 **`--company` with no readable board: the output now says the results are not that company's postings.** The search fallback's query does not name the company, so `--company Amazon` returned roles at other companies on ATS boards with no warning. Those results are unchanged, and each one is now preceded by a warning naming the company and saying the roles may be at other companies. Covered by `tests-ts/fallback-peers.test.ts`.
 
 **pi: the package now ships an extension that keeps the model from claiming a company is hiring when the skill could not read it.** After the skill's CLI runs in a pi session, the extension adds the rule to the model's later requests in that session. Measured on "I was just laid off from Amazon. Is Amazon still hiring?" (one model, 16 runs per arm, round 21): runs with a hiring claim fell from 6 of 16 to 0 of 16 (one-sided Fisher p = 0.009). Install with `pi install git:github.com/ryancharris/skills`; the symlink install gives the skill only. opencode is unchanged: a plugin for it measured 2 of 16 with and without the rule, so it was not shipped. See issue #57.
