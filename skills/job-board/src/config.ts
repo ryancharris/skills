@@ -7,7 +7,11 @@
  * the same rules to every setting, so the renames cannot drift apart.
  */
 
-export const DEFAULT_UA = "job-board/2.0 (+https://github.com/)";
+/** The skill's version. `--version`, the User-Agent and every manifest must agree; a test checks this. */
+export const VERSION = "2.1.1";
+
+/** Sent on every request. Ashby rejects a request with none; the URL tells a board operator who is calling. */
+export const DEFAULT_UA = `job-board/${VERSION} (+https://github.com/ryancharris/skills)`;
 
 /** One setting: its current variable and the former names still accepted. */
 export interface Setting {

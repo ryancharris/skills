@@ -8,7 +8,7 @@
  * every invocation, not just the help path.
  */
 
-import { configFromEnv, type Config } from "./config.js";
+import { configFromEnv, VERSION, type Config } from "./config.js";
 import { buildSiteQuery, expandTitles } from "./filtering.js";
 import { sharedDomainSiteTargets } from "./ats.js";
 import { emptyProfile, noteLines, type Board, type Job, type PartialBoard, type SearchProfile } from "./models.js";
@@ -299,7 +299,7 @@ export async function main(argv: string[]): Promise<number> {
     return EXIT_OK;
   }
   if (opts.version) {
-    process.stdout.write("job-board 2.1.1\n");
+    process.stdout.write(`job-board ${VERSION}\n`);
     return EXIT_OK;
   }
 

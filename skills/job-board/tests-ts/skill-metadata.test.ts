@@ -74,6 +74,12 @@ describe("the version is the same everywhere it is written", () => {
     }
     expect(written.join("").trim()).toBe(`job-board ${version}`);
   });
+
+  it("matches the User-Agent every request sends, and the User-Agent names this repository", async () => {
+    const version = skillVersion();
+    const { DEFAULT_UA } = await import("../src/config.js");
+    expect(DEFAULT_UA).toBe(`job-board/${version} (+https://github.com/ryancharris/skills)`);
+  });
 });
 
 describe("the skill ships its own LICENSE", () => {

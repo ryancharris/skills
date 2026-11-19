@@ -6,7 +6,10 @@
  * names that are still accepted with a deprecation warning. One reader applies
  * the same rules to every setting, so the renames cannot drift apart.
  */
-export const DEFAULT_UA = "job-board/2.0 (+https://github.com/)";
+/** The skill's version. `--version`, the User-Agent and every manifest must agree; a test checks this. */
+export const VERSION = "2.1.1";
+/** Sent on every request. Ashby rejects a request with none; the URL tells a board operator who is calling. */
+export const DEFAULT_UA = `job-board/${VERSION} (+https://github.com/ryancharris/skills)`;
 export const SETTINGS = {
     apiKey: {
         current: "JOB_BOARD_SEARCH_API_KEY",
