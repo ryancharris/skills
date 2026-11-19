@@ -11,6 +11,7 @@
  */
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 import { daysSince, noBoardAdvice, noKeyTail, parseIso, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies } from "./models.js";
+import { CAREERS_STEP_HEADING, nextSteps } from "./next-steps.js";
 // ------------------------------------------------------------------- symbols
 /** A finding is "fresh" within this many days. */
 export const FRESH_DAYS = 14;
@@ -146,6 +147,17 @@ export function toDetail(jobs, options = {}) {
         `${SYMBOLS.fresh} under ${FRESH_DAYS}d · ${SYMBOLS.stale} over ${STALE_DAYS}d</sub>`);
     return lines.join("\n");
 }
+function nextStepBlock(reason) {
+    const steps = nextSteps(reason);
+    if (!steps)
+        return [];
+    const out = [`#### 🔗 ${CAREERS_STEP_HEADING}`, "", steps.careersIntro, ""];
+    for (const q of steps.careersQueries)
+        out.push(`\`${q}\``, "");
+    if (steps.siteQueriesHint)
+        out.push(steps.siteQueriesHint, "");
+    return out;
+}
 function emptyBlock(reason) {
     if (reason?.kind === "no_key") {
         const who = reason.companies.join(", ");
@@ -155,6 +167,7 @@ function emptyBlock(reason) {
                 `${plural ? "These companies use" : "This company uses"} a careers site this ` +
                 `skill cannot read directly.`,
             "",
+            ...nextStepBlock(reason),
             `Optional: set \`${reason.variable}\` ${noKeyTail(possessive(reason.companies))} ${SEARCH_KEY_SETUP_URL}`,
             "",
         ];
@@ -165,6 +178,7 @@ function emptyBlock(reason) {
             "",
             `Large employers use custom careers sites. Try a smaller company. ${noBoardAdvice(reason.search)}`,
             "",
+            ...nextStepBlock(reason),
         ];
     }
     if (reason?.kind === "filtered") {

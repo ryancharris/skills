@@ -11,6 +11,7 @@
  */
 import { displayCompany } from "./hiring-signal.js";
 import { noBoardAdvice, noKeyTail, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies } from "./models.js";
+import { CAREERS_STEP_HEADING, nextSteps } from "./next-steps.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
 import { friendlyDepartment, verdict } from "./hiring-signal.js";
 const ESCAPES = {
@@ -135,21 +136,32 @@ export function toHtml(jobs, options = {}) {
     parts.push("</html>");
     return parts.join("\n");
 }
+function nextStepHtml(reason) {
+    const steps = nextSteps(reason);
+    if (!steps)
+        return "";
+    const queries = steps.careersQueries.map((q) => `<li><code>${escapeHtml(q)}</code></li>`).join("");
+    return (`<p><strong>${escapeHtml(CAREERS_STEP_HEADING)}</strong></p>` +
+        `<p>${escapeHtml(steps.careersIntro)}</p><ul>${queries}</ul>` +
+        (steps.siteQueriesHint ? `<p>${escapeHtml(steps.siteQueriesHint)}</p>` : ""));
+}
 function emptyHtml(reason) {
     if (reason?.kind === "no_key") {
         const who = escapeHtml(reason.companies.join(", "));
         const plural = reason.companies.length > 1;
         return (`${SYMBOLS.unreadable} No roles found for <strong>${who}</strong>. ` +
             `${plural ? "These companies use" : "This company uses"} a careers site this skill ` +
-            `cannot read directly. ` +
-            `Optional: set <code>${escapeHtml(reason.variable)}</code> ` +
+            `cannot read directly.` +
+            nextStepHtml(reason) +
+            `<p>Optional: set <code>${escapeHtml(reason.variable)}</code> ` +
             `${escapeHtml(noKeyTail(possessive(reason.companies)))} ` +
-            `<a href="${escapeHtml(SEARCH_KEY_SETUP_URL)}">${escapeHtml(SEARCH_KEY_SETUP_URL)}</a>`);
+            `<a href="${escapeHtml(SEARCH_KEY_SETUP_URL)}">${escapeHtml(SEARCH_KEY_SETUP_URL)}</a></p>`);
     }
     if (reason?.kind === "no_board") {
         return (`${SYMBOLS.unreadable} No job board found for ${escapeHtml(reason.companies.join(", "))}. ` +
             `Large employers use custom careers sites. Try a smaller company. ` +
-            escapeHtml(noBoardAdvice(reason.search)));
+            escapeHtml(noBoardAdvice(reason.search)) +
+            nextStepHtml(reason));
     }
     if (reason?.kind === "filtered") {
         // The advice is in the warnings block, from the pipeline. Repeating it printed the

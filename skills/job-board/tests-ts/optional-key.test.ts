@@ -179,3 +179,62 @@ describe("--check never mentions the search key", () => {
     }
   }, 60_000);
 });
+
+describe("the careers query comes before the optional key", () => {
+  const KEYED = {
+    kind: "no_key",
+    provider: "kagi",
+    variable: "JOB_BOARD_SEARCH_API_KEY",
+    companies: ["Zzqx", "Qqxz"],
+  };
+  const CAREERS = (c: string) => `"${c}" (careers OR jobs) (greenhouse OR lever OR ashby OR workday)`;
+  const HINT = "run the same command with --queries";
+
+  it("prints a careers query per company, then the site-query hint, then the key, in md and detail", () => {
+    for (const fmt of ["md", "detail"] as const) {
+      const out = renderJobs([], fmt, opts(KEYED));
+      const careers = out.indexOf(CAREERS("Zzqx"));
+      expect(careers, fmt).toBeGreaterThan(-1);
+      expect(out, fmt).toContain(CAREERS("Qqxz"));
+      expect(out, fmt).toContain("Next step for the user: find the careers page");
+      const hint = out.indexOf(HINT);
+      const key = out.indexOf("JOB_BOARD_SEARCH_API_KEY");
+      expect(careers, fmt).toBeLessThan(hint);
+      expect(hint, fmt).toBeLessThan(key);
+      expect(out.split("JOB_BOARD_SEARCH_API_KEY").length - 1, fmt).toBe(1);
+    }
+  });
+
+  it("html does the same, with the queries escaped", () => {
+    const html = renderJobs([], "html", opts(KEYED));
+    const careers = html.indexOf(`<code>${CAREERS("Zzqx").replace(/"/g, "&quot;")}</code>`);
+    expect(careers).toBeGreaterThan(-1);
+    expect(html).not.toContain(CAREERS("Zzqx"));
+    expect(careers).toBeLessThan(html.indexOf(HINT));
+    expect(html.indexOf(HINT)).toBeLessThan(html.indexOf("JOB_BOARD_SEARCH_API_KEY"));
+    const evil = renderJobs([], "html", opts({ ...KEYED, companies: ["<script>x</script>"] }));
+    expect(evil).not.toContain("<script>");
+  });
+
+  it("no_board prints the careers query in every renderer; the --queries hint only when a title was given", () => {
+    for (const fmt of ["md", "detail", "html"] as const) {
+      const noTitle = renderJobs([], fmt, opts({ kind: "no_board", companies: ["Zzqx"], search: "no_title" }));
+      expect(noTitle, fmt).toContain("careers OR jobs");
+      expect(noTitle, fmt).not.toContain("For site queries");
+      expect(noTitle.split("--queries").length - 1, fmt).toBe(1);
+      const empty = renderJobs([], fmt, opts({ kind: "no_board", companies: ["Zzqx"], search: "no_results" }));
+      expect(empty, fmt).toContain("careers OR jobs");
+      expect(empty, fmt).toContain(HINT);
+      expect(empty, fmt).not.toMatch(KEY_TEXT);
+    }
+  });
+
+  it("end to end, the unreadable-company output of a role search carries the careers query in md, detail and html", async () => {
+    for (const format of ["md", "detail", "html"]) {
+      const out = await run(["--company", "Zzqx", "--title", "engineer", "--format", format]);
+      const text = out.stdout.replace(/&quot;/g, '"');
+      expect(text, format).toContain(CAREERS("Zzqx"));
+      expect(text.indexOf(CAREERS("Zzqx")), format).toBeLessThan(text.indexOf("Optional: set"));
+    }
+  }, 30_000);
+});

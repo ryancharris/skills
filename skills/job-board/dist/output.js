@@ -6,6 +6,7 @@
  */
 import { displayCompany, friendlyDepartment, signalToDict, verdict } from "./hiring-signal.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, hiringBadge, jobBadges } from "./format-detail.js";
+import { CAREERS_STEP_HEADING, nextSteps } from "./next-steps.js";
 import { daysSince, noBoardAdvice, noKeyTail, parseIso, SEARCH_KEY_SETUP_URL, possessive, resultHeadline, unreadableCompanies } from "./models.js";
 // --------------------------------------------------------------------- dedupe
 /** Repost identity: normalised title + company + location. */
@@ -179,17 +180,31 @@ export function toMarkdown(jobs, options = {}) {
         // "Try widening your filters" is wrong advice when nothing could be read in
         // the first place. Say what actually happened and what would help.
         const reason = options.emptyReason;
+        const steps = nextSteps(reason);
+        const stepLines = () => {
+            if (!steps)
+                return [];
+            const out = ["## " + CAREERS_STEP_HEADING, "", steps.careersIntro, ""];
+            for (const q of steps.careersQueries)
+                out.push(`> ${q}`, "");
+            if (steps.siteQueriesHint)
+                out.push(steps.siteQueriesHint, "");
+            return out;
+        };
         if (reason?.kind === "no_key") {
             const who = reason.companies.join(", ");
             const plural = reason.companies.length > 1;
             lines.push(`No roles found for **${who}**. ${plural ? "These companies use" : "This company uses"} ` +
                 `a careers site this skill cannot read directly.`);
             lines.push("");
+            lines.push(...stepLines());
             lines.push(`Optional: set \`${reason.variable}\` ${noKeyTail(possessive(reason.companies))} ${SEARCH_KEY_SETUP_URL}`);
         }
         else if (reason?.kind === "no_board") {
             lines.push(`No job board found for ${reason.companies.join(", ")}. Large employers use ` +
                 `custom careers sites; try a smaller company. ${noBoardAdvice(reason.search)}`);
+            lines.push("");
+            lines.push(...stepLines());
         }
         else if (reason?.kind === "filtered") {
             // The advice is already in the warnings block above, from the pipeline. Saying

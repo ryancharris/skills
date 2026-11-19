@@ -12,6 +12,7 @@
 
 import { displayCompany } from "./hiring-signal.js";
 import { noBoardAdvice, noKeyTail, parseIso, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies, type Board, type Job } from "./models.js";
+import { CAREERS_STEP_HEADING, nextSteps } from "./next-steps.js";
 import type { EmptyReason } from "./pipeline.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
 import type { HiringSignal } from "./hiring-signal.js";
@@ -162,6 +163,17 @@ export function toHtml(jobs: Job[], options: HtmlOptions = {}): string {
   return parts.join("\n");
 }
 
+function nextStepHtml(reason: EmptyReason | null | undefined): string {
+  const steps = nextSteps(reason);
+  if (!steps) return "";
+  const queries = steps.careersQueries.map((q) => `<li><code>${escapeHtml(q)}</code></li>`).join("");
+  return (
+    `<p><strong>${escapeHtml(CAREERS_STEP_HEADING)}</strong></p>` +
+    `<p>${escapeHtml(steps.careersIntro)}</p><ul>${queries}</ul>` +
+    (steps.siteQueriesHint ? `<p>${escapeHtml(steps.siteQueriesHint)}</p>` : "")
+  );
+}
+
 function emptyHtml(reason: EmptyReason | null | undefined): string {
   if (reason?.kind === "no_key") {
     const who = escapeHtml(reason.companies.join(", "));
@@ -169,17 +181,19 @@ function emptyHtml(reason: EmptyReason | null | undefined): string {
     return (
       `${SYMBOLS.unreadable} No roles found for <strong>${who}</strong>. ` +
       `${plural ? "These companies use" : "This company uses"} a careers site this skill ` +
-      `cannot read directly. ` +
-      `Optional: set <code>${escapeHtml(reason.variable)}</code> ` +
+      `cannot read directly.` +
+      nextStepHtml(reason) +
+      `<p>Optional: set <code>${escapeHtml(reason.variable)}</code> ` +
       `${escapeHtml(noKeyTail(possessive(reason.companies)))} ` +
-      `<a href="${escapeHtml(SEARCH_KEY_SETUP_URL)}">${escapeHtml(SEARCH_KEY_SETUP_URL)}</a>`
+      `<a href="${escapeHtml(SEARCH_KEY_SETUP_URL)}">${escapeHtml(SEARCH_KEY_SETUP_URL)}</a></p>`
     );
   }
   if (reason?.kind === "no_board") {
     return (
       `${SYMBOLS.unreadable} No job board found for ${escapeHtml(reason.companies.join(", "))}. ` +
       `Large employers use custom careers sites. Try a smaller company. ` +
-      escapeHtml(noBoardAdvice(reason.search))
+      escapeHtml(noBoardAdvice(reason.search)) +
+      nextStepHtml(reason)
     );
   }
   if (reason?.kind === "filtered") {
