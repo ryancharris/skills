@@ -1,7 +1,11 @@
 // Strict, keyword-based grading of one opencode run. A run passes only if every check holds.
 // S7 and S9 are matched on wording, so read their transcripts before trusting a pass.
 
+import { adapters } from "./routes/adapt.mjs";
+
 export function parseRun(rec) {
+  // Runs from the claude and pi routes carry rec.harness; opencode records have none.
+  if (adapters[rec.harness]) return adapters[rec.harness](rec.events);
   const calls = [];
   const texts = [];
   const errors = [];
