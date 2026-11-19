@@ -1,7 +1,7 @@
 /**
  * ATS (Applicant Tracking System) job-board adapters.
  *
- * Ported from the earlier Python implementation (removed; see CHANGELOG). Every quirk below was discovered by
+ * Every quirk below was discovered by
  * calling the live APIs; none of them are guesswork:
  *
  *  - Greenhouse `/jobs` carries NO department field. Departments come from a

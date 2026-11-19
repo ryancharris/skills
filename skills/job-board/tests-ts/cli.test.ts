@@ -1,8 +1,8 @@
 /**
  * CLI behaviour tests (no network).
  *
- * Ported from tests/test_cli.py, including the regression where a literal '%'
- * in help text crashed every invocation in the Python build.
+ * Includes the regression where a literal `%` in help text crashed every
+ * invocation in an earlier build.
  */
 
 import { spawnSync } from "node:child_process";
@@ -185,7 +185,7 @@ describe("main", () => {
 });
 
 describe("entry point", () => {
-  it("runs from an unrelated cwd without PYTHONPATH or install", () => {
+  it("runs from an unrelated cwd without any install step", () => {
     const result = spawnSync(process.execPath, [entry, "--help"], {
       cwd: "/tmp",
       encoding: "utf8",

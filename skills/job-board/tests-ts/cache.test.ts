@@ -1,7 +1,7 @@
 /**
  * Tests for the on-disk response cache.
  *
- * Ported from tests/test_cache.py. The cache must never be able to break a run:
+ * The cache must never be able to break a run:
  * every failure path degrades to a miss.
  */
 

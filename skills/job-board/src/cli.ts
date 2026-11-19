@@ -1,11 +1,11 @@
 /**
  * Command-line interface.
  *
- * Ported from the earlier Python implementation (removed; see CHANGELOG). Flags, exit codes and defaults must match.
+ * Flags, exit codes and defaults are part of the documented interface.
  *
- * NOTE ON `%`: Python's argparse crashed on a literal '%' in help text. Node has
- * no such trap, but `--help` is still covered by a test because an outage there
- * breaks every invocation, not just the help path.
+ * NOTE ON `%`: a literal `%` in help text once crashed every invocation in an
+ * earlier build. `--help` is covered by a test because an outage there breaks
+ * every invocation, not just the help path.
  */
 
 import { configFromEnv, type Config } from "./config.js";

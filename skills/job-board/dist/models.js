@@ -1,8 +1,7 @@
 /**
  * Shared data types for the job-board skill.
  *
- * Ported from the earlier Python implementation (removed; see CHANGELOG). Field names are part of the public JSON
- * contract, so they must match the Python implementation exactly.
+ * Field names are part of the public JSON contract, so they are fixed.
  */
 export function emptyProfile() {
     return {
@@ -19,8 +18,8 @@ export function emptyProfile() {
 /**
  * Build a Job with every field populated, in the canonical key order.
  *
- * Order is part of the JSON contract an agent parses: the Python implementation
- * emitted title, company, url, ... and a stable order lets a model learn the
+ * Order is part of the JSON contract an agent parses: the output
+ * emits title, company, url, ... and a stable order lets a model learn the
  * schema once. Spreading defaults first would put the optional fields ahead of
  * the required ones, which is what this explicit construction avoids.
  */
@@ -66,7 +65,7 @@ export function daysSince(when, now) {
 /**
  * Dedupe key for a posting.
  *
- * Mirrors Python's `Job.dedupe_key()`: prefer the provider id within a board,
+ * Prefer the provider id within a board,
  * else the normalised URL.
  */
 export function dedupeKey(job) {
