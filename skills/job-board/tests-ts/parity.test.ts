@@ -1,9 +1,9 @@
 /**
- * Parity harness: assert the TypeScript port reproduces the Python
- * implementation's output EXACTLY on the pure functions.
+ * Golden-vector tests: assert the pure functions reproduce the fixed expected
+ * outputs in `vectors.json` EXACTLY.
  *
- * The vectors in `vectors.json` were produced by the Python code before the
- * port, so this is evidence rather than an assertion that "it looks right".
+ * The vectors were recorded from a known-good implementation, so they pin the
+ * behaviour rather than rely on an assertion that "it looks right".
  */
 
 import { readFileSync } from "node:fs";
@@ -22,7 +22,7 @@ const vectors = JSON.parse(readFileSync(join(here, "vectors.json"), "utf8")) as 
   Record<string, unknown>
 >;
 
-describe("parity with the Python implementation", () => {
+describe("golden vectors", () => {
   it("slug_candidates", () => {
     for (const [input, expected] of Object.entries(vectors.slug_candidates)) {
       expect(slugCandidates(input), `slugCandidates(${JSON.stringify(input)})`).toEqual(expected);

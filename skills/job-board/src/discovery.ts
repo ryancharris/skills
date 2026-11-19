@@ -1,11 +1,10 @@
 /**
  * Slug discovery: map a company name to live ATS board(s).
  *
- * Ported from the earlier Python implementation (removed; see CHANGELOG). Two behaviours are non-obvious and must
- * not regress:
+ * Two behaviours are non-obvious and must not regress:
  *
  *  - Diacritics fold to ASCII, so "Société Générale" -> slug `societegenerale`.
- *    Python used unicodedata.normalize("NFKD"); JS has the same normalisation.
+ *    This uses Unicode NFKD normalisation, then drops combining marks.
  *  - A non-empty board is NOT proof of the right company. `general motors`
  *    matched a board named "General Interest", so a board is accepted only when
  *    the queried company name accounts for most of the board's own name.
@@ -33,7 +32,7 @@ const DROP_TOKENS = new Set([
  */
 export function fold(text: string): string {
   const decomposed = text.normalize("NFKD");
-  // \p{M} = any combining mark; equivalent to Python's unicodedata.combining().
+  // \p{M} = any combining mark; removes the accents left after NFKD decomposition.
   return decomposed.replace(/\p{M}/gu, "");
 }
 

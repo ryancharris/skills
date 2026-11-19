@@ -1,8 +1,7 @@
 /**
  * Post-layoff hiring signal: "they cut staff -- are they still hiring?"
  *
- * Ported from the earlier Python implementation (removed; see CHANGELOG). The design rationale is preserved
- * there and in SCOPE.md ("Seeding searches from layoff filings"): an earlier
+ * The design rationale is in SCOPE.md ("Seeding searches from layoff filings"): an earlier
  * version seeded searches from WARN filings, which failed because WARN cannot
  * express "tech" and its largest filers resolve on none of the supported ATSes.
  */

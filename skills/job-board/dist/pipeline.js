@@ -1,8 +1,7 @@
 /**
  * Pipeline orchestration: discover -> fetch -> filter -> rank -> emit.
  *
- * Ported from the earlier Python implementation (removed; see CHANGELOG). Two behaviours here were bug fixes and must
- * not regress:
+ * Two behaviours here were bug fixes and must not regress:
  *
  *  - Boards are keyed by (company, ATS, slug). Keying on (company, slug) made
  *    Ramp's two boards collide, reporting 1 posting instead of 169.

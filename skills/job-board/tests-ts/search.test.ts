@@ -1,7 +1,7 @@
 /**
  * Search-provider tests with the network mocked.
  *
- * Ported from tests/test_search.py. The Kagi fixtures reproduce the LIVE v1
+ * The Kagi fixtures reproduce the LIVE v1
  * envelope: `data` is an OBJECT with a `search` list, not the legacy list of
  * typed objects. Assuming otherwise made the provider non-functional in
  * production while its own mocks happily agreed with the bug.

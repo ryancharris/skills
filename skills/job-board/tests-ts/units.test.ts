@@ -1,8 +1,5 @@
 /**
  * Unit tests for pure logic: models, hiring signal, discovery, filtering, output.
- *
- * Ported from tests/test_units.py. Assertions mirror the Python suite so that a
- * behavioural drift in either implementation is visible.
  */
 
 import { describe, expect, it } from "vitest";

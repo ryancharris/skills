@@ -2,9 +2,9 @@
  * Minimal HTML helpers.
  *
  * Node has no HTML entity decoder (`decodeURIComponent` only handles URL
- * escapes), so the port needs its own. Python's `html.unescape` handles ~2,000
- * named entities; only a small subset realistically appears in job titles,
- * snippets and slugs, and this covers those plus numeric references.
+ * escapes), so this module supplies its own. Only a small subset of the ~2,000 HTML named
+ * entities realistically appears in job titles, snippets and slugs; this covers
+ * those plus numeric references.
  */
 
 /** Named entities that plausibly appear in ATS text. */

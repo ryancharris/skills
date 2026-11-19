@@ -1,8 +1,8 @@
 /**
  * Serialization: dedupe plus JSON and Markdown renderers.
  *
- * Ported from the earlier Python implementation (removed; see CHANGELOG). The JSON key set and ordering are part of the
- * public contract an agent parses, so they must match the Python output.
+ * The JSON key set and ordering are part of the public contract an agent
+ * parses, so they are fixed.
  */
 
 import { displayCompany, friendlyDepartment, isPartial, signalToDict, verdict } from "./hiring-signal.js";
@@ -74,13 +74,13 @@ export function dedupeJobs(jobs: Job[]): Job[] {
 // ----------------------------------------------------------------------- JSON
 
 /**
- * ISO-8601 timestamp matching Python's `datetime.now(timezone.utc).isoformat()`.
+ * ISO-8601 UTC timestamp with microseconds and a `+00:00` offset.
  *
- * Not `toISOString()`: that emits milliseconds and a `Z` suffix, whereas Python
- * emits microseconds and `+00:00`. Both are valid ISO-8601, but `generated_at`
- * is part of the JSON an agent may compare, so the format is kept identical.
+ * Not `toISOString()`: that emits milliseconds and a `Z` suffix. Both are valid
+ * ISO-8601, but `generated_at` is part of the documented JSON an agent may
+ * compare, so the format is kept stable.
  */
-function isoLikePython(date: Date = new Date()): string {
+function isoTimestamp(date: Date = new Date()): string {
   const pad = (n: number, width = 2): string => String(n).padStart(width, "0");
   const micros = pad(date.getUTCMilliseconds() * 1000, 6);
   return (
@@ -149,7 +149,7 @@ export function toJson(jobs: Job[], options: JsonOptions = {}): string {
   });
 
   const payload = {
-    generated_at: isoLikePython(),
+    generated_at: isoTimestamp(),
     fetched_at: options.fetchedAt ?? null,
     cached: options.cached ?? false,
     count: jobs.length,
@@ -180,7 +180,7 @@ export interface HiringJsonOptions {
 export function toHiringJson(signals: HiringSignal[], options: HiringJsonOptions = {}): string {
   const { queries = [], warnings = [] } = options;
   const payload = {
-    generated_at: isoLikePython(),
+    generated_at: isoTimestamp(),
     fetched_at: options.fetchedAt ?? null,
     cached: options.cached ?? false,
     count: signals.length,
