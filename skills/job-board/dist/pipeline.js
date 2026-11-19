@@ -125,7 +125,7 @@ export async function fetchBoard(board, adapters, timeoutMs, errors) {
         return { jobs: [], reported: null };
     const adapter = base.timeout === timeoutMs ? base : new base.constructor(timeoutMs);
     try {
-        return await adapter.fetchRead(board.slug);
+        return await adapter.fetchRead(board.slug, board.company);
     }
     catch (err) {
         if (errors) {

@@ -41,11 +41,17 @@ interface Run {
 }
 
 /** Run the built CLI against a synthetic board of `total` postings. */
-function runCli(args: string[], total: number, cacheDir?: string): Promise<Run> {
+function runCli(
+  args: string[],
+  total: number,
+  cacheDir?: string,
+  extraEnv: NodeJS.ProcessEnv = {},
+): Promise<Run> {
   const env: NodeJS.ProcessEnv = {
     PATH: process.env.PATH ?? "",
     HOME: process.env.HOME ?? "",
     FAKE_SR_TOTAL: String(total),
+    ...extraEnv,
   };
   if (cacheDir) env.JOB_BOARD_CACHE_DIR = cacheDir;
   return new Promise((done) => {
@@ -174,6 +180,40 @@ describe("end to end through the built CLI (synthetic board, no network)", () =>
       const args = ["--company", "Acme", "--title", "engineer", "--format", "json-compact", "--limit", "1"];
       const out = JSON.parse((await runCli(args, 800, cacheDir)).stdout);
       expect(out.cached).toBe(false);
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "a job on a board with no vendor company name carries the board's name, not the slug",
+    async () => {
+      // Ashby sends no company name. Before the fix jobs[].company was the slug
+      // ("cohere") while boards[].company was the name searched ("Cohere").
+      const ashby = { FAKE_ASHBY_SLUG: "cohere" };
+      const base = ["--company", "Cohere", "--title", "engineer"];
+
+      const json = JSON.parse((await runCli([...base, "--format", "json"], 0, undefined, ashby)).stdout);
+      expect(json.boards).toEqual([{ company: "Cohere", ats: "ashby", slug: "cohere", job_count: 3, url: "" }]);
+      expect(json.jobs).toHaveLength(3);
+      for (const job of json.jobs) expect(job.company).toBe(json.boards[0].company);
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "--exclude-company still matches the searched spelling and the display name",
+    async () => {
+      const ashby = { FAKE_ASHBY_SLUG: "cohere" };
+      for (const spelling of ["Cohere", "cohere", "COHERE"]) {
+        const run = await runCli(
+          ["--company", "Cohere", "--title", "engineer", "--exclude-company", spelling, "--format", "json-compact"],
+          0,
+          undefined,
+          ashby,
+        );
+        const out = JSON.parse(run.stdout);
+        expect(out.count, spelling).toBe(0);
+      }
     },
     TIMEOUT,
   );

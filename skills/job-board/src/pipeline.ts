@@ -181,7 +181,7 @@ export async function fetchBoard(
     base.timeout === timeoutMs ? base : new (base.constructor as new (t: number) => ATSAdapter)(timeoutMs);
 
   try {
-    return await adapter.fetchRead(board.slug);
+    return await adapter.fetchRead(board.slug, board.company);
   } catch (err) {
     if (errors) {
       errors.push(
