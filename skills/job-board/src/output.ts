@@ -8,7 +8,7 @@
 import { displayCompany, friendlyDepartment, isPartial, signalToDict, verdict } from "./hiring-signal.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, hiringBadge, jobBadges } from "./format-detail.js";
 import type { HiringSignal } from "./hiring-signal.js";
-import { daysSince, parseIso, resultHeadline, unreadableCompanies, type Board, type Job, type PartialBoard } from "./models.js";
+import { daysSince, noBoardAdvice, noKeyTail, parseIso, SEARCH_KEY_SETUP_URL, possessive, resultHeadline, unreadableCompanies, type Board, type Job, type PartialBoard } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 
 // --------------------------------------------------------------------- dedupe
@@ -255,14 +255,12 @@ export function toMarkdown(jobs: Job[], options: MarkdownOptions = {}): string {
       );
       lines.push("");
       lines.push(
-        `Set \`${reason.variable}\` (provider: ${reason.provider}) and re-run to ` +
-          `search indexed job boards instead.`,
+        `Optional: set \`${reason.variable}\` ${noKeyTail(possessive(reason.companies))} ${SEARCH_KEY_SETUP_URL}`,
       );
     } else if (reason?.kind === "no_board") {
       lines.push(
         `No job board found for ${reason.companies.join(", ")}. Large employers use ` +
-          `custom careers sites; try a smaller company, or set ` +
-          `\`JOB_BOARD_SEARCH_API_KEY\` to search indexed boards.`,
+          `custom careers sites; try a smaller company. ${noBoardAdvice(reason.search)}`,
       );
     } else if (reason?.kind === "filtered") {
       // The advice is already in the warnings block above, from the pipeline. Saying

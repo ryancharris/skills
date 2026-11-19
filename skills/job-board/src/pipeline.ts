@@ -53,9 +53,15 @@ export interface RunResult {
   unreadable_companies: string[];
 }
 
+/**
+ * Why the search fallback gave no search results when no board was readable:
+ * no `--title` was given (it cannot run), it ran and returned nothing, or it failed.
+ */
+export type NoBoardSearch = "no_title" | "no_results" | "failed";
+
 export type EmptyReason =
   | { kind: "no_key"; provider: string; variable: string; companies: string[] }
-  | { kind: "no_board"; companies: string[] }
+  | { kind: "no_board"; companies: string[]; search: NoBoardSearch }
   | { kind: "filtered"; raw: number };
 
 function emptyResult(): RunResult {
@@ -280,11 +286,11 @@ export async function runSearch(
     result.warnings.push(partialWarning(p));
   }
 
-  // For companies with no live board, hand the agent a discovery query.
+  // For companies with no live board, hand the agent a careers query.
   // Match on the name that was typed: a board's own `company` may be the vendor's name.
   for (const name of unreadable) result.queries.push(buildDiscoveryQuery(name));
 
-  // Offer boolean site: queries the agent can execute via the search API.
+  // Offer site queries for the user to paste into a search engine.
   if (profile.titles.length > 0) {
     const groups = expandTitles(profile.titles);
     for (const domain of sharedDomainSiteTargets()) {
@@ -307,7 +313,8 @@ export async function runSearch(
 
   let peerWarned = false;
   if (raw.length === 0) {
-    result.jobs = await searchFallback(profile, result, config, options.provider ?? null, options.searchLimit ?? 15);
+    const fallback = await searchFallback(profile, result, config, options.provider ?? null, options.searchLimit ?? 15);
+    result.jobs = fallback.jobs;
     // The fallback query does not name the company, so its results are other companies'
     // roles. Say so, for each named company that has no readable board.
     if (result.jobs.length > 0 && unreadable.length > 0) {
@@ -315,7 +322,7 @@ export async function runSearch(
       peerWarned = true;
     }
     if (result.jobs.length === 0 && result.empty_reason === null && live.length === 0) {
-      result.empty_reason = { kind: "no_board", companies: result.companies };
+      result.empty_reason = { kind: "no_board", companies: result.companies, search: fallback.search };
     }
   }
 
@@ -374,33 +381,43 @@ export async function checkHiring(
   return result;
 }
 
-/** Use the search engine when no ATS APIs produced postings. */
+/**
+ * The search fallback: runs once per run, when no board produced a posting and a
+ * title was given. `search` says why it produced nothing, for the empty-result text.
+ */
 async function searchFallback(
   profile: SearchProfile,
   result: RunResult,
   config: Config,
   provider: SearchProvider | null,
   searchLimit: number,
-): Promise<Job[]> {
-  if (profile.titles.length === 0) return [];
+): Promise<{ jobs: Job[]; search: NoBoardSearch }> {
+  if (profile.titles.length === 0) return { jobs: [], search: "no_title" };
 
   let active = provider;
   if (!active) {
     try {
       active = buildProvider(config);
     } catch (err) {
-      result.warnings.push(`Search fallback skipped: ${(err as Error)?.message ?? err}`);
+      // The missing-key advice is said once, in the empty-result text; the warning only
+      // reports that the fallback did not run.
+      result.warnings.push(
+        config.search_api_key
+          ? `Search fallback skipped: ${(err as Error)?.message ?? err}`
+          : "Search fallback skipped: no search key is set.",
+      );
       result.empty_reason = {
         kind: "no_key",
         provider: config.search_provider,
         variable: "JOB_BOARD_SEARCH_API_KEY",
         companies: result.companies,
       };
-      return [];
+      return { jobs: [], search: "no_results" };
     }
   }
 
   const jobs: Job[] = [];
+  let failed = false;
   for (const domain of sharedDomainSiteTargets().slice(0, 3)) {
     const query = buildSiteQuery(domain, expandTitles(profile.titles));
     try {
@@ -420,10 +437,12 @@ async function searchFallback(
       // An auth/quota error fails identically on every domain: stop rather than
       // emit the same warning three times and burn quota.
       result.warnings.push(err instanceof SearchError ? err.message : String(err));
+      failed = true;
       break;
     }
   }
-  return dedupeJobs(jobs);
+  const unique = dedupeJobs(jobs);
+  return { jobs: unique, search: unique.length === 0 && failed ? "failed" : "no_results" };
 }
 
 const AT = /\s+(?:at|@)\s+(.+)$/i;

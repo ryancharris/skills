@@ -10,7 +10,7 @@
  * read as unserious.
  */
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
-import { daysSince, parseIso, resultHeadline, unreadableCompanies } from "./models.js";
+import { daysSince, noBoardAdvice, noKeyTail, parseIso, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies } from "./models.js";
 // ------------------------------------------------------------------- symbols
 /** A finding is "fresh" within this many days. */
 export const FRESH_DAYS = 14;
@@ -155,7 +155,7 @@ function emptyBlock(reason) {
                 `${plural ? "These companies use" : "This company uses"} a careers site this ` +
                 `skill cannot read directly.`,
             "",
-            `Set \`${reason.variable}\` (provider: ${reason.provider}) and re-run to search indexed job boards instead.`,
+            `Optional: set \`${reason.variable}\` ${noKeyTail(possessive(reason.companies))} ${SEARCH_KEY_SETUP_URL}`,
             "",
         ];
     }
@@ -163,8 +163,7 @@ function emptyBlock(reason) {
         return [
             `${SYMBOLS.unreadable} No job board found for ${reason.companies.join(", ")}.`,
             "",
-            "Large employers use custom careers sites. Try a smaller company, or set " +
-                "`JOB_BOARD_SEARCH_API_KEY` to search indexed boards.",
+            `Large employers use custom careers sites. Try a smaller company. ${noBoardAdvice(reason.search)}`,
             "",
         ];
     }

@@ -1,5 +1,5 @@
 /**
- * Search-engine providers.
+ * Search providers.
  *
  * Ported from the earlier Python implementation (removed; see CHANGELOG). The Kagi response shape is captured
  * from the LIVE v1 API, not inferred:

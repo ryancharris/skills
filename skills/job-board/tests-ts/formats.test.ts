@@ -167,7 +167,7 @@ describe("toHtml", () => {
 
   it("explains an empty result", () => {
     const html = toHtml([], {
-      emptyReason: { kind: "no_board", companies: ["Acme"] },
+      emptyReason: { kind: "no_board", companies: ["Acme"], search: "no_title" },
     });
     expect(html).toContain(SYMBOLS.unreadable);
     expect(html).toContain("Acme");

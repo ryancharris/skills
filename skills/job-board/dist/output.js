@@ -6,7 +6,7 @@
  */
 import { displayCompany, friendlyDepartment, signalToDict, verdict } from "./hiring-signal.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, hiringBadge, jobBadges } from "./format-detail.js";
-import { daysSince, parseIso, resultHeadline, unreadableCompanies } from "./models.js";
+import { daysSince, noBoardAdvice, noKeyTail, parseIso, SEARCH_KEY_SETUP_URL, possessive, resultHeadline, unreadableCompanies } from "./models.js";
 // --------------------------------------------------------------------- dedupe
 /** Repost identity: normalised title + company + location. */
 function contentKey(job) {
@@ -185,13 +185,11 @@ export function toMarkdown(jobs, options = {}) {
             lines.push(`No roles found for **${who}**. ${plural ? "These companies use" : "This company uses"} ` +
                 `a careers site this skill cannot read directly.`);
             lines.push("");
-            lines.push(`Set \`${reason.variable}\` (provider: ${reason.provider}) and re-run to ` +
-                `search indexed job boards instead.`);
+            lines.push(`Optional: set \`${reason.variable}\` ${noKeyTail(possessive(reason.companies))} ${SEARCH_KEY_SETUP_URL}`);
         }
         else if (reason?.kind === "no_board") {
             lines.push(`No job board found for ${reason.companies.join(", ")}. Large employers use ` +
-                `custom careers sites; try a smaller company, or set ` +
-                `\`JOB_BOARD_SEARCH_API_KEY\` to search indexed boards.`);
+                `custom careers sites; try a smaller company. ${noBoardAdvice(reason.search)}`);
         }
         else if (reason?.kind === "filtered") {
             // The advice is already in the warnings block above, from the pipeline. Saying

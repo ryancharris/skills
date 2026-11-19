@@ -11,7 +11,7 @@
  */
 
 import { displayCompany } from "./hiring-signal.js";
-import { parseIso, resultHeadline, unreadableCompanies, type Board, type Job } from "./models.js";
+import { noBoardAdvice, noKeyTail, parseIso, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies, type Board, type Job } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
 import type { HiringSignal } from "./hiring-signal.js";
@@ -170,14 +170,16 @@ function emptyHtml(reason: EmptyReason | null | undefined): string {
       `${SYMBOLS.unreadable} No roles found for <strong>${who}</strong>. ` +
       `${plural ? "These companies use" : "This company uses"} a careers site this skill ` +
       `cannot read directly. ` +
-      `Set <code>${escapeHtml(reason.variable)}</code> (provider: ` +
-      `${escapeHtml(reason.provider)}) and re-run to search indexed job boards instead.`
+      `Optional: set <code>${escapeHtml(reason.variable)}</code> ` +
+      `${escapeHtml(noKeyTail(possessive(reason.companies)))} ` +
+      `<a href="${escapeHtml(SEARCH_KEY_SETUP_URL)}">${escapeHtml(SEARCH_KEY_SETUP_URL)}</a>`
     );
   }
   if (reason?.kind === "no_board") {
     return (
       `${SYMBOLS.unreadable} No job board found for ${escapeHtml(reason.companies.join(", "))}. ` +
-      `Large employers use custom careers sites.`
+      `Large employers use custom careers sites. Try a smaller company. ` +
+      escapeHtml(noBoardAdvice(reason.search))
     );
   }
   if (reason?.kind === "filtered") {

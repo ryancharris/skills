@@ -226,6 +226,33 @@ export function unreadableCompanies(
   return reason.companies && reason.companies.length > 0 ? reason.companies : null;
 }
 
+import type { NoBoardSearch } from "./pipeline.js";
+
+/** Where the search key is explained: what it does and how to set it up. */
+export const SEARCH_KEY_SETUP_URL =
+  "https://github.com/ryancharris/skills/blob/main/skills/job-board/references/providers.md";
+
+/** "Amazon's", or "these companies'" when several were named. */
+export function possessive(companies: string[]): string {
+  return companies.length === 1 ? `${companies[0]}'s` : "these companies'";
+}
+
+/** The no_key advice after the variable name, up to the setup link. `who` is already possessive. */
+export function noKeyTail(who: string): string {
+  return `to also get search results from other ATS boards. They may be other companies' roles, not ${who}. Setup:`;
+}
+
+/**
+ * What to do next when no board was read and the search fallback produced nothing.
+ * Never advises the search key: with no `--title` the fallback cannot run, and
+ * otherwise a key was already set.
+ */
+export function noBoardAdvice(search: NoBoardSearch): string {
+  if (search === "no_results") return "The search fallback ran and returned no search results.";
+  if (search === "failed") return "The search fallback failed; see the warnings.";
+  return "Add a --title, then run the same command with --queries to get site queries you can paste into a search engine.";
+}
+
 /** The headline for a result: a count, or what could not be read. */
 export function resultHeadline(count: number, where: string, unreadable: string[] | null): string {
   if (unreadable) {
