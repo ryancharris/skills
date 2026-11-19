@@ -9,5 +9,6 @@
 {"id":"S7","title":"Unsupported company (no verdict from memory)","prompt":"I was just laid off from Amazon. Is Amazon still hiring?","expect":"Says the board cannot be read; does NOT claim hiring status from memory or the web."},
 {"id":"S8","title":"Filters and format","prompt":"Senior backend roles at Stripe in New York, posted in the last 14 days. Show them as markdown.","expect":"Uses --seniority/--location/--max-age-days and md output; or says none match."},
 {"id":"S9","title":"Company that does not exist","prompt":"Is Zzqxv Holdings International hiring?","expect":"Reports it could not find a board / unknown; does not invent numbers."},
-{"id":"S10","title":"HTML output","prompt":"Give me a standalone HTML page of data engineer roles at Cohere.","expect":"Uses --format html and provides or saves the page."}
+{"id":"S10","title":"HTML output","prompt":"Give me a standalone HTML page of data engineer roles at Cohere.","expect":"Uses --format html and provides or saves the page."},
+{"id":"S11","title":"Roles at a readable and an unreadable company","prompt":"Find software engineer roles at Ramp and Amazon.","expect":"Reports postings at Ramp and says Amazon could not be read (never that Amazon has no roles)."}
 ]

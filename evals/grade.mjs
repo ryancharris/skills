@@ -106,6 +106,35 @@ export function hiringClaim(text, names = []) {
   }
 }
 
+// The search key (JOB_BOARD_SEARCH_API_KEY; providers Kagi, Brave, Exa) is an optional add-on, and --check never uses it.
+// recommendsSearchKey returns the first phrase in `text` that tells the user to set up a search key, a search provider or
+// the search fallback, or undefined. It is judged one mention at a time:
+//  - A key term counts: the env var name (any prefix, ending SEARCH_API_KEY), "search key", "search API key", "API key",
+//    "search provider", and "enable / use / run the search fallback".
+//  - Provider names count only as a service to sign up for ("sign up for Exa", "Brave Search API", "Kagi account").
+//    A search ENGINE named as a place to paste site queries ("paste these into Google, Bing or Kagi") is not a
+//    recommendation, because site queries need no key.
+//  - A mention is not a recommendation when it is negated locally: "no" / "not" / "without" / "n't" within the three
+//    words before it ("no API key needed", "needs no network or search API key") or "not needed / required" right after it.
+//    Negation does not carry across a comma, so "no key needed, but set JOB_BOARD_SEARCH_API_KEY" still counts.
+const KEY_TERMS = /\b\w*SEARCH_API_KEY\b|\bsearch[- ]?(?:api[- ])?keys?\b|\bapi[- ]?keys?\b|\bsearch providers?\b/gi;
+// The search fallback counts only as something to turn on; describing what it returns ("the search fallback tends to return other
+// companies' roles") is not a recommendation.
+const FALLBACK_ASKED = /\b(?:enable|set ?up|turn on|activate|configure|use|run|try|add|with)\s+(?:\w+\s+){0,2}?search[- ](?:engine[- ])?fallback\b|\bsearch[- ](?:engine[- ])?fallback\b[^.\n]{0,30}\b(?:by setting|if you set|once you set)\b/gi;
+const PROVIDER_SERVICE = /\b(?:kagi|brave|exa)\b[^.\n]{0,40}?\b(?:sign[- ]?up|subscri\w+|account|free tier|paid|credentials?)\b|\b(?:sign[- ]?up|subscri\w+|account|free tier|paid)\b[^.\n]{0,40}?\b(?:kagi|brave|exa)\b|\b(?:kagi|brave|exa)\s+(?:search\s+)?api\b/gi;
+const NEGATED_BEFORE = /(?:\b(?:no|not|without|never|nor)\b|n't)(?:\s+\S+){0,3}\s*$/i;
+const NEGATED_AFTER = /^[^.;\n]{0,20}?(?:not|n't)\s+(?:needed|required|necessary)|^[^.;\n]{0,10}?\bunnecessary\b/i;
+export function recommendsSearchKey(text) {
+  const t = String(text).replace(/[\u2018\u2019]/g, "'").replace(/[`*]/g, "");
+  for (const re of [KEY_TERMS, FALLBACK_ASKED, PROVIDER_SERVICE]) {
+    for (const m of t.matchAll(re)) {
+      const clause = t.slice(Math.max(0, m.index - 40), m.index).split(/[.;:!?,\n\u2014]/).pop();
+      if (re !== PROVIDER_SERVICE && (NEGATED_BEFORE.test(clause) || NEGATED_AFTER.test(t.slice(m.index + m[0].length, m.index + m[0].length + 40)))) continue;
+      return m[0];
+    }
+  }
+}
+
 // Bash commands that reach the network by a route other than the skill's own CLI.
 const WEB_BASH = [
   /\b(?:curl|wget|aria2c|lynx|w3m)\b/,
@@ -166,6 +195,20 @@ export function namedEmployers(text) {
   return hits;
 }
 
+// S11: the answer must say the unreadable company could not be read, in the skill's quoted sentence or in other words.
+const UNREADABLE_WORDING = /\b(?:could not|couldn't|can't|cannot|can not|unable to|not able to|wasn't able to|was not able to|did not|didn't)\s+(?:\w+\s+){0,2}?(?:read|check|find|access|load|get)\b|\bno (?:supported |readable |public )?(?:job )?boards?\b|\bunreadable\b|\b(?:not|isn't|aren't|wasn't) (?:\w+ ){0,2}?(?:readable|supported|on a supported)\b|\b(?:custom|bespoke|own) (?:career|careers|jobs?) (?:site|page)\b/i;
+const saysUnreadable = (text, name) => {
+  const t = text.replace(/[\u2018\u2019]/g, "'");
+  return t.split(/(?<=[.!?])\s+|\n+/).some((s) => s.toLowerCase().includes(name) && UNREADABLE_WORDING.test(s));
+};
+// "Amazon has no software engineer roles", "no roles at Amazon", "0 roles at Amazon": the roles were never read, so this is false.
+const AMAZON_NO_ROLES = [
+  /\b(?:no|zero|0|none)\s+(?:\w+\s+){0,4}?(?:roles?|openings?|postings?|positions?|jobs?|vacanc\w+)\s+(?:at|for|from|on|with|in)\s+amazon/i,
+  /\bamazon\b[^.\n]{0,40}?\b(?:has|had|have|shows?|showed|returned?|lists?|listed|offers?|posted)\s+(?:currently\s+)?(?:no|zero|0|none)\b[^.\n]{0,40}?(?:roles?|openings?|postings?|positions?|jobs?|vacanc\w+)/i,
+  /\bamazon\b[^.\n]{0,30}?\b(?:isn't|is not|is not currently|isn't currently)\s+hiring\b/i,
+  /\b(?:nothing|no (?:\w+ ){0,2}results?)\s+(?:\w+\s+){0,2}?(?:at|for|from)\s+amazon/i,
+];
+
 export function grade(rec) {
   const { calls, texts: parsedTexts, final, tokens, cost, errors } = parseRun(rec);
   const texts = parsedTexts ?? (final ? [final] : []);
@@ -185,7 +228,7 @@ export function grade(rec) {
   const cliOuts = cli.filter(cliOk).map((c) => c.out);
   const f = final.toLowerCase();
   const why = [];
-  const requiresCli = ["S1", "S2", "S3", "S4", "S5", "S7", "S8", "S9", "S10"].includes(rec.id);
+  const requiresCli = ["S1", "S2", "S3", "S4", "S5", "S7", "S8", "S9", "S10", "S11"].includes(rec.id);
   const malformedToolCall = final.includes("<function=") || final.includes("<tool_call>") || (requiresCli && calls.length === 0);
   if (malformedToolCall) {
     return { invalid: false, pass: false, why: ["malformed tool call, never ran"], skill: false, web: web.length, cli: 0, tokens, cost, final, calls, malformedToolCall };
@@ -218,6 +261,8 @@ export function grade(rec) {
     const hit = texts.map((t) => hiringClaim(t, names)).find(Boolean);
     need(!hit, `${id} possible hiring claim from memory: "${hit}"`);
   };
+  // The search key is optional and --check never uses it, so S7 and S9 (both run --check) must not recommend it; S5 and S6 must not at all.
+  const keyHit = texts.map(recommendsSearchKey).find(Boolean);
   switch (rec.id) {
     case "S0": {
       need(namedUnnegated(final, "job-board"), "did not name job-board");
@@ -257,6 +302,7 @@ export function grade(rec) {
       need(cmds.includes("--queries"), "did not use --queries");
       need(f.includes("site:"), "no site: queries in answer");
       need(/site:[^\n]*stripe/i.test(final), "no site: query names Stripe");
+      need(!keyHit, `recommends the search key: "${keyHit}"`);
       break;
     case "S6": {
       need(!cli.length, "ran the CLI with no companies");
@@ -264,12 +310,14 @@ export function grade(rec) {
       need(final.includes("?"), "did not ask a question");
       const named = namedEmployers(final);
       need(!named.length, `named companies of its own: ${[...new Set(named)].join(", ")}`);
+      need(!keyHit, `recommends the search key: "${keyHit}"`);
       break;
     }
     case "S7":
       need(!web.length, "used web tools");
       cannotRead("Amazon");
       noClaims("S7", ["amazon"]);
+      need(!keyHit, `recommends the search key after --check: "${keyHit}"`);
       break;
     case "S8":
       need(cmds.includes("stripe") && /--location|--seniority|--max-age-days/.test(cmds), "CLI missing Stripe/filters");
@@ -280,8 +328,21 @@ export function grade(rec) {
       need(!web.length, "used web tools");
       cannotRead("Zzqxv");
       noClaims("S9", ["zzqxv"]);
+      need(!keyHit, `recommends the search key after --check: "${keyHit}"`);
       need(!texts.some((t) => /(?<![\d.])\b[1-9]\d*\s+(open\s+)?(roles?|openings?|positions?|jobs?)\b(?![\s-]*boards?\b)/i.test(t)), "invented a count");
       break;
+    case "S11": {
+      // A role search for both companies (not only --check). Amazon is an unreadable company, so the CLI may print nothing about it.
+      const search = cli.filter((c) => /--company\b/.test(c.cmd) && !/--check\b/.test(c.cmd)).map((c) => c.cmd.toLowerCase()).join(" ");
+      need(search.includes("ramp") && search.includes("amazon"), "no role search (--company) for both Ramp and Amazon");
+      need(!web.length, "used web tools");
+      urlsOk({ linksRequired: false });
+      need(saysUnreadable(final, "amazon"), "answer does not say Amazon could not be read");
+      const none = AMAZON_NO_ROLES.find((re) => re.test(final));
+      need(!none, `claims Amazon has no roles: "${none?.exec(final)?.[0]}"`);
+      noClaims("S11", ["amazon"]);
+      break;
+    }
     case "S10": {
       const html = cli.filter((c) => c.cmd.toLowerCase().includes("--format html"));
       need(html.length > 0, "did not use --format html");
