@@ -373,6 +373,7 @@ describe("seniority filter (title words only)", () => {
     ["VP of Engineering", "director", true],
     ["Head of Product", "director", true],
     ["Chief of Staff", "director", true],
+    ["Chief of Staff", "senior", false],
     ["Leadership Coach", "senior", false],
     ["Internal Tools Engineer", "intern", false],
   ])("%s under %s -> %s", (title, level, expected) => {
@@ -416,8 +417,26 @@ describe("seniority filter (title words only)", () => {
   it("lets one title match two levels", () => {
     expect(titlesFor("Senior Director, Engineering", ["senior"])).toBe(true);
     expect(titlesFor("Senior Director, Engineering", ["director"])).toBe(true);
-    expect(titlesFor("Chief of Staff", ["senior"])).toBe(true);
     expect(titlesFor("Chief of Staff", ["director"])).toBe(true);
+  });
+
+  it("does not read Chief of Staff as a senior (staff-level) role", () => {
+    expect(titlesFor("Chief of Staff", ["senior"])).toBe(false);
+    expect(titlesFor("Chief of Staff to the CEO", ["senior"])).toBe(false);
+    expect(titlesFor("CHIEF OF STAFF", ["SENIOR"])).toBe(false);
+  });
+
+  it("still reads a real level word next to Chief of Staff, and Staff Engineer", () => {
+    expect(titlesFor("Senior Chief of Staff", ["senior"])).toBe(true);
+    expect(titlesFor("Chief of Staff, Principal Operations", ["senior"])).toBe(true);
+    expect(titlesFor("Staff Engineer", ["senior"])).toBe(true);
+    expect(titlesFor("Chief of Staff, Staff Engineering", ["senior"])).toBe(true);
+  });
+
+  it("leaves other levels and literal values alone for Chief of Staff", () => {
+    expect(titlesFor("Chief of Staff", ["staff"])).toBe(true);
+    expect(titlesFor("Chief of Staff", ["intern"])).toBe(false);
+    expect(titlesFor("Chief of Staff", ["senior", "director"])).toBe(true);
   });
 
   it("does not read level words from anything but the title", () => {

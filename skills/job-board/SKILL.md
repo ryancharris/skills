@@ -290,8 +290,9 @@ board in `--check`):
   not match);
   `mid` (mid, intermediate, II); `senior` (senior, sr, staff, lead, principal);
   `director` (director, VP, head of, chief). Repeated values are OR-ed, and a
-  title can match two levels ("Senior Director"; "Chief of Staff" matches both
-  `senior` and `director`). A value that is not a level is matched literally as
+  title can match two levels ("Senior Director"). "Chief of Staff" matches
+  `director` (via "chief") but not `senior`: the phrase is ignored for `senior`, so
+  "Senior Chief of Staff" and "Chief of Staff, Staff Engineering" still match it. A value that is not a level is matched literally as
   a title word, so `--seniority staff` matches only "staff". There is no "or
   above" (`senior` does not match a plain "Director"), and III, IV and L-levels
   are not mapped ("Software Engineer III" matches no level; `--seniority l5`
