@@ -1,0 +1,16 @@
+FROM node:22-slim
+ARG CLAUDE_CODE_VERSION=2.1.328
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
+RUN useradd -m tester && mkdir /out && chmod 777 /out
+USER tester
+WORKDIR /home/tester
+ENV DISABLE_AUTOUPDATER=1
+# repo.tar is `git archive <ref>`: committed files only, as a fresh clone would have.
+# The marketplace is added from this local copy because the GitHub copy would not contain an unmerged ref.
+COPY --chown=tester repo.tar /tmp/repo.tar
+RUN mkdir -p ~/src/skills && tar -xf /tmp/repo.tar -C ~/src/skills && rm /tmp/repo.tar
+RUN claude plugin marketplace add ~/src/skills && claude plugin install job-board@ryancharris-skills
+COPY --chown=tester verify.mjs run-claude.mjs adapt.mjs stories.json /evals/
+RUN mkdir -p /home/tester/work
+WORKDIR /home/tester/work

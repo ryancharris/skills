@@ -1,0 +1,15 @@
+FROM node:22-slim
+ARG PI_VERSION=1.5.2
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent@${PI_VERSION}
+RUN useradd -m tester && mkdir /out && chmod 777 /out
+USER tester
+WORKDIR /home/tester
+# repo.tar is `git archive <ref>`: committed files only, as a fresh clone would have.
+# pi loads a local-path package in place (no copy), so the package lives at ~/src/skills.
+COPY --chown=tester repo.tar /tmp/repo.tar
+RUN mkdir -p ~/src/skills && tar -xf /tmp/repo.tar -C ~/src/skills && rm /tmp/repo.tar
+RUN pi install ~/src/skills && pi list
+COPY --chown=tester verify.mjs run-pi.mjs adapt.mjs stories.json /evals/
+RUN mkdir -p /home/tester/work
+WORKDIR /home/tester/work
