@@ -1,8 +1,26 @@
 # Search providers
 
-The search engine is only used for the **fallback** path: generating and
-executing `site:<ats-domain> ("title" OR "synonym")` queries when a company has
-no supported ATS board. Query *generation* needs no key — only execution does.
+## What the search key is for
+
+The search key is an **optional add-on**. The skill is fully useful without it: site
+queries (`--queries`) and careers queries are always printed for the user to paste into
+a search engine, and need no key.
+
+The key enables the search fallback, and nothing else. The search fallback:
+
+- runs **once per run**, only when no named company yielded a posting and a `--title`
+  was given;
+- runs site queries `site:<ats-domain> ("title" OR "synonym")` for the first three
+  supported systems' domains (Greenhouse, Lever, Ashby), through the search provider.
+  The queries do not name the company;
+- returns search results (title, link, snippet, and a company name guessed from the
+  title or link). They may be other companies' roles, not the one you named, and the
+  output says so;
+- never adds to postings read from a board, and never follows a link.
+
+`--check` never reads the key.
+
+The output links to this page when it offers the key. Setup follows.
 
 ## Configuration
 
@@ -102,9 +120,9 @@ returning zero results.
 
 ### Pricing
 
-Billed per query (~$25 / 1000 searches). The fallback only runs for companies
-that resolve to no ATS board, and it stops at the first fatal error rather than
-retrying per domain, so cost stays bounded. Prefer ATS API discovery (free).
+Billed per query (~$25 / 1000 searches). A run makes at most three searches, and only
+when the search fallback runs (see above). It stops at the first fatal error rather than
+retrying per domain, so cost stays bounded. Board discovery is free; prefer it.
 
 ## Brave
 
