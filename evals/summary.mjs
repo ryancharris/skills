@@ -1,7 +1,9 @@
 // Usage: node evals/summary.mjs <out-dir>  -> writes <out-dir>/summary.json and <out-dir>/summary.md
 // Compact and diffable (no transcripts), so it can be committed under evals/results/ and compared later.
 import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { grade } from "./grade.mjs";
+import { mdText } from "./md.mjs";
 
 const dir = process.argv[2];
 if (!dir) {
@@ -57,29 +59,33 @@ for (const r of invalid) {
   const k = r.g.invalidReason.slice(0, 120);
   invalidReasons[k] = (invalidReasons[k] ?? 0) + 1;
 }
-const summary = { meta: { ...meta, seed: order.seed, runs: runs.length, invalidRuns: invalid.length }, stories: titles, cells, perModel, failures, invalidReasons };
+const versions = existsSync(`${dir}/versions.json`) ? JSON.parse(readFileSync(`${dir}/versions.json`, "utf8")) : null;
+const timedOut = allRuns.filter((r) => r.timedOut).length;
+const summary = { meta: { ...meta, ...(versions ? { versions } : {}), seed: order.seed, runs: runs.length, invalidRuns: invalid.length, ...(timedOut ? { timedOutRuns: timedOut } : {}) }, stories: titles, cells, perModel, failures, invalidReasons };
 writeFileSync(`${dir}/summary.json`, JSON.stringify(summary, null, 2) + "\n");
 
 const cell = (c) => (c ? `${c.pass}/${c.n}${c.invalid ? ` (+${c.invalid} err)` : ""}` : "");
 const lines = [];
-lines.push(`# Agent eval: ${meta.name ?? meta.ref} (${meta.date})`, "");
-lines.push(`- Skill: \`${meta.ref}\` at \`${meta.commit}\``);
-if (invalid.length > 0) lines.push(`- **WARNING: ${invalid.length} of ${allRuns.length} runs hit an API error and are excluded from every rate below.** Do not compare this run until it is repeated. First error: ${invalid[0].g.invalidReason.slice(0, 160)}`);
+lines.push(`# Agent eval: ${mdText(meta.name ?? meta.ref)} (${mdText(meta.date)})`, "");
+lines.push(`- Skill: \`${mdText(meta.ref)}\` at \`${mdText(meta.commit)}\``);
+lines.push(`- Agent versions: ${versions ? Object.entries(versions).map(([k, v]) => `${mdText(k)} ${mdText(v)}`).join(", ") : "not recorded"}`);
+if (timedOut) lines.push(`- ${timedOut} run(s) hit the time limit and were killed (graded by the grader, see timed-out runs in the report).`);
+if (invalid.length > 0) lines.push(`- **WARNING: ${invalid.length} of ${allRuns.length} runs hit an API error and are excluded from every rate below.** Do not compare this run until it is repeated. First error: ${mdText(invalid[0].g.invalidReason.slice(0, 160))}`);
 lines.push(`- ${runs.length} valid runs, ${models.length} models, stories ${stories.join(", ")}, shuffle seed ${order.seed}`);
 lines.push(`- Each run is a fresh opencode session in Docker. Grading is strict and keyword-based (\`evals/grade.mjs\`); S7 and S9 match wording, so a pass there is weaker evidence.`, "");
 lines.push("## Passes by model and story", "");
-lines.push(`| Model | ${stories.join(" | ")} | Total |`, `|---|${stories.map(() => "---").join("|")}|---|`);
-for (const m of models) lines.push(`| ${m} | ${stories.map((s) => cell(cells[m][s])).join(" | ")} | ${perModel[m].pass}/${perModel[m].n}${perModel[m].invalid ? ` (+${perModel[m].invalid} err)` : ""} |`);
+lines.push(`| Model | ${stories.map(mdText).join(" | ")} | Total |`, `|---|${stories.map(() => "---").join("|")}|---|`);
+for (const m of models) lines.push(`| ${mdText(m)} | ${stories.map((s) => cell(cells[m][s])).join(" | ")} | ${perModel[m].pass}/${perModel[m].n}${perModel[m].invalid ? ` (+${perModel[m].invalid} err)` : ""} |`);
 lines.push("", "## Stories", "");
-for (const s of stories) lines.push(`- **${s}**: ${titles[s]}`);
+for (const s of stories) lines.push(`- **${mdText(s)}**: ${mdText(titles[s])}`);
 lines.push("", "## Per model", "", "| Model | Loaded the skill | Runs using web tools | Malformed tool calls | Avg seconds | Tokens | Cost |", "|---|---|---|---|---|---|---|");
 for (const m of models) {
   const p = perModel[m];
-  lines.push(`| ${m} | ${p.skillLoaded}/${p.n} | ${p.usedWeb} | ${p.malformedToolCalls} | ${p.avgSeconds} | ${Math.round(p.tokens / 1000)}k | $${p.cost.toFixed(2)} |`);
+  lines.push(`| ${mdText(m)} | ${p.skillLoaded}/${p.n} | ${p.usedWeb} | ${p.malformedToolCalls} | ${p.avgSeconds} | ${Math.round(p.tokens / 1000)}k | $${p.cost.toFixed(2)} |`);
 }
 lines.push("", "## Failed checks", "");
 const fk = Object.entries(failures).sort();
 if (fk.length === 0) lines.push("None.");
-else for (const [k, n] of fk) lines.push(`- ${k} (${n})`);
+else for (const [k, n] of fk) lines.push(`- ${mdText(k)} (${n})`);
 writeFileSync(`${dir}/summary.md`, lines.join("\n") + "\n");
 console.log(`${dir}/summary.md`);
