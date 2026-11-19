@@ -656,8 +656,9 @@ describe("empty-state messages", () => {
         companies: ["Amazon"],
       },
     });
-    expect(md).toContain("No roles found for **Amazon**");
-    expect(md).toContain("cannot read directly");
+    expect(md).toContain("No postings were read for **Amazon**");
+    expect(md).toContain("not the same as having no roles");
+    expect(md).not.toContain("No roles found");
     expect(md).toContain("JOB_BOARD_SEARCH_API_KEY");
     expect(md).not.toContain("widening titles");
   });
@@ -671,8 +672,8 @@ describe("empty-state messages", () => {
         companies: ["Amazon", "Google"],
       },
     });
-    expect(md).toContain("No roles found for **Amazon, Google**");
-    expect(md).toContain("These companies use");
+    expect(md).toContain("No postings were read for **Amazon, Google**");
+    expect(md).toContain("found no board it can read for them");
   });
 
   it("explains a no-board result", () => {

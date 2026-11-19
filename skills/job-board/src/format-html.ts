@@ -11,7 +11,7 @@
  */
 
 import { displayCompany } from "./hiring-signal.js";
-import { noBoardAdvice, noKeyTail, parseIso, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies, type Board, type Job } from "./models.js";
+import { noBoardAdvice, noKeyTail, parseIso, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies, unreadableNotice, type Board, type Job } from "./models.js";
 import { CAREERS_STEP_HEADING, nextSteps } from "./next-steps.js";
 import type { EmptyReason } from "./pipeline.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
@@ -177,11 +177,8 @@ function nextStepHtml(reason: EmptyReason | null | undefined): string {
 function emptyHtml(reason: EmptyReason | null | undefined): string {
   if (reason?.kind === "no_key") {
     const who = escapeHtml(reason.companies.join(", "));
-    const plural = reason.companies.length > 1;
     return (
-      `${SYMBOLS.unreadable} No roles found for <strong>${who}</strong>. ` +
-      `${plural ? "These companies use" : "This company uses"} a careers site this skill ` +
-      `cannot read directly.` +
+      `${SYMBOLS.unreadable} ${unreadableNotice(`<strong>${who}</strong>`, reason.companies.length)}` +
       nextStepHtml(reason) +
       `<p>Optional: set <code>${escapeHtml(reason.variable)}</code> ` +
       `${escapeHtml(noKeyTail(possessive(reason.companies)))} ` +

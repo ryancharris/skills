@@ -232,6 +232,17 @@ import type { NoBoardSearch } from "./pipeline.js";
 export const SEARCH_KEY_SETUP_URL =
   "https://github.com/ryancharris/skills/blob/main/skills/job-board/references/providers.md";
 
+/**
+ * The first line of the no_key result. `who` is the already-formatted company list. Says
+ * what is known (no postings were read) and not what is not (that the company has none).
+ */
+export function unreadableNotice(who: string, count: number): string {
+  return (
+    `No postings were read for ${who}: this skill found no board it can read for ` +
+    `${count > 1 ? "them" : "it"}. That is not the same as having no roles.`
+  );
+}
+
 /** "Amazon's", or "these companies'" when several were named. */
 export function possessive(companies: string[]): string {
   return companies.length === 1 ? `${companies[0]}'s` : "these companies'";

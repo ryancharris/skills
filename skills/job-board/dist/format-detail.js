@@ -10,7 +10,7 @@
  * read as unserious.
  */
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
-import { daysSince, noBoardAdvice, noKeyTail, parseIso, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies } from "./models.js";
+import { daysSince, noBoardAdvice, noKeyTail, parseIso, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies, unreadableNotice } from "./models.js";
 import { CAREERS_STEP_HEADING, nextSteps } from "./next-steps.js";
 // ------------------------------------------------------------------- symbols
 /** A finding is "fresh" within this many days. */
@@ -161,11 +161,8 @@ function nextStepBlock(reason) {
 function emptyBlock(reason) {
     if (reason?.kind === "no_key") {
         const who = reason.companies.join(", ");
-        const plural = reason.companies.length > 1;
         return [
-            `${SYMBOLS.unreadable} No roles found for **${who}**. ` +
-                `${plural ? "These companies use" : "This company uses"} a careers site this ` +
-                `skill cannot read directly.`,
+            `${SYMBOLS.unreadable} ${unreadableNotice(`**${who}**`, reason.companies.length)}`,
             "",
             ...nextStepBlock(reason),
             `Optional: set \`${reason.variable}\` ${noKeyTail(possessive(reason.companies))} ${SEARCH_KEY_SETUP_URL}`,

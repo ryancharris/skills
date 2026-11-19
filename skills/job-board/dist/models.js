@@ -147,6 +147,14 @@ export function unreadableCompanies(count, reason) {
 }
 /** Where the search key is explained: what it does and how to set it up. */
 export const SEARCH_KEY_SETUP_URL = "https://github.com/ryancharris/skills/blob/main/skills/job-board/references/providers.md";
+/**
+ * The first line of the no_key result. `who` is the already-formatted company list. Says
+ * what is known (no postings were read) and not what is not (that the company has none).
+ */
+export function unreadableNotice(who, count) {
+    return (`No postings were read for ${who}: this skill found no board it can read for ` +
+        `${count > 1 ? "them" : "it"}. That is not the same as having no roles.`);
+}
 /** "Amazon's", or "these companies'" when several were named. */
 export function possessive(companies) {
     return companies.length === 1 ? `${companies[0]}'s` : "these companies'";

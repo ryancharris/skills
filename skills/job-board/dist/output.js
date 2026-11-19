@@ -7,7 +7,7 @@
 import { displayCompany, friendlyDepartment, signalToDict, verdict } from "./hiring-signal.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, hiringBadge, jobBadges } from "./format-detail.js";
 import { CAREERS_STEP_HEADING, nextSteps } from "./next-steps.js";
-import { daysSince, noBoardAdvice, noKeyTail, parseIso, SEARCH_KEY_SETUP_URL, possessive, resultHeadline, unreadableCompanies } from "./models.js";
+import { daysSince, noBoardAdvice, noKeyTail, parseIso, SEARCH_KEY_SETUP_URL, possessive, resultHeadline, unreadableCompanies, unreadableNotice } from "./models.js";
 // --------------------------------------------------------------------- dedupe
 /** Repost identity: normalised title + company + location. */
 function contentKey(job) {
@@ -193,9 +193,7 @@ export function toMarkdown(jobs, options = {}) {
         };
         if (reason?.kind === "no_key") {
             const who = reason.companies.join(", ");
-            const plural = reason.companies.length > 1;
-            lines.push(`No roles found for **${who}**. ${plural ? "These companies use" : "This company uses"} ` +
-                `a careers site this skill cannot read directly.`);
+            lines.push(unreadableNotice(`**${who}**`, reason.companies.length));
             lines.push("");
             lines.push(...stepLines());
             lines.push(`Optional: set \`${reason.variable}\` ${noKeyTail(possessive(reason.companies))} ${SEARCH_KEY_SETUP_URL}`);
