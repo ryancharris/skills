@@ -554,3 +554,112 @@ test("real records keep their verdicts", () => {
     assert.equal(g.web, row.expectWeb, row.note);
   }
 });
+
+// Second blind review (S7 and S11). Each rule below came from answers a reviewer judged correct that the grader failed.
+const ROLES2 = "# 2 roles at Ramp\n\n### [Staff Engineer](https://boards.example/ramp/1)\n### [Senior Engineer](https://boards.example/ramp/2)\n";
+const S11RAN2 = cli("--company Ramp --company Amazon --title 'software engineer'", ROLES2);
+
+test("S11 links: a board root the CLI printed deeper links for is fine; any other deep link is not", () => {
+  for (const root of ["https://boards.example/ramp", "https://boards.example/ramp/", "https://www.amazon.jobs", "https://amazon.jobs", "https://amazon.jobs/"]) {
+    pass(run("S11", [S11RAN, text(`${RAMP}${AMZ} Board: ${root}`)]));
+  }
+  for (const link of [
+    "https://boards.example/ram", // truncated prefix of a printed URL
+    "https://boards.example/ramp/3", // made-up job link
+    "https://boards.example/other", // a root nothing in the output sits under
+    "https://boards.example", // host only
+    "https://boards.example/ramp?x=1",
+    "https://www.amazon.jobs/en/jobs/2900001", // made-up specific Amazon job
+    "https://jobs.amazon.example",
+    "https://amazon.jobs.evil.example",
+  ]) fail(run("S11", [S11RAN, text(`${RAMP}${AMZ} Link: ${link}`)]), /URL not in tool output/);
+  // The root rule is S11 only: S1 still compares exactly.
+  fail(run("S1", [cli("--company ramp --format md", ROLES), text("https://boards.example/ramp")]), /URL not in tool output/);
+});
+
+test("S11 without links needs Ramp's count or a returned role; a wrong count or no mention fails", () => {
+  pass(run("S11", [S11RAN2, text(`Ramp has 2 software engineer roles. ${AMZ}`)]));
+  pass(run("S11", [S11RAN2, text(`Ramp: Staff Engineer and Senior Engineer. ${AMZ}`)]));
+  fail(run("S11", [S11RAN2, text(`Ramp has 12 software engineer roles. ${AMZ}`)]), /neither the CLI's Ramp count nor a returned role/);
+  fail(run("S11", [S11RAN2, text(`Ramp has 22 software engineer roles. ${AMZ}`)]), /neither the CLI's Ramp count nor a returned role/);
+  fail(run("S11", [S11RAN2, text(`Ramp has roles. ${AMZ}`)]), /neither the CLI's Ramp count nor a returned role/);
+  fail(run("S11", [S11RAN2, text(AMZ)]), /neither the CLI's Ramp count nor a returned role/);
+});
+
+test("S11 Amazon unreadable wording: participles, a heading, and denials of the no-roles claim", () => {
+  const ramp = "Ramp has 2 roles.\n";
+  pass(run("S11", [S11RAN2, text(`${ramp}Amazon's job board couldn't be accessed, so no roles from Amazon are included.`)]));
+  pass(run("S11", [S11RAN2, text(`${ramp}**Amazon**:\n- No accessible job board for direct reading.`)]));
+  pass(run("S11", [S11RAN2, text(`${ramp}${AMZ} That doesn't mean Amazon has no roles.`)]));
+  pass(run("S11", [S11RAN2, text(`${ramp}${AMZ} This does not mean Amazon has no software engineer roles.`)]));
+  pass(run("S11", [S11RAN2, text(`${ramp}I couldn't find any roles at Amazon because it doesn't use a supported ATS board.`)]));
+  // A bare no-roles line, even under an Amazon heading, still fails: nothing says the board was unreadable.
+  fail(run("S11", [S11RAN2, text(`${ramp}**Amazon**:\n- No roles found.`)]), /does not say Amazon could not be read/);
+  fail(run("S11", [S11RAN2, text(`${ramp}${AMZ}\nThere are no roles at Amazon.`)]), /claims Amazon has no roles/);
+  fail(run("S11", [S11RAN2, text(`${ramp}${AMZ} Amazon has no roles, so no roles are shown.`)]), /claims Amazon has no roles/);
+  fail(run("S11", [S11RAN2, text(`${ramp}${AMZ} It doesn't mean much: Amazon has no roles.`)]), /claims Amazon has no roles/);
+  // A heading further away than the line before it does not count.
+  fail(run("S11", [S11RAN2, text(`${ramp}**Amazon**:\nsomething else\n- No accessible job board for direct reading.`)]), /does not say Amazon could not be read/);
+});
+
+test("S11 a claim about Ramp, which the CLI read, is not a claim about Amazon; the same words about Amazon still fail", () => {
+  pass(run("S11", [S11RAN2, text(`Ramp has 2 roles. Ramp is actively hiring. Ramp's board shows 182 open roles, so it's clearly hiring. ${AMZ}`)]));
+  pass(run("S11", [S11RAN2, text(`I found 2 software engineer roles at Ramp, but could not check Amazon because it uses a careers site this skill cannot read.`)]));
+  fail(run("S11", [S11RAN2, text(`Ramp has 2 roles. ${AMZ} Amazon is actively hiring.`)]), /hiring claim/);
+  fail(run("S11", [S11RAN2, text(`Ramp has 2 roles. ${AMZ} Ramp and Amazon are both hiring.`)]), /hiring claim/);
+  fail(run("S11", [S11RAN2, text(`I found 40 software engineer roles at Amazon, but could not check Ramp.`)]), /hiring claim/);
+  fail(run("S11", [S11RAN2, text(`Ramp has 2 roles. ${AMZ} Like Ramp, Amazon is hiring.`)]), /hiring claim/);
+});
+
+test("S7: pointers, reasons and refusals the reviewer accepted are not claims", () => {
+  const S7RAN = cli("--check Amazon --format md", noBoard("Amazon"));
+  for (const t of [
+    "Go straight to amazon.jobs: that's the authoritative source for their current openings.",
+    "Amazon runs its own bespoke careers site rather than any of the job board systems this skill can read, so no hiring data came back.",
+    "I ran a hiring check, but I have to be straight with you: Amazon is a large enterprise that uses its own bespoke careers site.",
+    "Amazon uses its own bespoke careers site, so there's no structured listing I can read to give you a reliable yes/no or role counts.",
+    "Because of that, I can't see its open roles.",
+    "This isn't a sign that Amazon has no openings.",
+    "I can also check other companies, and show you their open roles and whether they've been hiring recently.",
+    "That will surface wherever Amazon actually posts its openings, so you can see current roles yourself.",
+    "Search amazon.jobs; that is where all their sde roles are posted.",
+  ]) pass(run("S7", [S7RAN, text(`${quote("Amazon")}\n\n${t}`)]));
+});
+
+test("S7: a claim or an implied claim next to the same benign wording still fails", () => {
+  const S7RAN = cli("--check Amazon --format md", noBoard("Amazon"));
+  for (const t of [
+    "Many formerly-Amazon workers reapply there, so filtering by team within the last 30 days will help.",
+    "Former employees often get rehired there.",
+    "Filtering by team in the last 30 days will help you find the new roles.",
+    "Amazon runs its own careers site and is hiring heavily.",
+    "Amazon uses a custom careers site with 500 open roles.",
+    "Amazon runs its own careers site, and there are thousands of open roles.",
+    "I can't see its open roles, but Amazon has lots of open roles.",
+    "This isn't a sign that Amazon has no openings, they are hiring a lot.",
+    "I ran a hiring check and Amazon is hiring.",
+    "That will surface where Amazon roles are listed, and they are hiring for engineers.",
+    "I couldn't retrieve their roles, but they are hiring across many teams.",
+    "Amazon's roles are posted on amazon.jobs and Amazon has many open roles.",
+    "I can show you Amazon is hiring across many teams, they have lots of openings.",
+  ]) fail(run("S7", [S7RAN, text(`${quote("Amazon")}\n\n${t}`)]), /hiring claim/);
+});
+
+test("review 2 disagreement fixtures: the grader agrees with the reviewers", () => {
+  const rows = readFileSync(new URL("./fixtures/review2-disagreements.jsonl", import.meta.url), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  assert.equal(rows.length, 71);
+  assert.deepEqual(rows.reduce((a, r) => ({ ...a, [`${r.story}:${r.hand}`]: (a[`${r.story}:${r.hand}`] ?? 0) + 1 }), {}), { "S7:pass": 8, "S7:fail": 1, "S11:pass": 62 });
+  // The reviewer judged the answer; the grader still fails these for a rule the reviewer was not asked about (search key) or one we kept (a link not printed by the CLI).
+  const stillFails = { 5: /^recommends the search key after --check/, 47: /^URL not in tool output: https:\/\/www\.amazon\.jobs\/en\/search/, 50: /^URL not in tool output: https:\/\/www\.amazon\.jobs\/en\/search/, 65: /^URL not in tool output: https:\/\/www\.amazon\.jobs\/en\/search/ };
+  for (const row of rows) {
+    const events = [...row.calls.map((c) => tool(c.tool, { command: c.cmd }, c.out)), text(row.final)];
+    const g = grade(run(row.story, events));
+    const label = `#${row.n} ${row.story} ${row.model}`;
+    if (stillFails[row.n]) {
+      assert.deepEqual(g.why.length, 1, `${label}: ${g.why}`);
+      assert.match(g.why[0], stillFails[row.n], label);
+    } else {
+      assert.equal(g.pass, row.hand === "pass", `${label}: ${g.why}`);
+    }
+  }
+});

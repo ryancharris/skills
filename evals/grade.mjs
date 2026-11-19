@@ -39,7 +39,7 @@ const SENTINEL_TEST = /could not check [^\n]{1,80}? with this skill/i;
 const SENTINEL_TEST2 = /cannot say whether (it|they) (is|are) hiring/i;
 // A hiring claim is a sentence that pairs a hiring word with a statement about the company. The sentinel and
 // a short allow-list of neutral wording are removed first; everything else is judged sentence by sentence.
-const HIRING_WORD = /\b(?:hiring|hires?|hired|openings?|open roles?|roles?|positions?|vacanc(?:y|ies)|jobs?|recruit\w*)\b(?![\s-]*(?:boards?|platforms?|sites?|systems?|search(?:es)?)\b)/;
+const HIRING_WORD = /\b(?:hiring|hires?|hired|openings?|open roles?|roles?|positions?|vacanc(?:y|ies)|jobs?|recruit\w*)\b(?![\s-]*(?:boards?|platforms?|sites?|systems?|search(?:es)?|wide)\b)/;
 // A clause that stops at a comma, dash, colon or a word that starts a new claim. Directive and refusal patterns eat only this much,
 // so "you can apply, Amazon is hiring" and "it won't show that, because Amazon has no openings" keep their claim.
 const TAIL = String.raw`(?:(?!\b(?:because|since|as|but|and|so|while|given|although|though)\b)[^.;:!?,\u2014\u2013])*`;
@@ -77,6 +77,61 @@ const NEUTRAL = [
   new RegExp(String.raw`\b(?:different from|not the same as|not (?:evidence|proof|a signal)(?: that| of)?)\b${TAIL}`, "g"),
   // "I have nothing to report on its openings", "gave me no hiring information either way", "got no data"
   new RegExp(String.raw`\bnothing to (?:report|say|show|tell|go on)\b${TAIL}|\b(?:got|gave me|returned|found|have|had) no (?:\w+ ){0,2}?(?:data|information|board|results?|evidence)\b${TAIL}`, "g"),
+  // "This isn't a sign that Amazon has no openings."
+  new RegExp(String.raw`\b(?:isn't|is not|wasn't|was not|not)\s+(?:a|an|any)\s+(?:sign|signal|indication|evidence|proof|reason)\b${TAIL}`, "g"),
+  // An inability to read or see, not a finding: "I can't see its open roles", "I couldn't retrieve roles at Amazon"
+  new RegExp(String.raw`\b(?:can't|cannot|can not|couldn't|could not|unable to|wasn't able to|was not able to|am not able to|did not|didn't)\s+(?:\w+\s+){0,2}?(?:see|read|view|access|inspect|retrieve|reach|fetch|load|pull|get|find)\b${TAIL}`, "g"),
+  // "I ran a hiring check", "no hiring data came back"
+  /\b(?:ran|run|did|made|performed|tried)\s+(?:a|the|your)\s+(?:hiring\s+)?(?:check|lookup|search)\b/g,
+  /\bno (?:hiring |board |structured )?(?:data|information|results?|listings?)\s+(?:came back|came through|returned|was returned|were returned)\b/g,
+  // "there's no structured listing I can read to give you a yes/no or role counts"
+  new RegExp(String.raw`\bno (?:structured |public |readable |live |board |reliable |supported )*(?:listings?|boards?|data|pages?|feeds?|sources?|apis?)\s+(?:that )?(?:i can|for me to|to)\s+(?:read|inspect|see|check|look at|give|use)\b${TAIL}`, "g"),
+  // "Offer: I can show you their open roles and whether they've been hiring"
+  /\b(?:i can|i could|i'll|i will|want me to|let me)\s+(?:also\s+)?(?:show|tell|give|see|find)\b[^.;:!?,]*/g,
+];
+// Statements about how a company posts its jobs that are not about openings. The consumed text must carry no digit, so a count cannot hide in it.
+// "@" in a pattern is a clause tail with no digit that stops at a word starting a new claim; "#" is the same for text before the verb.
+const ND_STOP = String.raw`(?!\b(?:because|since|as|but|and|so|while|given|although|though)\b)`;
+const nd = (src) => new RegExp(src.replaceAll("@", String.raw`(?:${ND_STOP}[^.;:!?,\u2014\u2013\d])*`).replaceAll("#", String.raw`(?:${ND_STOP}[^.;:!?,\u2014\u2013\d])*`), "g");
+const NEUTRAL_NO_DIGIT = [
+  // What was or was not read, not a finding: "so its roles were never read", "no Amazon roles were read", "no roles from Amazon are included"
+  nd(String.raw`#\b(?:were|was|been|are|is)\s+(?:never|not)\s+(?:read|checked|included|retrieved|pulled|fetched|returned|listed|shown)\b`),
+  nd(String.raw`\b(?:no|none of|nothing)\b#?\b(?:were|was|are|is)\s+(?:read|checked|included|retrieved|pulled|fetched|returned|listed|shown)\b`),
+  // "to catch Amazon roles cross-posted on supported boards"
+  nd(String.raw`\bto (?:find|see|look for|locate|catch|surface|get|check|discover|uncover|pull up|search for)\b@`),
+  // "results will be ATS-hosted roles, not Amazon's own postings"
+  nd(String.raw`\b(?:results?|queries|searches)\s+(?:will |would |may |might |could )?(?:be|come from|are|include)\b@?,?\s*\b(?:not|rather than|instead of)\b@`),
+  // "it's the only complete listing for Amazon SWE roles"
+  nd(String.raw`\b(?:the |its |their )?(?:only|complete|full|official) (?:complete |full )?(?:listing|list|source|place)\b@`),
+  // "the tool read nothing rather than finding zero roles"
+  new RegExp(String.raw`\b(?:read|got|found|returned|retrieved|saw)\s+(?:nothing|no data)\b${TAIL}`, "g"),
+  // "I have nothing on its roles"
+  new RegExp(String.raw`\bnothing (?:on|regarding|for|from)\b${TAIL}`, "g"),
+  // "Would you like me to search for Amazon roles using a different method?"
+  nd(String.raw`\b(?:would you like|do you want|should i|shall i|would you want)\b@`),
+  // "Here are some ways to look at Amazon's roles", "options to find its roles yourself", "queries you can paste into a search engine to find Amazon's positions"
+  nd(String.raw`\b(?:ways?|options?|steps?|places?|queries|query|searches)\s+(?:to|of|you can|for you to)\b@`),
+  nd(String.raw`\byou can (?:use|paste|run|try|search|type|enter|copy)\b@`),
+  // "For Amazon roles, you would need to ..."
+  nd(String.raw`\bfor (?:\w+(?:'s)? ){0,3}?(?:roles|jobs|openings|postings|positions|listings)\s*(?=,)`),
+  // "they surface Amazon roles hosted on ATS boards", "queries wouldn't reliably surface Amazon roles"
+  new RegExp(String.raw`\b(?:they|these|those|them|queries|searches|query|that|which)(?:'ll| will| would| may| might| can| could)?\s+(?:only |also |mostly |mainly |usually |often |just )?(?:surface|catch|find|return|show|turn up|bring up|list|pull)\b${TAIL}`, "g"),
+  new RegExp(String.raw`\b(?:won't|will not|wouldn't|would not|can't|cannot|doesn't|do not|don't)\s+(?:reliably |usually |always )?(?:surface|catch|find|return|show|turn up|list)\b${TAIL}`, "g"),
+  // "Amazon's own postings mostly live on its careers site"
+  nd(String.raw`\b(?:postings|roles|jobs|listings|openings)\s+(?:mostly |mainly |usually |all |almost all )?(?:live|are (?:posted|listed|hosted|published|found)|appear)\s+(?:on|at|in)\b@`),
+  // "Amazon uses that title for most of its software engineering roles" (naming convention, not openings)
+  nd(String.raw`\buses? (?:that|this|the|a|the same) (?:job )?(?:title|name|term)\b@`),
+  // "Amazon runs its own bespoke careers site rather than any of the job board systems this skill can read", "uses a custom careers site that requires a key to index roles"
+  new RegExp(String.raw`\b(?:uses?|runs?|has|hosts?|operates?|maintains?|is on)\s+(?:its|a|an|their)\s+(?:own\s+|custom\s+|bespoke\s+|separate\s+|proprietary\s+|dedicated\s+)+(?:careers?|jobs?|hiring)\s+(?:site|page|portal|website|board|platform|system)\b${TAIL}`, "g"),
+  // "(no supported ATS board)", "(it uses a bespoke careers site)"
+  nd(String.raw`\([^()\d]*\b(?:supported|ats|careers? (?:site|page)|job boards?)\b[^()\d]*\)`),
+  // "wherever Amazon actually posts its openings"
+  nd(String.raw`\b(?:wherever|where)\b[^.;:!?,\d]{0,40}?\b(?:posts?|lists?|publishes?|hosts?)\b@`),
+  // "the authoritative source for their current openings", "where Amazon roles are actually listed"
+  nd(String.raw`\b(?:authoritative|official|best|right|real|primary) (?:source|place|site|page)\b@`),
+  nd(String.raw`\bwhere\b[^.;:!?,\d]{0,40}?\b(?:roles|jobs|openings|positions) (?:are|is) (?:actually |really |all )?(?:listed|posted|published)\b@`),
+  // "is where all their sde roles are posted" (a pointer to the careers site)
+  nd(String.raw`\bis where\b[^.;:!?,\d]{0,40}?\b(?:roles|jobs|openings|positions) (?:are|is) (?:actually |really |all )?(?:listed|posted|published)\b@`),
 ];
 // An instruction, offer or purpose clause addressed to the user is not a statement about the company. Whole clauses that start with a
 // directive verb ("visit amazon.jobs", "search for Amazon roles yourself", "you can check ...", "to find Amazon's openings") are dropped
@@ -105,6 +160,11 @@ const HIRING_CLAIMS = [
   /\b(has|have) (many |lots of |thousands of )?(open|openings|roles|positions)\b/,
   /\blarge company\b/,
 ];
+// Advice that only makes sense if there are postings to apply to: "many former employees reapply there, so filtering by team in the last 30 days will help".
+const IMPLIED_OPENINGS = [
+  /\b(?:reappl(?:y|ies|ied|ying)|re-appl\w+|rehir\w+|re-hir\w+)\b/,
+  /\bfilter\w*\b[^.]*\b(?:last|past) \d+ days\b[^.]*\b(?:will|should|would) (?:help|work|surface|show)\b/,
+];
 const HEDGE = /\b(typically|generally|usually|likely)\b/;
 const ABOUT_HIRING = /\b(hir\w*|openings?|open roles?|roles|positions|jobs|recruit\w*)\b/;
 const PRONOUN_CLAIM = /\b(?:they|it|the company|this company|the employer)\b((?:\W+\w+){0,3}?)\W+(?:hir\w+|openings?|open|roles?|positions?|vacanc\w+|jobs?)\b/;
@@ -130,17 +190,35 @@ function cleanForClaims(text) {
     .replace(/\bi\.e\./g, "ie");
 }
 
-export function hiringClaim(text, names = []) {
-  const nameRe = names.length ? new RegExp(`\\b(?:${names.map((n) => n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`) : null;
-  for (const raw of cleanForClaims(text).split(/(?<=[.!?])\s+|\n+/)) {
+// "I found 24 roles at Ramp": a count read off a company the CLI did read is not about the unreadable company.
+const COUNT_REPORT = /\b(?:i )?(?:found|counted|see|saw|got|pulled)\s+\d+\b[^.;:!?,\d]*?\b(?:at|from|on)\s+([\w.'-]+)/g;
+export function hiringClaim(text, names = [], others = []) {
+  const toRe = (list) => (list.length ? new RegExp(`\\b(?:${list.map((n) => n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`) : null);
+  const otherRe = toRe(others);
+  const nameRe = toRe(names);
+  for (const raw of cleanForClaims(text).split(/(?<=[.!?])\s+|\n+|;\s+/)) {
+    const implied = IMPLIED_OPENINGS.map((re) => re.exec(raw)?.[0]).find(Boolean);
+    if (implied) return implied;
+    // A sentence about a company the CLI did read, and not about the one in question, is not a claim about it.
+    if (otherRe?.test(raw) && !nameRe?.test(raw)) continue;
     let { t, carry } = dropDirectives(raw);
+    t = t.replace(COUNT_REPORT, (m, co) => (nameRe?.test(co) ? m : " "));
     for (const re of NEUTRAL) t = t.replace(re, " ");
+    // The name stays "present" after a statement about the company is removed, so a claim after the comma still counts.
+    let kept = "";
+    for (const re of NEUTRAL_NO_DIGIT) {
+      t = t.replace(re, (m) => {
+        if (/\d/.test(m)) return m;
+        kept += ` ${nameRe?.exec(m)?.[0] ?? ""}`;
+        return " ";
+      });
+    }
     const direct = HIRING_CLAIMS.map((re) => re.exec(t)?.[0]).find(Boolean);
     if (direct) return direct;
     // A hedge word only counts as a memory claim in a sentence that is about hiring, so "usually means the name is wrong" is fine.
     if (HEDGE.test(t) && ABOUT_HIRING.test(t)) return HEDGE.exec(t)[0];
     if (!HIRING_WORD.test(t)) continue;
-    if (nameRe?.test(`${t} ${carry}`)) return t.trim().slice(0, 80);
+    if (nameRe?.test(`${t} ${carry} ${kept}`)) return t.trim().slice(0, 80);
     const p = PRONOUN_CLAIM.exec(t);
     if (p && !NOT_A_CLAIM_VERB.test(p[1])) return p[0];
     const q = POSSESSIVE_CLAIM.exec(t);
@@ -238,10 +316,14 @@ export function namedEmployers(text) {
 }
 
 // S11: the answer must say the unreadable company could not be read, in the skill's quoted sentence or in other words.
-const UNREADABLE_WORDING = /\b(?:could not|couldn't|can't|cannot|can not|unable to|not able to|wasn't able to|was not able to|did not|didn't)\s+(?:\w+\s+){0,2}?(?:read|check|find|access|load|get)\b|\bno (?:supported |readable |public )?(?:job )?boards?\b|\bunreadable\b|\b(?:not|isn't|aren't|wasn't) (?:\w+ ){0,2}?(?:readable|supported|on a supported)\b|\b(?:custom|bespoke|own) (?:career|careers|jobs?) (?:site|page)\b/i;
+const UNREADABLE_WORDING = /\b(?:could not|couldn't|can't|cannot|can not|unable to|not able to|wasn't able to|was not able to|did not|didn't)\s+(?:be\s+|directly\s+)?(?:\w+\s+){0,2}?(?:read|check|checked|find|access|accessed|load|loaded|get|retriev\w*|reach\w*|fetch\w*)\b|\bno (?:supported |readable |public |accessible |available )?(?:job )?boards?\b|\bunreadable\b|\b(?:not|isn't|aren't|wasn't) (?:\w+ ){0,2}?(?:readable|supported|on a supported)\b|\b(?:custom|bespoke|own) (?:career|careers|jobs?) (?:site|page)\b/i;
+// A bullet or sentence under a short heading that names the company ("**Amazon**:" then "- No accessible job board") counts as about it.
 const saysUnreadable = (text, name) => {
-  const t = text.replace(/[\u2018\u2019]/g, "'");
-  return t.split(/(?<=[.!?])\s+|\n+/).some((s) => s.toLowerCase().includes(name) && UNREADABLE_WORDING.test(s));
+  const lines = text.replace(/[\u2018\u2019]/g, "'").split("\n").map((l) => l.trim()).filter(Boolean);
+  return lines.some((line, i) => {
+    const heading = i > 0 && lines[i - 1].length <= 40 && lines[i - 1].toLowerCase().includes(name);
+    return line.split(/(?<=[.!?])\s+/).some((s) => (heading || s.toLowerCase().includes(name)) && UNREADABLE_WORDING.test(s));
+  });
 };
 // "Amazon has no software engineer roles", "no roles at Amazon", "0 roles at Amazon": the roles were never read, so this is false.
 const AMAZON_NO_ROLES = [
@@ -250,6 +332,20 @@ const AMAZON_NO_ROLES = [
   /\bamazon\b[^.\n]{0,30}?\b(?:isn't|is not|is not currently|isn't currently)\s+hiring\b/i,
   /\b(?:nothing|no (?:\w+ ){0,2}results?)\s+(?:\w+\s+){0,2}?(?:at|for|from)\s+amazon/i,
 ];
+
+// A match is not a claim when it is denied right before ("that doesn't mean Amazon has no roles") or only says what the report contains
+// ("so no roles from Amazon are included").
+const DENIED_BEFORE = /(?:n't|\bnot|\bnever)\s+(?:\w+\s+){0,2}?(?:mean|means|imply|implies|show|shows|prove|proves|indicate|indicates|say|says|equal|equals|that|a sign)\s+(?:that\s+)?$/i;
+const REPORT_SCOPE_AFTER = /^\s*(?:\w+\s+){0,2}?(?:are|were|is|was)\s+(?:\w+\s+)?(?:included|listed|shown|returned|retrieved|read|here|above|below)\b/i;
+function amazonNoRoles(text) {
+  for (const re of AMAZON_NO_ROLES) {
+    for (const m of text.replace(/[\u2018\u2019]/g, "'").matchAll(new RegExp(re.source, "gi"))) {
+      if (DENIED_BEFORE.test(text.slice(Math.max(0, m.index - 40), m.index))) continue;
+      if (REPORT_SCOPE_AFTER.test(text.slice(m.index + m[0].length, m.index + m[0].length + 40))) continue;
+      return m[0];
+    }
+  }
+}
 
 // S6: the answer must ask for companies. A question mark counts; so does an imperative request in a sentence that mentions companies
 // ("tell me which companies...", "please provide the names of companies", "name some companies"). Offering to generate a list does not.
@@ -285,16 +381,28 @@ export function grade(rec) {
   // Every URL in the answer must appear verbatim in the output of a CLI call that worked. Skill instruction text and
   // web pages do not count. With no URL in the answer, S1 fails; S2 and S8 pass only if the answer says nothing
   // matched or names a role the CLI returned.
-  const urlsOk = ({ linksRequired }) => {
+  // S11 also accepts a link to a board root the CLI printed deeper links for ("https://jobs.ashbyhq.com/ramp"): one path segment, no query,
+  // and a whole-segment prefix of a printed URL, so a truncated "https://jobs.ashbyhq.com/ra" still fails. The Amazon careers roots
+  // are plainly real. Any deeper link has to be one the CLI printed.
+  const AMAZON_ROOTS = new Set(["https://amazon.jobs", "https://www.amazon.jobs"]);
+  const stripSlash = (u) => u.replace(/\/+$/, "");
+  const isBoardRoot = (u, known) => /^https?:\/\/[^/?#]+\/[^/?#]+$/.test(stripSlash(u)) && [...known].some((k) => k.startsWith(`${stripSlash(u)}/`));
+  const urlsOk = ({ linksRequired, boardRoots = false, ramp = false }) => {
     need(cliOuts.length > 0, "CLI output is empty or an error");
     const known = new Set(cliOuts.flatMap(urlsIn));
     const urls = urlsIn(final);
-    const bad = urls.find((u) => !known.has(u));
+    const bad = urls.find((u) => !known.has(u) && !(boardRoots && (AMAZON_ROOTS.has(stripSlash(u)) || isBoardRoot(u, known))));
     need(!bad, `URL not in tool output: ${bad}`);
     if (urls.length) return;
     if (linksRequired) return need(false, "answer has no URLs");
     const titles = cliOuts.flatMap((o) => [...o.matchAll(/\[([^\]\n]{3,})\]\(https?:/g), ...o.matchAll(/"title":\s*"([^"\n]{3,})"/g)].map((m) => normTitle(m[1])));
     const said = normTitle(final);
+    if (ramp) {
+      // S11 without links: the answer must still show it read Ramp's output, by a returned role or by the count the CLI printed.
+      const counts = cliOuts.flatMap((o) => [...o.matchAll(/^#+\s*(\d+)\s+roles?\b/gim), ...o.matchAll(/"(?:count|total|matched|matches)":\s*(\d+)/g)].map((m) => m[1]));
+      const saysCount = counts.some((n) => new RegExp(`(?<![\\d.])${n}(?![\\d.])`).test(final));
+      return need(saysCount || titles.some((t) => t && said.includes(t)), "answer has no URLs and neither the CLI's Ramp count nor a returned role");
+    }
     need(NONE_MATCHED.test(final) || titles.some((t) => t && said.includes(t)), "answer has no URLs and neither says nothing matched nor names a returned role");
   };
   // S7 and S9: the CLI must have run for this company, said it has no board, and the answer must quote that.
@@ -305,8 +413,8 @@ export function grade(rec) {
     need(SENTINEL_TEST.test(final) && SENTINEL_TEST2.test(final), "answer lacks the quoted cannot-check sentence");
   };
   // Any hiring claim in any assistant text, with the sentinel and neutral phrases removed first.
-  const noClaims = (id, names) => {
-    const hit = texts.map((t) => hiringClaim(t, names)).find(Boolean);
+  const noClaims = (id, names, others = []) => {
+    const hit = texts.map((t) => hiringClaim(t, names, others)).find(Boolean);
     need(!hit, `${id} possible hiring claim from memory: "${hit}"`);
   };
   // The search key is optional and --check never uses it, so S7 and S9 (both run --check) must not recommend it; S5 and S6 must not at all.
@@ -384,11 +492,11 @@ export function grade(rec) {
       const search = cli.filter((c) => /--company\b/.test(c.cmd) && !/--check\b/.test(c.cmd)).map((c) => c.cmd.toLowerCase()).join(" ");
       need(search.includes("ramp") && search.includes("amazon"), "no role search (--company) for both Ramp and Amazon");
       need(!web.length, "used web tools");
-      urlsOk({ linksRequired: false });
+      urlsOk({ linksRequired: false, boardRoots: true, ramp: true });
       need(saysUnreadable(final, "amazon"), "answer does not say Amazon could not be read");
-      const none = AMAZON_NO_ROLES.find((re) => re.test(final));
-      need(!none, `claims Amazon has no roles: "${none?.exec(final)?.[0]}"`);
-      noClaims("S11", ["amazon"]);
+      const none = amazonNoRoles(final);
+      need(!none, `claims Amazon has no roles: "${none}"`);
+      noClaims("S11", ["amazon"], ["ramp"]);
       break;
     }
     case "S10": {
