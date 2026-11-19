@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 2.1.2 — 2026-11-19
+
+No change to what the skill finds or says. This release fixes one thing the skill sends, ships its license, and cleans up the repository for outside readers.
+
+**The User-Agent now reports the real version and this repository.** Every request to a job-board host carried `job-board/2.0 (+https://github.com/)`: a stale version and a link to GitHub's front page, which tells a board operator who sees it in their logs nothing about who is calling. It is now `job-board/<version> (+https://github.com/ryancharris/skills)`. `--version` and the User-Agent read the same constant, and a test checks that it matches the version in `SKILL.md`, both `package.json` files, the lockfile and both plugin manifests.
+
+**The skill directory now carries a `LICENSE` file.** `SKILL.md` declares `license: MIT`, but a plain copy of `skills/job-board/` (the documented `cp -r`) and `npm pack` carried no license text. `skills/job-board/LICENSE` is a byte-identical copy of the root one, and a test fails if they differ.
+
+**Test tooling updated to clear 15 security alerts.** `vitest` 2 to 4, which pulls `vite` 8. These are development dependencies only: the skill still has no runtime dependencies, and `npm audit` now reports none. Contributors need Node 20.19 or newer (or 22.12 or newer) to run the tests; the skill itself still runs on Node 20.
+
+**Docs.** The READMEs now open with what the skill does, needs and cannot do, say what it sends over the network (the hosts, no telemetry, the cache), and fix the copy and symlink install steps (`~/.agents/skills` has to exist first). References to the earlier Python implementation are gone from comments and test text, with no change to behaviour (the compiled output, comments stripped, is identical).
+
 ## 2.1.1 — 2026-11-19
 
 **Fixed: `SKILL.md` was not valid YAML in 2.1.0, so strict loaders skipped the skill.** The 2.1.0 description contains `site: queries`, written without quotes. A plain YAML value cannot contain `: `, so a spec-compliant parser rejects the whole frontmatter ("Nested mappings are not allowed in compact mappings"). pi uses one, and it did not load the skill at all; opencode and Claude Code are lenient and did, which is why the measurements for the new description did not catch it. The description is now single-quoted, with the same text. 2.0.0 was not affected.

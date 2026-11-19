@@ -7,7 +7,7 @@
  * the same rules to every setting, so the renames cannot drift apart.
  */
 /** The skill's version. `--version`, the User-Agent and every manifest must agree; a test checks this. */
-export const VERSION = "2.1.1";
+export const VERSION = "2.1.2";
 /** Sent on every request. Ashby rejects a request with none; the URL tells a board operator who is calling. */
 export const DEFAULT_UA = `job-board/${VERSION} (+https://github.com/ryancharris/skills)`;
 export const SETTINGS = {
