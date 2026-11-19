@@ -32,6 +32,8 @@ are listed under "Already decided" in `SCOPE.md`. Read those before proposing a 
   end-to-end suite serves a synthetic board. Nothing may reach the network.
 - Live tests live in `tests-ts/live/` and run only with `npm run test:live`. Never
   add a live call to CI.
+- `evals/` runs the skill through real agents in Docker. It is manual, costs money and
+  calls live boards. Never add it to CI. See `evals/README.md`.
 - Do not write test counts into docs. They go stale.
 - For new behaviour, break it on purpose and confirm the suite fails.
 

@@ -33,3 +33,6 @@ coverage/
 
 # Locally installed agent skills (reinstall with the skills CLI; not part of this repo)
 .agents/
+
+# Agent eval output (manual runs; contains full transcripts)
+evals/out/
