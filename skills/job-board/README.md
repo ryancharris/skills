@@ -21,12 +21,15 @@ instead of scraping aggregators.
 
 ## Install
 
-Requires **Node.js 20+**. No runtime dependencies: build once, then the
-compiled JavaScript runs anywhere Node does.
+Requires **Node.js 20+**. No runtime dependencies, and nothing to build: the
+compiled JavaScript in `dist/` is committed, and CI runs it from a copy that has no
+`node_modules`.
 
 This skill is the `skills/job-board/` folder of this repo. Run these from the repo root:
 
 ```bash
+mkdir -p ~/.agents/skills
+
 # symlink so the harness picks it up and the repo stays the source of truth
 ln -s "$PWD/skills/job-board" ~/.agents/skills/job-board
 
@@ -38,13 +41,13 @@ cp -r skills/job-board ~/.agents/skills/
 
 pi and opencode discover `~/.agents/skills/` (both verified by listing the skill
 in each). Claude Code reads `~/.claude/skills/` (its skills docs say so; not tested on this
-machine). Or run `node dist/main.js` from inside the skill directory. From anywhere else,
-use the absolute path (`node /path/to/skills/job-board/dist/main.js ...`). No install is
-needed.
+machine). You can also run the CLI without installing the skill: `node dist/main.js` from
+inside the skill directory, or from anywhere else with the absolute path
+(`node /path/to/skills/job-board/dist/main.js ...`).
 
 ### Claude Code plugin
 
-This repo is a Claude Code plugin marketplace. Tested with Claude Code 2.1.308:
+This repo is a Claude Code plugin marketplace:
 
 ```bash
 claude plugin marketplace add ryancharris/skills
@@ -60,7 +63,9 @@ pi install git:github.com/ryancharris/skills
 pi list                 # confirm; pi remove git:github.com/ryancharris/skills to undo
 ```
 
-Both routes work without a GitHub account now that the repo is public. If the skill is also
+Both routes work without a GitHub account. The install routes were tested through the
+[evals harness](../../evals/README.md) with Claude Code 2.1.328, pi 1.5.2 and opencode 1.19.6
+(the versions pinned in its Dockerfiles). If the skill is also
 symlinked into `~/.agents/skills/`, pi loads that copy in preference to the package
 copy. Keep one of the two.
 
@@ -150,6 +155,30 @@ are never replayed.
 JSON output reports `cached` and `fetched_at`, so a cached result is not presented as
 fresh.
 
+## What it sends
+
+Running it costs nothing and needs no account or key. There is no telemetry or
+analytics: the only network code is the request function in `src/http.ts`, and it contacts
+only the hosts below.
+
+- **Role search and hiring check:** HTTPS GETs to the public job-board API of each
+  supported system, for the company names you give. A name is turned into likely board
+  names (slugs), and each is tried until a board is found, so some requests are for boards
+  that do not exist. Your filters (location, seniority, keywords and the rest) are applied
+  on your machine and are not sent.
+- **Hosts:** `boards-api.greenhouse.io`, `api.lever.co`, `api.ashbyhq.com`,
+  `api.smartrecruiters.com`, and `<slug>.bamboohr.com`. Every request carries the
+  User-Agent `job-board/2.0 (+https://github.com/)`. Posting links in the output (for
+  example on `jobs.smartrecruiters.com`) are not fetched.
+- **Search fallback, only if you set a search key:** the query is the job-title synonyms
+  plus the site domain of a supported system, not the company name. It goes to your chosen
+  provider only: `kagi.com`, `api.search.brave.com` or `api.exa.ai`. Without a key, nothing
+  is sent to any search provider, and `--queries` only prints text.
+- **On disk:** nothing is written by default. If you set `JOB_BOARD_CACHE_TTL` (or pass
+  `--cache-ttl`) to more than 0, board responses are cached as JSON files in
+  `~/.cache/job-board` (or `JOB_BOARD_CACHE_DIR`) and reused for that many seconds. Search
+  requests are never cached. `--clear-cache` deletes them.
+
 ## Supported ATS
 
 Greenhouse, Lever, Ashby, SmartRecruiters, BambooHR. See
@@ -214,7 +243,7 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
     So the symlink install above gives the skill but not the extension. Install the package to get the extension.
   - **opencode:** No fix yet. A plugin that set the same rule on opencode's build agent
     gave 2 of 16 claims with it and 2 of 16 without (p = 0.70). opencode's plugin API
-    cannot condition on skill use. Tracked in GitHub issue #57. Earlier, a
+    cannot condition on skill use. Tracked in [GitHub issue #57](https://github.com/ryancharris/skills/issues/57). Earlier, a
     quoted verdict (the exact sentence to say when the board cannot be read) cut runs with
     an unsupported claim from 8 of 16 to 5 of 48 across three batches, and web searches from
     4 of 16 to 1 of 48. Later, adding "with nothing added" (4 of 32), or the AGENTS
@@ -223,7 +252,11 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
 
 ## Tests
 
-From the skill directory (`skills/job-board/` in this repo), after `npm install`:
+From the skill directory (`skills/job-board/` in this repo), after `npm install`. The
+suite has unit, end-to-end, live (opt-in) and golden-vector tests. `tests-ts/vectors.json`
+holds expected outputs for the pure functions (slug candidates, title expansion and
+site queries) that were recorded before the skill's source was rewritten in TypeScript, and
+`tests-ts/parity.test.ts` checks the current code still returns them exactly.
 
 ```bash
 npm test                    # unit, format, cache and end-to-end tests; NO network
@@ -275,13 +308,13 @@ src/                  # TypeScript source
   ats.ts              # ATS adapters + identity verification
   discovery.ts        # board discovery: company -> live boards
   filtering.ts        # profile expansion + filtering + ranking
-  hiring-signal.ts    # "is it still hiring?" + why the WARN feed was dropped (see SCOPE.md)
+  hiring-signal.ts    # "is it still hiring?" from a board's open roles
   search.ts           # pluggable search providers (Kagi, Brave, Exa)
   output.ts           # dedupe + JSON/Markdown
   http.ts / cache.ts  # fetch + retries, optional TTL cache
   html.ts             # entity decoding (Node has no built-in decoder)
 dist/                 # compiled JavaScript -- this is what runs
-tests-ts/             # unit, mocked, live, and parity vs the old Python build
+tests-ts/             # unit, end-to-end, live (opt-in) and golden-vector tests
 references/           # verified API contracts and caveats
 GLOSSARY.md           # the skill's terms, one meaning each
 ```
