@@ -1,31 +1,26 @@
-# job-board
+# skills
 
 [![CI](https://github.com/ryancharris/skills/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ryancharris/skills/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-An agent skill and command-line tool that lists the open roles on the public job boards (Greenhouse, Lever, Ashby, SmartRecruiters and BambooHR) of the companies you name. It needs Node.js 20+, and it cannot find which companies are hiring: you supply the names.
+A collection of [Agent Skills](https://agentskills.io): self-contained folders of instructions and code that a coding agent loads when a request matches. Maintained by Ryan Harris. Each skill here is tested offline, runs without an `npm install`, and can be copied on its own.
 
-```bash
-git clone https://github.com/ryancharris/skills && cd skills
-node skills/job-board/dist/main.js --company Stripe --title "software engineer" --format md
-# to use it from an agent instead of the command line, see "Get the skill" below
-```
+## Skills
 
-It is free to run and needs no account or key: it makes HTTPS requests to the public job-board APIs for the company names you give it, and to nothing else, unless you set the optional search key, in which case job-title search queries also go to the search provider you chose. It has no telemetry. Details are in [What it sends](skills/job-board/README.md#what-it-sends).
+| Skill | What it does | Needs | Docs |
+|---|---|---|---|
+| `job-board` | Lists the open roles on the public job boards of companies you name (Greenhouse, Lever, Ashby, SmartRecruiters and BambooHR), and checks whether a company is still hiring. It cannot find which companies are hiring: you supply the names. | Node.js 20+ | [skills/job-board/README.md](skills/job-board/README.md) |
 
-## Installation
+## Install a skill
 
-Requires Node.js 20+. Nothing needs to be built or installed with npm: the compiled
-JavaScript is committed in the repo, and the skill has no runtime dependencies.
-
-### 1. Get the skill
+Pick the route for your agent and replace `<skill>` with a name from the table. Each skill's README has its requirements and anything specific to it.
 
 <details>
 <summary><strong>Claude Code</strong></summary>
 
 ```bash
 claude plugin marketplace add ryancharris/skills
-claude plugin install job-board@ryancharris-skills
+claude plugin install <skill>@ryancharris-skills
 ```
 
 Installs for your user. Works without a GitHub account or SSH key.
@@ -39,8 +34,8 @@ Installs for your user. Works without a GitHub account or SSH key.
 pi install git:github.com/ryancharris/skills
 ```
 
-Installs the skill and pi's hiring-claims extension. Works without a GitHub account or SSH key.
-Remove with `pi remove git:github.com/ryancharris/skills`.
+Installs every skill declared in this repo, and any pi extension a skill ships. Works without a
+GitHub account or SSH key. Remove with `pi remove git:github.com/ryancharris/skills`.
 
 </details>
 
@@ -51,73 +46,17 @@ Remove with `pi remove git:github.com/ryancharris/skills`.
 git clone https://github.com/ryancharris/skills
 cd skills
 mkdir -p ~/.agents/skills
-ln -s "$PWD/skills/job-board" ~/.agents/skills/job-board   # or: cp -r skills/job-board ~/.agents/skills/
+ln -s "$PWD/skills/<skill>" ~/.agents/skills/<skill>   # or: cp -r skills/<skill> ~/.agents/skills/
 ```
 
 pi and opencode read `~/.agents/skills/`. The symlink keeps the repo as the source of truth:
-run `git pull` to update. A symlinked skill does not load pi's extension; install the pi
-package for that (see the skill README).
+run `git pull` to update. A symlinked skill does not load a pi extension; install the pi
+package for that.
 
 </details>
 
-### 2. Use it
-
-Ask your agent for roles at companies you name, or run the CLI directly from the repo root:
-
-```bash
-node skills/job-board/dist/main.js --company Stripe --title "software engineer" --format md
-```
-
-## Optional add-on: search key
-
-The skill is fully useful without a search key. Most companies with a supported job
-board need nothing. For a company it cannot read (Amazon, Google, Meta and similar), a
-role search prints its careers query, and `--queries` with a `--title` prints site queries,
-to paste into a search engine.
-
-A search key adds one thing: the search fallback. It runs once per run, only when no
-company you named yielded a posting and you gave a `--title`. It makes a general search
-of the first three supported systems' sites (not naming the company) through your search
-provider and returns search results: a title, a link and a snippet. These may be other companies'
-roles, not the one you asked about. It does not add to postings read from a board.
-
-The skill uses one search provider at a time, chosen with `JOB_BOARD_SEARCH_PROVIDER`.
-
-| Provider | `JOB_BOARD_SEARCH_PROVIDER` | Get a key | Verified with a real key |
-|---|---|---|---|
-| Kagi (default) | `kagi` | https://kagi.com/settings/api | Yes, 2026-11-11 |
-| Exa | `exa` | https://dashboard.exa.ai/api-keys | Yes, one live query, 2026-11-11 |
-| Brave | `brave` | https://api.search.brave.com/ | Not yet ([issue #60](https://github.com/ryancharris/skills/issues/60)) |
-
-1. Create an account with the provider and create a search key in its dashboard (links above).
-2. Put the key and the provider in your shell profile (`~/.zshrc` or `~/.bashrc`), or in the environment your agent runs in:
-
-   ```bash
-   export JOB_BOARD_SEARCH_API_KEY="paste-your-key-here"
-   export JOB_BOARD_SEARCH_PROVIDER=kagi     # or exa, or brave
-   ```
-
-3. Open a new terminal, or run `source ~/.zshrc`, so the variables are set.
-
-To test a key, run one live query from the skill directory (it is billed to that key):
-
-```bash
-cd skills/job-board
-LIVE_KAGI_API_KEY="$JOB_BOARD_SEARCH_API_KEY" npm run test:live -- tests-ts/live/search.test.ts
-```
-
-Use `LIVE_EXA_API_KEY` or `LIVE_BRAVE_API_KEY` in place of `LIVE_KAGI_API_KEY` for the other providers.
-
-- An unknown provider name is an error, not a silent fallback.
-- A run that reaches the search fallback makes up to three billed searches on that account. A run that does not reach it makes none.
-- Keep the key out of chat, commits and shared files. The CLI never prints it.
-- Tuning variables and the rest of the configuration are in the [skill README](skills/job-board/README.md#search-providers).
-
-## Skills
-
-| Skill | What it does | README |
-|---|---|---|
-| `job-board` | Find live job postings by querying company ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters, BambooHR) directly, and check whether a company is still hiring after a layoff. It needs company names; it cannot find companies that are hiring. | [skills/job-board/README.md](skills/job-board/README.md) |
+Nothing needs to be built or installed with npm to use a skill: each one commits its compiled
+code and has no runtime dependencies.
 
 ## Support
 
@@ -230,7 +169,7 @@ JavaScript is what users run, so a stale build would ship code nobody reviewed.
 
 ### Testing
 
-Each skill owns its tests:
+Each skill owns its tests and runs them from its own directory. For `job-board`:
 
 ```bash
 cd skills/job-board && npm test       # offline; never touches the network
