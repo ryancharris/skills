@@ -299,7 +299,7 @@ export async function main(argv: string[]): Promise<number> {
     return EXIT_OK;
   }
   if (opts.version) {
-    process.stdout.write("job-board 2.0.0\n");
+    process.stdout.write("job-board 2.1.0\n");
     return EXIT_OK;
   }
 
