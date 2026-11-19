@@ -1,7 +1,5 @@
 name: Question
 description: Ask how to use a skill
-title: "[Question]: "
-labels: ["question"]
 body:
   - type: markdown
     attributes:
