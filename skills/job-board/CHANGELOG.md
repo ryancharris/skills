@@ -4,6 +4,8 @@
 
 **`--queries` now names the company when you pass `--company`.** `--company Stripe --title "chief of staff" --queries` printed the same role-wide `site:` queries as without `--company`, so nothing in them mentioned Stripe, and agents then wrote Stripe queries from memory. Each `--company` now adds its quoted name after the `site:` domain, one block of queries per company. With no `--company` (for example `--check Stripe --queries`, or just `--title`) the output is unchanged. Found by running the skill's user stories on six models: three of them skipped the CLI on "write me queries at Stripe" and made the queries up. Covered by `tests-ts/cli.test.ts` and `tests-ts/units.test.ts`.
 
+**`--seniority` is now documented as title-only, with the words each level matches.** A search for senior backend roles at Stripe returned nothing because Stripe titles such as "Software Engineer, Backend" carry no level word, and neither `--help`, the `SKILL.md` flag table nor the README said so. `--help` and `SKILL.md` now say the filter matches words in the job title only, list the words behind each level, say that other values match literally as a title word, and say there is no "or above" matching and no III, IV or L-level mapping. `SKILL.md` also tells the agent what to do after an empty result: say the board does not encode level in titles and offer to retry without `--seniority`. This does not change matching. Covered by `tests-ts/units.test.ts` and `tests-ts/cli.test.ts`.
+
 ## 2.0.0 — 2026-11-18
 
 First public release. Everything below, from the rewrite to the latest fixes, ships in it.
