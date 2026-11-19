@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+**The skill has a glossary.** `GLOSSARY.md` fixes one name for each concept that the docs and the output used several words for: board, posting, unreadable company, role search, hiring check, board discovery, careers query, site query, company discovery, search fallback, search key, search provider and search result. It changes no behaviour; later changes to the docs and printed text use these terms. The repo root has a `GLOSSARY-MAP.md` that lists one glossary per skill.
+
 **`--seniority senior` no longer matches "Chief of Staff".** The `senior` level matches the word "staff", so a Chief of Staff role came back from `--seniority senior`, which is a different thing from a staff-level engineer. The phrase "chief of staff" is now ignored when matching `senior`. Titles with another level word still match ("Senior Chief of Staff", "Chief of Staff, Staff Engineering"), "Staff Engineer" still matches, `--seniority director` still matches "Chief of Staff" (via "chief"), and a literal `--seniority staff` is unchanged. Covered by `tests-ts/units.test.ts`.
 
 **`--queries` now names the company when you pass `--company`.** `--company Stripe --title "chief of staff" --queries` printed the same role-wide `site:` queries as without `--company`, so nothing in them mentioned Stripe, and agents then wrote Stripe queries from memory. Each `--company` now adds its quoted name after the `site:` domain, one block of queries per company. With no `--company` (for example `--check Stripe --queries`, or just `--title`) the output is unchanged. Found by running the skill's user stories on six models: three of them skipped the CLI on "write me queries at Stripe" and made the queries up. Covered by `tests-ts/cli.test.ts` and `tests-ts/units.test.ts`.
