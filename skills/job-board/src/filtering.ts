@@ -31,6 +31,8 @@ export const SENIORITY_TERMS: Record<string, string[]> = {
   director: ["director", "vp", "head of", "chief"],
 };
 
+const CHIEF_OF_STAFF = /(?<![a-z0-9])chief of staff(?![a-z0-9])/gi;
+
 // Word boundaries so short terms match as words, not substrings. Multi-word
 // phrases still work: their space is a boundary.
 const WORD_START = "(?<![a-z0-9])";
@@ -123,10 +125,14 @@ export function matches(job: Job, profile: SearchProfile, now: Date = new Date()
   }
 
   if (profile.seniority.length > 0) {
-    const terms = profile.seniority.flatMap(
-      (s) => SENIORITY_TERMS[s.toLowerCase()] ?? [s.toLowerCase()],
-    );
-    if (!terms.some((t) => titleContains(job.title, t))) return false;
+    // "Chief of Staff" is a role, not a staff-level one, so the senior level ignores that phrase.
+    const withoutChiefOfStaff = job.title.replace(CHIEF_OF_STAFF, " ");
+    const matches = profile.seniority.some((s) => {
+      const level = s.toLowerCase();
+      const title = level === "senior" ? withoutChiefOfStaff : job.title;
+      return (SENIORITY_TERMS[level] ?? [level]).some((t) => titleContains(title, t));
+    });
+    if (!matches) return false;
   }
 
   if (profile.include_keywords.length > 0) {
