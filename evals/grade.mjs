@@ -44,6 +44,8 @@ const HIRING_WORD = /\b(?:hiring|hires?|hired|openings?|open roles?|roles?|posit
 // so "you can apply, Amazon is hiring" and "it won't show that, because Amazon has no openings" keep their claim.
 const TAIL = String.raw`(?:(?!\b(?:because|since|as|but|and|so|while|given|although|though)\b)[^.;:!?,\u2014\u2013])*`;
 const NEUTRAL = [
+  // "The user is asking about open roles at Ramp and Amazon" (restating the request)
+  new RegExp(String.raw`\bthe user (?:is |was )?(?:asking|asked|wants?|wanted|requests?|requested|looking)\b${TAIL}`, "g"),
   // "Which companies are hiring?"
   /\b(?:which|who|what)\b[^.;:!?]{0,40}?\b(?:is|are) (?:currently |still |actively )?hiring\b/g,
   // "That doesn't mean Amazon has no openings."
@@ -162,7 +164,7 @@ const HIRING_CLAIMS = [
 ];
 // Advice that only makes sense if there are postings to apply to: "many former employees reapply there, so filtering by team in the last 30 days will help".
 const IMPLIED_OPENINGS = [
-  /\b(?:reappl(?:y|ies|ied|ying)|re-appl\w+|rehir\w+|re-hir\w+)\b/,
+  /\b(?:reappl(?:y|ies|ied|ying)|re-appl\w+|rehired|re-hired)\b/,
   /\bfilter\w*\b[^.]*\b(?:last|past) \d+ days\b[^.]*\b(?:will|should|would) (?:help|work|surface|show)\b/,
 ];
 const HEDGE = /\b(typically|generally|usually|likely)\b/;
@@ -203,6 +205,8 @@ export function hiringClaim(text, names = [], others = []) {
     if (otherRe?.test(raw) && !nameRe?.test(raw)) continue;
     let { t, carry } = dropDirectives(raw);
     t = t.replace(COUNT_REPORT, (m, co) => (nameRe?.test(co) ? m : " "));
+    // "Ramp has 24 software engineer roles, but Amazon's board wasn't readable": a counted clause about a company the CLI did read.
+    if (otherRe) t = t.replace(new RegExp(`${otherRe.source}${TAIL}`, "g"), (m) => (/\d/.test(m) ? " " : m));
     for (const re of NEUTRAL) t = t.replace(re, " ");
     // The name stays "present" after a statement about the company is removed, so a claim after the comma still counts.
     let kept = "";

@@ -609,6 +609,11 @@ test("S11 a claim about Ramp, which the CLI read, is not a claim about Amazon; t
   fail(run("S11", [S11RAN2, text(`Ramp has 2 roles. ${AMZ} Ramp and Amazon are both hiring.`)]), /hiring claim/);
   fail(run("S11", [S11RAN2, text(`I found 40 software engineer roles at Amazon, but could not check Ramp.`)]), /hiring claim/);
   fail(run("S11", [S11RAN2, text(`Ramp has 2 roles. ${AMZ} Like Ramp, Amazon is hiring.`)]), /hiring claim/);
+  pass(run("S11", [S11RAN2, text("Ramp has 2 software engineer roles, but Amazon's board wasn't readable.")]));
+  pass(run("S11", [S11RAN2, text(`The user is asking about open roles at Ramp and Amazon.`), text(`Ramp has 2 roles. ${AMZ}`)]));
+  fail(run("S11", [S11RAN2, text(`Ramp has 2 roles and Amazon has 500 roles. ${AMZ}`)]), /hiring claim/);
+  fail(run("S11", [S11RAN2, text(`Ramp has 2 roles, Amazon has many open roles. ${AMZ}`)]), /hiring claim/);
+  fail(run("S11", [S11RAN2, text(`The user is asking about roles, and Amazon is hiring. ${AMZ}`)]), /hiring claim/);
 });
 
 test("S7: pointers, reasons and refusals the reviewer accepted are not claims", () => {
@@ -623,6 +628,7 @@ test("S7: pointers, reasons and refusals the reviewer accepted are not claims", 
     "I can also check other companies, and show you their open roles and whether they've been hiring recently.",
     "That will surface wherever Amazon actually posts its openings, so you can see current roles yourself.",
     "Search amazon.jobs; that is where all their sde roles are posted.",
+    "Post-layoff, note job boards don't reflect who is rehiring.",
   ]) pass(run("S7", [S7RAN, text(`${quote("Amazon")}\n\n${t}`)]));
 });
 
