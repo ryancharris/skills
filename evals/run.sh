@@ -45,14 +45,23 @@ cid=$(docker create --env-file "$envfile" \
   -e MODELS="$models" -e RUNS="$runs" -e CONCURRENCY="$concurrency" -e SEED="$seed" -e STORIES="$stories" \
   "$tag" node /evals/run.mjs)
 trap 'docker rm -f "$cid" >/dev/null 2>&1; rm -rf "$ctx"' EXIT
-docker start -a "$cid" || true
+rc=0
+docker start -a "$cid" || rc=$?
 docker cp "$cid:/out/." "$out/"
 node "$here/report.mjs" "$out"
 node "$here/summary.mjs" "$out" >/dev/null
-if [ -n "$save" ]; then
+invalid=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).meta.invalidRuns)' "$out/summary.json")
+if [ "$invalid" -gt 0 ]; then
+  echo "WARNING: $invalid run(s) hit an API error (credit limit, bad key, provider outage) and are excluded from every rate." >&2
+  [ -n "$save" ] && echo "Not saving to evals/results/: fix the cause and repeat the run." >&2
+elif [ "$rc" -ne 0 ]; then
+  echo "WARNING: the runner exited with $rc." >&2
+  [ -n "$save" ] && echo "Not saving to evals/results/." >&2
+elif [ -n "$save" ]; then
   mkdir -p "$here/results"
   cp "$out/summary.md" "$here/results/$(date +%F)-$save.md"
   cp "$out/summary.json" "$here/results/$(date +%F)-$save.json"
   echo "saved evals/results/$(date +%F)-$save.{md,json}"
 fi
 echo "open $out/report.html"
+exit $(( invalid > 0 || rc != 0 ? 1 : 0 ))

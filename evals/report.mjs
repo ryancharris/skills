@@ -9,8 +9,10 @@ if (!dir) {
 }
 const meta = JSON.parse(readFileSync(`${dir}/meta.json`, "utf8"));
 const order = JSON.parse(readFileSync(`${dir}/order.json`, "utf8"));
-const runs = readFileSync(`${dir}/results.jsonl`, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
-for (const r of runs) r.g = grade(r);
+const allRuns = readFileSync(`${dir}/results.jsonl`, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+for (const r of allRuns) r.g = grade(r);
+const invalid = allRuns.filter((r) => r.g.invalid);
+const runs = allRuns.filter((r) => !r.g.invalid);
 
 const esc = (x) => String(x).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const short = (m) => m.replace(/^openrouter\//, "");
@@ -68,7 +70,7 @@ details.run{border:1px solid #ddd;border-left:6px solid #2da44e;border-radius:6p
 .why{background:#ffebe9;padding:.4rem .7rem;border-radius:6px}h4{margin:.8rem 0 .2rem;font-size:12px;text-transform:uppercase;color:#555}.tool{margin:.4rem 0}#f button{margin:2px;padding:3px 10px;border:1px solid #bbb;border-radius:99px;background:#fff;cursor:pointer}.note{background:#f6f8fa;padding:.6rem 1rem;border-radius:6px}
 </style><h1>job-board agent evals</h1>
 <p>${esc(meta.date)} · skill from <code>${esc(meta.ref)}</code> (${esc(meta.commit)}) · opencode in Docker (node:22-slim)</p>
-<p><b>${total} of ${runs.length} runs passed</b> (${models.length} models × ${sids.length} stories × up to ${perRuns} runs). Order shuffled with seed <code>${order.seed}</code>; each run is a fresh session in its own directory.</p>
+${invalid.length ? `<p style="background:#ffebe9;padding:.6rem 1rem;border-radius:6px"><b>${invalid.length} of ${allRuns.length} runs hit an API error and are excluded from every rate on this page.</b> First error: ${esc(invalid[0].g.invalidReason.slice(0, 200))}. Repeat the run before comparing.</p>` : ""}<p><b>${total} of ${runs.length} valid runs passed</b> (${models.length} models × ${sids.length} stories × up to ${perRuns} runs). Order shuffled with seed <code>${order.seed}</code>; each run is a fresh session in its own directory.</p>
 <h2>Pass rate by model and story</h2><table><tr><th></th>${sids.map((s) => `<th title="${esc(titles[s])}">${s}</th>`).join("")}<th>total</th></tr>${heat}</table>
 <h2>Per model</h2><table><tr><th>Model</th><th>Pass</th><th>Guardrails S6/S7/S9</th><th>Loaded the skill</th><th>Runs using web tools</th><th>Malformed tool calls</th><th>Avg time</th><th>Tokens</th><th>Cost</th></tr>${rows}</table>
 <h2>Grading</h2><div class="note">Automatic and strict (see <code>evals/grade.mjs</code>): a run passes only if every check holds. S7 and S9 are matched on wording, so read those transcripts before trusting a pass. The grader is project code and can be wrong.</div>

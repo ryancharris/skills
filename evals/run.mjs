@@ -1,5 +1,5 @@
 // Runs inside the container. Env: MODELS (comma list), RUNS, CONCURRENCY, SEED, STORIES (optional comma list).
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { readFileSync, appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 
 const all = JSON.parse(readFileSync("/evals/stories.json", "utf8"));
@@ -27,8 +27,13 @@ for (let i = jobs.length - 1; i > 0; i--) {
 }
 writeFileSync("/out/order.json", JSON.stringify({ seed, order: jobs.map((j) => [j.model, j.s.id, j.run]) }));
 
+// The first opencode start creates its SQLite database. Several fresh processes doing that at once
+// crash some of the runs ("Failed query: CREATE TABLE workspace"), so create it once before the pool starts.
+spawnSync("opencode", ["models"], { stdio: "ignore" });
+
 let next = 0;
 let done = 0;
+let aborted = null;
 function runOne(job, slot) {
   return new Promise((resolve) => {
     const cwd = `/home/tester/slot${slot}`;
@@ -46,6 +51,12 @@ function runOne(job, slot) {
       const rec = { ...job.s, model: job.model, run: job.run, exit, seconds: Math.round((Date.now() - t) / 1000), events: stdout, stderr: stderr.slice(0, 2000) };
       appendFileSync("/out/results.jsonl", JSON.stringify(rec) + "\n");
       console.error(`${++done}/${jobs.length} ${job.model} ${job.s.id}#${job.run} exit=${exit}`);
+      // Out of credit or bad key: every later run would fail the same way, so stop instead of burning the matrix.
+      const fatal = stdout.match(/"statusCode":(401|402|403)/);
+      if (fatal && !aborted) {
+        aborted = `provider returned HTTP ${fatal[1]} (credit limit or bad key)`;
+        console.error(`ABORTING: ${aborted}. Results so far are in results.jsonl; runs with this error are marked invalid.`);
+      }
       resolve();
     };
     p.on("close", finish);
@@ -53,6 +64,7 @@ function runOne(job, slot) {
   });
 }
 async function worker(slot) {
-  while (next < jobs.length) await runOne(jobs[next++], slot);
+  while (next < jobs.length && !aborted) await runOne(jobs[next++], slot);
 }
 await Promise.all(Array.from({ length: concurrency }, (_, i) => worker(i)));
+if (aborted) process.exit(3);

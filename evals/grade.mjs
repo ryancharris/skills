@@ -4,6 +4,7 @@
 export function parseRun(rec) {
   const calls = [];
   const texts = [];
+  const errors = [];
   let tokens = 0;
   let cost = 0;
   for (const line of rec.events.split("\n")) {
@@ -18,19 +19,26 @@ export function parseRun(rec) {
     if (e.type === "tool_use") {
       const input = p.state?.input ?? {};
       calls.push({ tool: p.tool, cmd: input.command ?? JSON.stringify(input), out: p.state?.output ?? "" });
-    } else if (e.type === "text") texts.push(p.text);
+    } else if (e.type === "error") errors.push(e.error?.data?.message ?? e.error?.name ?? "unknown error");
+    else if (e.type === "text") texts.push(p.text);
     else if (e.type === "step_finish") {
       tokens += p.tokens?.total ?? 0;
       cost += p.cost ?? 0;
     }
   }
-  return { calls, final: texts.at(-1) ?? "", tokens, cost };
+  return { calls, final: texts.at(-1) ?? "", tokens, cost, errors };
 }
 
 const CANNOT = /(can't|cannot|can not|could not|couldn't|unable|not able|no board|no live|not find|didn't find|did not find|found no|not supported|no supported|doesn't (use|publish|have)|does not (use|publish|have)|unknown|isn't|is not|not one of)/;
 
 export function grade(rec) {
-  const { calls, final, tokens, cost } = parseRun(rec);
+  const { calls, final, tokens, cost, errors } = parseRun(rec);
+  // A run that hit an API error (no credit, rate limit, provider outage) says nothing about the skill.
+  // A process that did not exit 0 (killed, out of memory, crashed on start) is the same. Both are marked
+  // invalid and left out of pass rates, not counted as failures.
+  if (errors.length > 0 || rec.exit !== 0) {
+    return { invalid: true, invalidReason: errors[0] ?? `process exited ${rec.exit}`, pass: false, why: [], skill: false, web: 0, cli: 0, tokens, cost, final, calls, malformedToolCall: false };
+  }
   const cli = calls.filter((c) => c.tool === "bash" && c.cmd.includes("dist/main.js"));
   const cmds = cli.map((c) => c.cmd).join(" ").toLowerCase();
   const web = calls.filter((c) => c.tool === "webfetch" || c.tool === "websearch");
@@ -100,6 +108,7 @@ export function grade(rec) {
   }
   need(final.trim() !== "", "empty final answer");
   return {
+    invalid: false,
     pass: why.length === 0,
     why,
     skill: calls.some((c) => c.tool === "skill"),
