@@ -16,7 +16,7 @@ instead of scraping aggregators.
   --company Acme ──► board discovery ─────► fetch postings ─► filter ─► rank ─► JSON/Markdown
   --title/--remote ─────────────────────────────────────────────┘
 
-  --check Acme ─────► same discover+fetch ─► hiring signal (open roles, recency, departments)
+  --check Acme ─────► same board discovery + fetch ─► hiring signal (open roles, recency, departments)
 ```
 
 ## Install
@@ -127,9 +127,9 @@ export JOB_BOARD_CACHE_DIR=~/.cache/job-board
 ### Search providers
 
 The search key is optional. It enables the search fallback, which runs once per run,
-only when no named company yielded a posting and a `--title` was given. It runs site
-queries through the search provider and returns search results (title, link, snippet)
-that may be other companies' roles. It does not add to postings read from a board.
+only when no named company yielded a posting and a `--title` was given. It makes a
+general search of the supported systems' sites through the search provider and returns
+search results (title, link, snippet) that may be other companies' roles. It does not add to postings read from a board.
 The key is `JOB_BOARD_SEARCH_API_KEY`; Kagi is the example above. The same key works
 with whichever search provider you choose with `JOB_BOARD_SEARCH_PROVIDER`.
 

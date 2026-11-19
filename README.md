@@ -59,13 +59,14 @@ node skills/job-board/dist/main.js --company Stripe --title "software engineer" 
 ## Optional add-on: search key
 
 The skill is fully useful without a search key. Most companies with a supported job
-board need nothing, and for a company it cannot read (Amazon, Google, Meta and similar)
-it hands you a careers query and site queries to paste into a search engine.
+board need nothing. For a company it cannot read (Amazon, Google, Meta and similar), a
+role search prints its careers query, and `--queries` with a `--title` prints site queries,
+to paste into a search engine.
 
 A search key adds one thing: the search fallback. It runs once per run, only when no
-company you named yielded a posting and you gave a `--title`. It runs site queries (the
-first three supported systems, not naming the company) through your search provider and
-returns search results: a title, a link and a snippet. These may be other companies'
+company you named yielded a posting and you gave a `--title`. It makes a general search
+of the first three supported systems' sites (not naming the company) through your search
+provider and returns search results: a title, a link and a snippet. These may be other companies'
 roles, not the one you asked about. It does not add to postings read from a board.
 
 The skill uses one search provider at a time, chosen with `JOB_BOARD_SEARCH_PROVIDER`.
@@ -76,7 +77,7 @@ The skill uses one search provider at a time, chosen with `JOB_BOARD_SEARCH_PROV
 | Exa | `exa` | https://dashboard.exa.ai/api-keys | Yes, one live query, 2026-11-11 |
 | Brave | `brave` | https://api.search.brave.com/ | Not yet ([issue #60](https://github.com/ryancharris/skills/issues/60)) |
 
-1. Create an account with the provider and create an API key in its dashboard (links above).
+1. Create an account with the provider and create a search key in its dashboard (links above).
 2. Put the key and the provider in your shell profile (`~/.zshrc` or `~/.bashrc`), or in the environment your agent runs in:
 
    ```bash
