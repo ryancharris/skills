@@ -138,7 +138,8 @@ what they have not already said:
 | Max results printed (role search) | `--limit` | `50` (default) |
 
 `--queries` (needs at least one `--title`) and `--list-boards` print plain text and
-ignore `--format`; see Quick start. `-h`/`--help` and `-V`/`--version` print usage and
+ignore `--format`; see Quick start. `--queries` names every `--company` you pass in each
+query; with no `--company` the queries are role-wide, for any company. `-h`/`--help` and `-V`/`--version` print usage and
 the version.
 
 If the user is vague ("find me a job"), propose a starting profile from their

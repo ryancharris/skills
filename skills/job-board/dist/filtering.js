@@ -62,9 +62,14 @@ export function expandTitles(titles) {
         return group;
     });
 }
-/** Build a boolean `site:` query, e.g. `site:x.com ("chief of staff" OR "CoS")`. */
-export function buildSiteQuery(domain, titleGroups, extras = []) {
+/**
+ * Build a boolean `site:` query, e.g. `site:x.com ("chief of staff" OR "CoS")`.
+ * With `company`, the quoted name follows the domain: `site:x.com "Stripe" (...)`.
+ */
+export function buildSiteQuery(domain, titleGroups, extras = [], company) {
     const parts = [`site:${domain}`];
+    if (company)
+        parts.push(`"${company}"`);
     for (const group of titleGroups) {
         const terms = group.map((t) => `"${t}"`).join(" OR ");
         parts.push(`(${terms})`);

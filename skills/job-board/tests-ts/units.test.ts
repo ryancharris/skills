@@ -239,6 +239,12 @@ describe("buildSiteQuery", () => {
     expect(query.split("(").length - 1).toBeGreaterThanOrEqual(2);
   });
 
+  it("names the company right after the domain when given one", () => {
+    expect(buildSiteQuery("jobs.lever.co", [["CoS"]], ["New York"], "Stripe")).toBe(
+      'site:jobs.lever.co "Stripe" ("CoS") "New York"',
+    );
+  });
+
   it("builds a discovery query", () => {
     expect(buildDiscoveryQuery("Acme")).toContain("greenhouse");
   });

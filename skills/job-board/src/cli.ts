@@ -96,7 +96,7 @@ Role filters:
 Output:
   --format F            json (default) | json-compact | md | detail | html
   --limit N             Max results to print (default 50)
-  --queries             Print only the generated site: queries
+  --queries             Print only the generated site: queries (each names --company, if given)
   --list-boards         Print only resolved boards
 
 Cache:
@@ -348,8 +348,12 @@ export async function main(argv: string[]): Promise<number> {
       return EXIT_USAGE;
     }
     process.stdout.write("Boolean site: queries (export JOB_BOARD_SEARCH_API_KEY to execute):\n\n");
-    for (const domain of sharedDomainSiteTargets()) {
-      process.stdout.write(buildSiteQuery(domain, expandTitles(opts.title), opts.location) + "\n");
+    // With --company, each query names the company. Without it the queries are role-wide.
+    const targets: (string | undefined)[] = opts.company.length > 0 ? opts.company : [undefined];
+    for (const company of targets) {
+      for (const domain of sharedDomainSiteTargets()) {
+        process.stdout.write(buildSiteQuery(domain, expandTitles(opts.title), opts.location, company) + "\n");
+      }
     }
     return EXIT_OK;
   }
