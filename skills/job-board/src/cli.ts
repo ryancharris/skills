@@ -85,7 +85,8 @@ Role filters:
   --title TITLE         Job title; expands to synonyms (repeatable)
   --location LOC         Location filter (repeatable)
   --remote              Remote roles only
-  --seniority S         intern|junior|mid|senior|director (repeatable)
+  --seniority S         Level word in the job title only: intern|junior|mid|senior|director;
+                        other values match literally (repeatable)
   --keyword K           Required keyword, AND-ed (repeatable)
   --exclude-keyword K   Excluded keyword (repeatable)
   --exclude-company C   Excluded company (repeatable)
