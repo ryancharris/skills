@@ -79,5 +79,5 @@ body:
       options:
         - label: I removed any API keys (`JOB_BOARD_*` or others) and private data from this report.
           required: true
-        - label: I read the list of things the skill does not do in SCOPE.md. For example, it cannot find companies; it needs company names.
+        - label: I read the "Already decided" section of SCOPE.md. For example, the skill cannot find which companies are hiring; it needs company names.
           required: true
