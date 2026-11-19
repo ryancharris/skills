@@ -7,6 +7,13 @@ Most jobs are never posted on LinkedIn. Almost every company on a modern ATS
 publishes its full board as structured JSON; this skill queries those APIs
 instead of scraping aggregators.
 
+- **Less contested**: ATS listings are the source of truth; aggregators repost
+  them later, after the first wave of applicants.
+- **Structured**: real locations, departments, compensation, post dates.
+- **Complete**: you see *every* open role at a company, not a ranked subset.
+- **Layoff-aware**: `--check` reads a company's live board, so after a layoff
+  announcement you can see whether it is *still hiring* and in which areas.
+
 ```
   --company Acme ──► discover ATS boards ─► fetch postings ─► filter ─► rank ─► JSON/Markdown
   --title/--remote ─────────────────────────────────────────────┘

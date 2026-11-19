@@ -1,11 +1,10 @@
 ---
 name: job-board
-description: After a layoff, check named companies' hiring on their ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters). With no company named, ask the user for names; do not web-search.
+description: Use for "is X hiring?", "open roles at X" and post-layoff checks on Greenhouse, Lever, Ashby, SmartRecruiters, BambooHR boards. With no company named, ask the user for names; do not web-search.
 license: MIT
 compatibility: Node.js 20+ (no runtime dependencies). Optional JOB_BOARD_SEARCH_API_KEY for search-engine fallback.
 metadata:
   version: "2.0.0"
-  upstream-idea: "site:<ats-domain> boolean job search"
 ---
 
 # Job board
@@ -13,7 +12,7 @@ metadata:
 Find live job postings on **company ATS boards** instead of job aggregators.
 
 Most jobs are never posted to LinkedIn. But almost every company that uses a
-modern ATS (Greenhouse, Lever, Ashby, SmartRecruiters) publishes its full board
+modern ATS (Greenhouse, Lever, Ashby, SmartRecruiters, BambooHR) publishes its full board
 as **structured JSON** at a predictable URL. This skill queries those APIs
 directly — no scraping, no search engine required, no LinkedIn.
 
@@ -30,23 +29,11 @@ below before running anything.
 | "Is Notion still hiring after layoffs?" | Companies on iCIMS, Workday, Workable, or a custom site |
 | "PM roles at Ramp, Figma, Linear" | Anything, if the company name is wrong |
 
-Large enterprises (Amazon, Google, Meta, Microsoft) have no supported board, but
-they **do** work when `JOB_BOARD_SEARCH_API_KEY` is set: the search fallback returns real
-postings from ATS-hosted boards at those companies' peers. The output warns that these
-may be other companies' roles, because the search does not filter to the named company. Without a key you get
-a ready-made query for the user to run, not an empty result.
+Large enterprises (Amazon, Google, Meta, Microsoft) have no supported board; see
+*Known limitations* for what you get instead.
 
 Tell the user which case they are in **before** they invest effort, and offer the
 fallbacks in *Known limitations* rather than running a search that returns nothing.
-
-## Why this beats searching LinkedIn
-
-- **Less contested**: ATS listings are the source of truth; aggregators repost
-  them later, after the first wave of applicants.
-- **Structured**: real locations, departments, compensation, post dates.
-- **Complete**: you see *every* open role at a company, not a ranked subset.
-- **Layoff-aware**: `--check` reads a company's live board, so after a layoff
-  announcement you can see whether it is *still hiring* and in which areas.
 
 ## Quick start
 
@@ -70,13 +57,12 @@ node "<skill-dir>/dist/main.js" --company Notion --list-boards
 node "<skill-dir>/dist/main.js" --company Stripe --title "chief of staff" --queries
 ```
 
-Output defaults to JSON. `md`, `detail` and `html` also state, in plain text, any
-partial read, cached data, and warnings, so a person sees what you are told. Formats: `json` (default), `json-compact`, `md`
-(concise), `detail` (one block per role, with emoji) and `html` (standalone
-page). See *Reading the results* for the JSON shape.
-
-**Emoji appear in `md`, `detail` and `html`.** `json` and `json-compact` stay plain:
-an agent parses them. `md` uses the same badges as `detail`, one per posting.
+Formats (`--format`): `json` (default), `json-compact`, `md` (concise), `detail`
+(one block per role) and `html` (standalone page). `md`, `detail` and `html` use
+emoji badges, one per posting, and also state any partial read, cached data and
+warnings in plain text, so a person sees what you are told. `json` and
+`json-compact` never contain emoji: an agent parses them. See *Reading the results*
+for the JSON shape.
 
 ## How it works
 
@@ -96,8 +82,8 @@ an agent parses them. `md` uses the same badges as `detail`, one per posting.
                                                         top departments)
 ```
 
-1. **Seed** — explicit `--company` names (there is no filing-feed seeding; see
-   *Why not seed from layoff filings* below).
+1. **Seed** — explicit `--company` names. The skill does not seed from layoff
+   filings (`references/layoff-data.md` says why).
 2. **Discover** — derive slug candidates (`"Cisco Systems, Inc."` → `ciscosystems`,
    `cisco`, `cisco-systems`) and probe each ATS. Boards are **identity-verified**:
    a board is accepted only if its company name covers the queried company, which
@@ -148,6 +134,12 @@ what they have not already said:
 | Cap companies probed | `--max-companies` | `40` |
 | Reuse ATS responses | `--cache-ttl` (seconds, `0` = off) | `300` |
 | Clear the cache | `--clear-cache` | — |
+| Output format | `--format` | `json` (default), `json-compact`, `md`, `detail`, `html` |
+| Max results printed (role search) | `--limit` | `50` (default) |
+
+`--queries` (needs at least one `--title`) and `--list-boards` print plain text and
+ignore `--format`; see Quick start. `-h`/`--help` and `-V`/`--version` print usage and
+the version.
 
 If the user is vague ("find me a job"), propose a starting profile from their
 background and confirm it before running a broad search.
@@ -234,8 +226,7 @@ Always parse `warnings` — a thin result is explained there. Exit codes: `0` on
 success, `2` on a usage error (no target, or `--queries` without `--title`).
 
 `--format json-compact` drops the `identifier` field (already inside `url`) and
-empty fields. Use it when feeding many results into context; measured ~11%
-fewer characters on dense Cohere data, more when many roles lack departments.
+empty fields. Use it when feeding many results into context.
 
 Diagnose a zero result from `meta`:
 
@@ -255,9 +246,9 @@ Diagnose a zero result from `meta`:
   do not run them yourself.
 - `raw postings > 0`, `matched postings: 0` → the boards had jobs, but the
   profile excluded them all. Widen `--title`/`--location` or drop filters.
-- `partial: true` (in `--check`) → the board reports more roles than were read;
-  never quote `open_roles` as a total.
-- `unknown: true` (in `--check`) → no board found; do not report "not hiring".
+- `partial: true` or `unknown: true` (in `--check`) → follow the "at least N" rule
+  above, or *When a company cannot be read* below. Never quote `open_roles` as a
+  total, and never report "not hiring".
 
 **When a company cannot be read** (`unknown: true`, `no_key`, `no_board`, or no
 board in `--check`):
@@ -274,19 +265,18 @@ board in `--check`):
 
 - **Enterprises use bespoke career sites.** Amazon, Microsoft, Meta, Intel,
   Walmart and Google resolve on **none** of the supported ATSes, so direct board
-  reading returns nothing. With `JOB_BOARD_SEARCH_API_KEY` set the search fallback fills
-  the gap. A search returned 33 Chief-of-Staff roles at other companies on ATS boards, not
-  Amazon's own postings, and the output now says so. Without
-  a key, hand the user the generated `site:` query.
+  reading returns nothing. `--check` returns `unknown: true` and a discovery
+  query, not `0 open roles`. With `JOB_BOARD_SEARCH_API_KEY` set, role search
+  falls back to a search engine, which returns roles from ATS-hosted boards at
+  other companies, not the named company's own postings; the output warns of
+  this, so do not present them as that company's. Without a key, hand the user
+  the generated `site:` query.
 - **BambooHR is supported but per-tenant.** `<company>.bamboohr.com/careers/list`
   returns JSON, so it works by slug probing only — never via `site:`.
 - **iCIMS and Workday are per-tenant.** They live at
   `careers-<company>.icims.com` and `<company>.wd1.myworkdayjobs.com`, so a
   `site:` query on the bare domain returns almost nothing. They are deliberately
   excluded from the generated query list.
-- **`--check` cannot read enterprises.** A large employer with a bespoke career
-  site returns `unknown: true` and a discovery query, not `0 open roles`. Never
-  report "not hiring" from an unknown signal.
 - **Boards paginate, up to a limit.** SmartRecruiters is read 100 postings per
   request, up to 1,000 per board. A larger board is read partially: `partial: true`
   and `partial_boards` name it, in both role search and `--check`, and its total
@@ -301,60 +291,17 @@ board in `--check`):
   and only fills `function`, which is used instead. Anything still unlabeled is
   reported as "unspecified" rather than dropped.
 
-## Why not seed from layoff filings
-
-An earlier version seeded searches straight from WARN Act filings (via
-`kadoa-org/layoffs-tracker`, 30,430 companies). It was removed after measurement:
-
-1. **WARN cannot express "tech"** — the fields are company/workers/states/dates,
-   with no industry or occupation. Seeding returned Boeing, Walmart, Sodexo,
-   Tyson Foods and a school-bus operator, not tech companies.
-2. **The seed and the searchable pool are anti-correlated** — the largest filers
-   (Amazon, Meta, Google, Intel, Microsoft) resolve on none of the supported
-   ATSes, so the most interesting companies were the least searchable.
-3. **Low yield** — 8 of 60 recent filers resolved to any board, several of them
-   look-alikes later rejected by identity verification.
-
-`--check` replaces it with the useful inversion: start from a company the user
-cares about and ask *is it still hiring, and for what?*
-
 ## Search-engine fallback (optional)
 
-The `site:` query generator works with no key. To *execute* queries, set a key:
-
-Both halves of the search configuration share the `JOB_BOARD_` prefix, so
-remembering one gives the other:
-
-```bash
-export JOB_BOARD_SEARCH_API_KEY=...      # the key
-export JOB_BOARD_SEARCH_PROVIDER=kagi    # kagi (default), brave, or exa
-```
-
-Key URLs: Kagi https://kagi.com/settings/api · Brave https://api.search.brave.com/
-· Exa https://dashboard.exa.ai/api-keys
-
-An unknown provider is a hard error (exit 2), not a silent fallback — searching
-with the wrong engine would bill the wrong account. The same applies if two names
-for one setting are set to *different* values. The error names the variables and
-never prints a key.
-
-Tuning, all under the same prefix:
-
-```bash
-export JOB_BOARD_HTTP_TIMEOUT=20         # seconds, must be positive
-export JOB_BOARD_CACHE_TTL=300           # seconds to reuse ATS responses; 0 = off
-export JOB_BOARD_CACHE_DIR=~/.cache/job-board
-```
-
-The former names still work but each prints a deprecation warning; they will be
-removed in a future release: `LAID_OFF_*` (the skill's former name, for every
-setting above), `SEARCH_API_KEY`, and `JOBSEARCH_SEARCH_PROVIDER`,
-`JOBSEARCH_HTTP_TIMEOUT`, `JOBSEARCH_CACHE_TTL`, `JOBSEARCH_CACHE_DIR`. An invalid value is a hard error (exit 2) rather than a silent default.
-
-See `references/providers.md` for the exact API contracts.
+The `site:` query generator works with no key. Executing queries needs
+`JOB_BOARD_SEARCH_API_KEY`, and `JOB_BOARD_SEARCH_PROVIDER` selects the engine
+(`kagi` default, `brave`, `exa`). An unknown provider or an invalid value is a hard
+error (exit 2), not a silent fallback. `JOB_BOARD_HTTP_TIMEOUT`, `JOB_BOARD_CACHE_TTL`
+and `JOB_BOARD_CACHE_DIR` also exist. Key URLs, tuning, defaults and deprecated
+names are in `references/providers.md`.
 
 ## Reference files
 
 - `references/ats-endpoints.md` — verified endpoints and payload shapes.
-- `references/providers.md` — Kagi, Brave and Exa API contracts and error codes.
+- `references/providers.md` — search-provider setup (key URLs, `JOB_BOARD_*` settings and defaults, deprecated names) and the Kagi, Brave and Exa API contracts and error codes.
 - `references/layoff-data.md` — WARN dataset schema and caveats.
