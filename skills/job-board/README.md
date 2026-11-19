@@ -168,7 +168,7 @@ only the hosts below.
   on your machine and are not sent.
 - **Hosts:** `boards-api.greenhouse.io`, `api.lever.co`, `api.ashbyhq.com`,
   `api.smartrecruiters.com`, and `<slug>.bamboohr.com`. Every request carries the
-  User-Agent `job-board/2.0 (+https://github.com/)`. Posting links in the output (for
+  User-Agent `job-board/<version> (+https://github.com/ryancharris/skills)`, with the installed version. Posting links in the output (for
   example on `jobs.smartrecruiters.com`) are not fetched.
 - **Search fallback, only if you set a search key:** the query is the job-title synonyms
   plus the site domain of a supported system, not the company name. It goes to your chosen
