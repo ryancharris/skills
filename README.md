@@ -1,11 +1,22 @@
-# Agent skills
+# job-board
 
-Agent Skills for coding agents (pi, Claude Code and other harnesses): self-contained
-directories with specialized instructions and supporting files for one kind of work.
+[![CI](https://github.com/ryancharris/skills/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ryancharris/skills/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## Installation (30-second setup)
+An agent skill and command-line tool that lists the open roles on the public job boards (Greenhouse, Lever, Ashby, SmartRecruiters and BambooHR) of the companies you name. It needs Node.js 20+, and it cannot find which companies are hiring: you supply the names.
 
-Requires Node.js 20+. Skills have no runtime dependencies.
+```bash
+git clone https://github.com/ryancharris/skills && cd skills
+node skills/job-board/dist/main.js --company Stripe --title "software engineer" --format md
+# to use it from an agent instead of the command line, see "Get the skill" below
+```
+
+It is free to run and needs no account or key: it makes HTTPS requests to the public job-board APIs for the company names you give it, and to nothing else, unless you set the optional search key, in which case job-title search queries also go to the search provider you chose. It has no telemetry. Details are in [What it sends](skills/job-board/README.md#what-it-sends).
+
+## Installation
+
+Requires Node.js 20+. Nothing needs to be built or installed with npm: the compiled
+JavaScript is committed in the repo, and the skill has no runtime dependencies.
 
 ### 1. Get the skill
 
@@ -17,7 +28,7 @@ claude plugin marketplace add ryancharris/skills
 claude plugin install job-board@ryancharris-skills
 ```
 
-Installs for your user. Works without a GitHub account or SSH key (the repo is public).
+Installs for your user. Works without a GitHub account or SSH key.
 
 </details>
 
@@ -39,6 +50,7 @@ Remove with `pi remove git:github.com/ryancharris/skills`.
 ```bash
 git clone https://github.com/ryancharris/skills
 cd skills
+mkdir -p ~/.agents/skills
 ln -s "$PWD/skills/job-board" ~/.agents/skills/job-board   # or: cp -r skills/job-board ~/.agents/skills/
 ```
 
@@ -48,9 +60,9 @@ package for that (see the skill README).
 
 </details>
 
-### 2. Ready
+### 2. Use it
 
-Ask your agent for roles at companies you name, or run the CLI directly:
+Ask your agent for roles at companies you name, or run the CLI directly from the repo root:
 
 ```bash
 node skills/job-board/dist/main.js --company Stripe --title "software engineer" --format md
@@ -107,31 +119,50 @@ Use `LIVE_EXA_API_KEY` or `LIVE_BRAVE_API_KEY` in place of `LIVE_KAGI_API_KEY` f
 |---|---|---|
 | `job-board` | Find live job postings by querying company ATS boards (Greenhouse, Lever, Ashby, SmartRecruiters, BambooHR) directly, and check whether a company is still hiring after a layoff. It needs company names; it cannot find companies that are hiring. | [skills/job-board/README.md](skills/job-board/README.md) |
 
+## Support
+
+This is maintained by one person on a best-effort basis, with no response-time promise.
+
+- Bug reports, feature requests and questions: [GitHub Issues](https://github.com/ryancharris/skills/issues/new/choose), using the issue forms. GitHub Discussions are off.
+- Security reports: use GitHub's private vulnerability reporting, not a public issue. See [SECURITY.md](SECURITY.md).
+
 ## For contributors
 
 ### Layout
 
 ```
-skills/
-├── .gitignore             # repo-wide; ignores every skill's toolchain dirs
-├── LICENSE                # MIT, covers the whole repo
-├── README.md              # this file
-├── .github/               # CI: tests, dist matches src, portability, SKILL.md validity
-├── .claude-plugin/        # Claude Code plugin + marketplace manifests
-├── package.json           # pi package manifest; declares the skills (no dependencies)
+<repo root>
 ├── skills/
 │   ├── job-board/         # one skill per directory; self-contained
 │   │   ├── SKILL.md           # required: frontmatter + instructions
 │   │   ├── dist/              # compiled JS -- what actually runs
 │   │   ├── src/               # TypeScript source
-│   │   ├── tests-ts/          # unit, mocked, live, parity
+│   │   ├── tests-ts/          # unit, end-to-end, live (opt-in), golden-vector
 │   │   ├── references/        # detailed docs loaded on demand
 │   │   ├── package.json       # dev-only deps; zero runtime deps
 │   │   ├── tsconfig.json
 │   │   └── README.md
 │   └── <next-skill>/
 │       └── SKILL.md
+├── evals/                 # manual test harness (see below)
+├── .github/               # CI workflow, repo automation
+├── .claude-plugin/        # Claude Code plugin + marketplace manifests
+├── package.json           # pi package manifest; declares the skills (no dependencies)
+├── README.md              # this file
+├── LICENSE                # MIT, covers the whole repo
+├── SCOPE.md               # the bar a change must clear; ideas already rejected
+├── CONTRIBUTING.md        # how to file issues and pull requests
+├── SECURITY.md            # how to report a vulnerability
+├── AGENTS.md              # instructions for coding agents working in this repo
+├── CLAUDE.md              # symlink to AGENTS.md
+├── GLOSSARY-MAP.md        # index of each skill glossary
+├── .gitleaks.toml         # secret-scanning config
+└── .gitignore             # repo-wide; ignores every skill's toolchain dirs
 ```
+
+`evals/` is a clean-room harness that runs the skill through real agents in Docker. It is
+run by hand, costs money and calls live boards, and is not needed to use the skill. See
+[evals/README.md](evals/README.md).
 
 The Claude Code plugin and the pi
 package each list skill paths in their manifests (`.claude-plugin/plugin.json` and
