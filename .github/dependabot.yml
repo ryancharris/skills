@@ -5,6 +5,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # vitest 5 supports Node 22.12 and newer; the skill and its CI support Node 20.
+      # Revisit when Node 20 is dropped.
+      - dependency-name: vitest
+        update-types: ["version-update:semver-major"]
     groups:
       npm-minor-patch:
         update-types:
