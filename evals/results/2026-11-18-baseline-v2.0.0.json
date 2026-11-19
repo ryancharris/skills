@@ -56,7 +56,7 @@
         "n": 3
       },
       "S7": {
-        "pass": 3,
+        "pass": 0,
         "n": 3
       },
       "S8": {
@@ -64,7 +64,7 @@
         "n": 3
       },
       "S9": {
-        "pass": 3,
+        "pass": 0,
         "n": 3
       },
       "S10": {
@@ -102,7 +102,7 @@
         "n": 3
       },
       "S7": {
-        "pass": 3,
+        "pass": 0,
         "n": 3
       },
       "S8": {
@@ -148,7 +148,7 @@
         "n": 3
       },
       "S7": {
-        "pass": 3,
+        "pass": 2,
         "n": 3
       },
       "S8": {
@@ -156,7 +156,7 @@
         "n": 3
       },
       "S9": {
-        "pass": 3,
+        "pass": 1,
         "n": 3
       },
       "S10": {
@@ -286,7 +286,7 @@
         "n": 3
       },
       "S7": {
-        "pass": 3,
+        "pass": 1,
         "n": 3
       },
       "S8": {
@@ -294,7 +294,7 @@
         "n": 3
       },
       "S9": {
-        "pass": 3,
+        "pass": 1,
         "n": 3
       },
       "S10": {
@@ -305,7 +305,7 @@
   },
   "perModel": {
     "anthropic/claude-sonnet-5.5": {
-      "pass": 32,
+      "pass": 26,
       "n": 33,
       "invalid": 0,
       "skillLoaded": 30,
@@ -316,7 +316,7 @@
       "cost": 0.88
     },
     "deepseek/deepseek-v4.1-flash-1017": {
-      "pass": 30,
+      "pass": 27,
       "n": 33,
       "invalid": 0,
       "skillLoaded": 27,
@@ -327,7 +327,7 @@
       "cost": 0.069
     },
     "moonshotai/kimi-k3": {
-      "pass": 33,
+      "pass": 30,
       "n": 33,
       "invalid": 0,
       "skillLoaded": 30,
@@ -360,7 +360,7 @@
       "cost": 0.096
     },
     "~deepseek/deepseek-v4-flash-latest": {
-      "pass": 31,
+      "pass": 27,
       "n": 33,
       "invalid": 0,
       "skillLoaded": 29,
@@ -374,11 +374,13 @@
   "failures": {
     "S3: no --check Notion": 2,
     "S3: used web tools": 2,
+    "S7: recommends the search key after --check": 9,
     "S5: did not use --queries": 4,
     "S5: no site": 4,
     "S9: malformed tool call, never ran": 3,
     "S7: malformed tool call, never ran": 3,
     "S5: malformed tool call, never ran": 6,
+    "S9: recommends the search key after --check": 7,
     "S0: malformed tool call, never ran": 3,
     "S2: malformed tool call, never ran": 3,
     "S10: did not use --format html": 6,

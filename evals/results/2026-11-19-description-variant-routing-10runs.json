@@ -1,0 +1,113 @@
+{
+  "meta": {
+    "date": "2026-11-19",
+    "ref": "fix/description-routing",
+    "commit": "1a1e3f8",
+    "name": "description-variant-routing-10runs",
+    "versions": {
+      "opencode": "1.19.6",
+      "node": "22.23.5"
+    },
+    "seed": 11,
+    "runs": 80,
+    "invalidRuns": 0,
+    "timedOutRuns": 2
+  },
+  "stories": {
+    "S5": "Search queries, no API key",
+    "S10": "HTML output"
+  },
+  "cells": {
+    "anthropic/claude-sonnet-5.5": {
+      "S5": {
+        "pass": 10,
+        "n": 10
+      },
+      "S10": {
+        "pass": 10,
+        "n": 10
+      }
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "S5": {
+        "pass": 10,
+        "n": 10
+      },
+      "S10": {
+        "pass": 10,
+        "n": 10
+      }
+    },
+    "qwen/qwen3-coder": {
+      "S5": {
+        "pass": 10,
+        "n": 10
+      },
+      "S10": {
+        "pass": 2,
+        "n": 10
+      }
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "S5": {
+        "pass": 10,
+        "n": 10
+      },
+      "S10": {
+        "pass": 10,
+        "n": 10
+      }
+    }
+  },
+  "perModel": {
+    "anthropic/claude-sonnet-5.5": {
+      "pass": 20,
+      "n": 20,
+      "invalid": 0,
+      "skillLoaded": 20,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 14,
+      "tokens": 1209970,
+      "cost": 0.7
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "pass": 20,
+      "n": 20,
+      "invalid": 0,
+      "skillLoaded": 20,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 16,
+      "tokens": 1669831,
+      "cost": 0.06
+    },
+    "qwen/qwen3-coder": {
+      "pass": 12,
+      "n": 20,
+      "invalid": 0,
+      "skillLoaded": 12,
+      "usedWeb": 10,
+      "malformedToolCalls": 0,
+      "avgSeconds": 107,
+      "tokens": 1172174,
+      "cost": 0.227
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "pass": 20,
+      "n": 20,
+      "invalid": 0,
+      "skillLoaded": 20,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 11,
+      "tokens": 807033,
+      "cost": 0.027
+    }
+  },
+  "failures": {
+    "S10: timed out": 2,
+    "S10: did not use --format html": 6
+  },
+  "invalidReasons": {}
+}
