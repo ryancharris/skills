@@ -54,7 +54,7 @@ export function parseClaude(events) {
       if (e.is_error) addError(e.result || `api_error_status ${e.api_error_status}`);
     }
   }
-  return { calls, final: texts.at(-1) ?? (errors.length ? "" : resultText ?? ""), tokens, cost, errors };
+  return { calls, texts, final: texts.at(-1) ?? (errors.length ? "" : resultText ?? ""), tokens, cost, errors };
 }
 
 export function parsePi(events) {
@@ -89,7 +89,7 @@ export function parsePi(events) {
       else errors.push(e.finalError ?? "auto retry failed");
     }
   }
-  return { calls, final: texts.at(-1) ?? "", tokens, cost, errors };
+  return { calls, texts, final: texts.at(-1) ?? "", tokens, cost, errors };
 }
 
 export const adapters = { claude: parseClaude, pi: parsePi };
