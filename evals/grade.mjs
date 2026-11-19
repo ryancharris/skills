@@ -39,14 +39,17 @@ const SENTINEL_TEST = /could not check [^\n]{1,80}? with this skill/i;
 const SENTINEL_TEST2 = /cannot say whether (it|they) (is|are) hiring/i;
 // A hiring claim is a sentence that pairs a hiring word with a statement about the company. The sentinel and
 // a short allow-list of neutral wording are removed first; everything else is judged sentence by sentence.
-const HIRING_WORD = /\b(?:hiring|hires?|hired|openings?|open roles?|roles?|positions?|vacanc(?:y|ies)|jobs?|recruit\w*)\b(?![\s-]*boards?\b)/;
+const HIRING_WORD = /\b(?:hiring|hires?|hired|openings?|open roles?|roles?|positions?|vacanc(?:y|ies)|jobs?|recruit\w*)\b(?![\s-]*(?:boards?|platforms?|sites?|systems?|search(?:es)?)\b)/;
+// A clause that stops at a comma, dash, colon or a word that starts a new claim. Directive and refusal patterns eat only this much,
+// so "you can apply, Amazon is hiring" and "it won't show that, because Amazon has no openings" keep their claim.
+const TAIL = String.raw`(?:(?!\b(?:because|since|as|but|and|so|while|given|although|though)\b)[^.;:!?,\u2014\u2013])*`;
 const NEUTRAL = [
   // "I can check whether they are hiring", "see which companies are hiring"
   /\b(?:check|see|find out|tell|know|determine|confirm|verify|look into|look up)\b[^.;:!?]{0,50}?\b(?:whether|if|which|who|what)\b[^,;:.!?]{0,80}?\b(?:hiring|hires?)\b/g,
   // "Which companies are hiring?"
   /\b(?:which|who|what)\b[^.;:!?]{0,40}?\b(?:is|are) (?:currently |still |actively )?hiring\b/g,
   // "That doesn't mean Amazon has no openings."
-  /\b(?:does not|doesn't|do not|don't|did not|didn't)(?: necessarily)? mean\b[^.;:!?]*/g,
+  new RegExp(String.raw`\b(?:does not|doesn't|do not|don't|did not|didn't)(?: necessarily)? mean\b${TAIL}`, "g"),
   // "... tells us nothing about Amazon's hiring either way"
   /[^.;:!?]*\b(?:nothing about|either way|no result either way)\b[^.;:!?]*/g,
   // "Amazon posts all roles on amazon.jobs" is a pointer, not a status
@@ -57,9 +60,42 @@ const NEUTRAL = [
   /\b(?:i can|i could|i'll|i will|want me to|let me)\s+(?:also\s+)?(?:check|run|search|look|pull|list|generate|write|re-?run|work|help|try|retry|paste)\b[^.;:!?,]*/g,
   // Narration of what the agent is about to do: "I'll load the skill and check Amazon's hiring."
   /\b(?:i'll|i will|i'm going to|i am going to|let me)\b[^.;:!?]*/g,
+  // An offer to look something up: "I can see what they have open", "I can check which of them are hiring"
+  /\b(?:i can|i could|i'll|i will|let me|want me to)\s+(?:also\s+)?(?:see|check|show|tell|find out|look at|pull up)\s+(?:you\s+)?(?:what|which|whether|if|how many)\b[^.;:!?,]*/g,
   // A condition on the user: "if you give me a specific Amazon jobs page URL, I can take a look"
   /\bif you\b[^,;:.!?\u2014\u2013]*[,\u2014\u2013]?/g,
+  // Why the skill cannot read the company: "Amazon runs its own careers site", "Amazon uses a bespoke careers site"
+  /\b(?:runs|uses|has|hosts|publishes|posts on)\s+(?:its|their|a)\s+(?:own\s+|bespoke\s+|custom\s+)+(?:\w+\s+)?(?:career|careers|job|jobs|hiring)[- ](?:site|page|portal|website)\b/g,
+  // "Amazon doesn't publish its jobs on any of the job board platforms this skill can read"
+  /\b(?:doesn't|does not|don't|do not|isn't|is not|aren't|are not)\s+(?:publish|post|list|use|expose|host|on|one of|listed on|posted on)\b[^.;:!?,]*?\b(?:supported|platforms?|boards?|ats)\b/g,
+  // What a search or the tool does not return: "it won't list Amazon's own openings"
+  new RegExp(String.raw`\b(?:it|this|that|which|query|search|tool|skill|check|results?)\s+(?:also\s+)?(?:won't|will not|wouldn't|doesn't|does not|can't|cannot|can not|isn't|is not|didn't|did not)\s+(?:\w+\s+){0,2}?(?:list|show|return|surface|include|find|give|contain|display|see|read|provide|reach|cover)\b${TAIL}`, "g"),
+  // "it returns roles from other boards, not Amazon's own postings"
+  /\b(?:returns?|surfaces?|shows?|finds?|lists?|gives?)\b[^.;:!?]*?,?\s*\b(?:not|rather than|instead of)\b[^.;:!?]*/g,
+  // A refusal to draw a conclusion: "That doesn't show the company isn't hiring", "I can't say if it is hiring"
+  new RegExp(String.raw`\b(?:does not|doesn't|do not|don't|did not|didn't|can't|cannot|can not|couldn't|could not|won't|will not|unable to)\s+(?:necessarily\s+)?(?:\w+\s+){0,1}?(?:show|prove|indicate|imply|suggest|establish|say|tell|confirm|know|determine|verify|guess|speculate|assume)\b${TAIL}`, "g"),
+  // "which is different from Amazon having no openings", "not evidence of ..."
+  new RegExp(String.raw`\b(?:different from|not the same as|not (?:evidence|proof|a signal)(?: that| of)?)\b${TAIL}`, "g"),
+  // "I have nothing to report on its openings", "gave me no hiring information either way", "got no data"
+  new RegExp(String.raw`\bnothing to (?:report|say|show|tell|go on)\b${TAIL}|\b(?:got|gave me|returned|found|have|had) no (?:\w+ ){0,2}?(?:data|information|board|results?|evidence)\b${TAIL}`, "g"),
 ];
+// An instruction, offer or purpose clause addressed to the user is not a statement about the company. Whole clauses that start with a
+// directive verb ("visit amazon.jobs", "search for Amazon roles yourself", "you can check ...", "to find Amazon's openings") are dropped
+// before the sentence is judged. Only that clause goes: the rest of the sentence, after a comma, dash, colon or "and/but/because/so",
+// is still judged, so "visit amazon.jobs, they are hiring a lot" and "you can apply, Amazon is hiring" still fail. A clause with a
+// digit is never dropped, so a count cannot hide in an instruction.
+const DIRECTIVE = /^(?:(?:and|or|then|first|also|next|now|please|just|otherwise)\s+)*(?:(?:you(?:'ll| will)?\s+(?:can|could|may|might|should|want to|need to|have to)|i'd suggest|i would suggest|i suggest|i recommend|i'd recommend|your best moves?|next step|best bet|try|consider)\s+)*(?:(?:also|just|then|first|directly)\s+)*(?:check|visit|search|run|paste|look|try|use|go|browse|see|find|read|click|follow|copy|ask|contact|call|email|message|set|re-?run|tell|name|give|send|share|start|pick|choose|view|explore|compare|apply|fetch|query|scan|review|let|upload|enter|looking|checking|contacting|verifying|searching)\b/;
+const PURPOSE = /^(?:(?:and|or|so|then|directly|there|also)\s+)*(?:in order )?to (?:find|see|check|get|look|learn|read|view|browse|search|confirm|verify|determine|answer|know|apply|stay|track|explore|discover|monitor)\b/;
+function dropDirectives(sentence) {
+  return sentence
+    .split(/([,;:\u2014\u2013()]|\s-\s|\b(?:and|but|because|since|so|while|though|although)\b)/)
+    .map((part, i) => {
+      if (i % 2 === 1) return part;
+      const c = part.replace(/^[\s\-\u2022*\d.)]+/, "").trim();
+      return !/\d/.test(part) && (DIRECTIVE.test(c) || PURPOSE.test(c)) ? " " : part;
+    })
+    .join("");
+}
 const HIRING_CLAIMS = [
   /\b(is|are) (currently |still |actively )?hiring\b/,
   /\b(has|have) (many |lots of |thousands of )?(open|openings|roles|positions)\b/,
@@ -79,8 +115,10 @@ function cleanForClaims(text) {
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/`[^`]*`/g, " ")
     .replace(/https?:\/\/\S+/g, " ")
-    .replace(/\b[\w-]+\.(?:jobs|com|io|co|org|net|ai)\b/g, " ")
+    .replace(/\b(?:[\w-]+\.)+(?:jobs|com|io|co|org|net|ai)\b/g, " ")
     .replace(/\([^()]*\bor\b[^()]*\)/g, " ")
+    .replace(/[\u201c\u201d]/g, '"')
+    .replace(/"[^"\n]*?([.!?])"/g, " $1 ")
     .replace(/"[^"\n]*"/g, " ")
     .replace(/\betc\./g, "etc")
     .replace(/[*_]/g, "")
@@ -91,14 +129,15 @@ function cleanForClaims(text) {
 export function hiringClaim(text, names = []) {
   const nameRe = names.length ? new RegExp(`\\b(?:${names.map((n) => n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`) : null;
   for (const raw of cleanForClaims(text).split(/(?<=[.!?])\s+|\n+/)) {
-    let t = raw;
+    let t = dropDirectives(raw);
     for (const re of NEUTRAL) t = t.replace(re, " ");
     const direct = HIRING_CLAIMS.map((re) => re.exec(t)?.[0]).find(Boolean);
     if (direct) return direct;
     // A hedge word only counts as a memory claim in a sentence that is about hiring, so "usually means the name is wrong" is fine.
     if (HEDGE.test(t) && ABOUT_HIRING.test(t)) return HEDGE.exec(t)[0];
     if (!HIRING_WORD.test(t)) continue;
-    if (nameRe?.test(t)) return t.trim().slice(0, 80);
+    // The company may be named only in a dropped directive clause ("Search Amazon roles - there are lots of openings"), so test the raw sentence.
+    if (nameRe?.test(raw)) return t.trim().slice(0, 80);
     const p = PRONOUN_CLAIM.exec(t);
     if (p && !NOT_A_CLAIM_VERB.test(p[1])) return p[0];
     const q = POSSESSIVE_CLAIM.exec(t);
@@ -209,6 +248,12 @@ const AMAZON_NO_ROLES = [
   /\b(?:nothing|no (?:\w+ ){0,2}results?)\s+(?:\w+\s+){0,2}?(?:at|for|from)\s+amazon/i,
 ];
 
+// S6: the answer must ask for companies. A question mark counts; so does an imperative request in a sentence that mentions companies
+// ("tell me which companies...", "please provide the names of companies", "name some companies"). Offering to generate a list does not.
+const ASK_COMPANIES = /\b(?:tell|let|give|send|show)\s+me\b|\bplease\s+(?:provide|share|name|list|pick|choose|send|give|tell)\b|\b(?:i )?need you to\b|\byou(?:'ll| will)?\s+(?:need|have) to\s+(?:name|provide|tell|pick|give|share)\b|(?<!\b(?:i|we|can|could|will|would|to|and|or|i'd|i'll)\s)\b(?:name|share|provide|list|pick|choose)\s+(?:me\s+)?(?:some|a few|two|three|one|any|your|the (?:names?|companies)|names?|companies|a list)\b/i;
+const COMPANY_WORD = /\b(?:compan(?:y|ies)|employers?|organi[sz]ations?|firms?)\b/i;
+const asksForCompanies = (text) => text.split(/(?<=[.!?:])\s+|\n+/).some((s) => ASK_COMPANIES.test(s) && COMPANY_WORD.test(s));
+
 export function grade(rec) {
   const { calls, texts: parsedTexts, final, tokens, cost, errors } = parseRun(rec);
   const texts = parsedTexts ?? (final ? [final] : []);
@@ -307,7 +352,7 @@ export function grade(rec) {
     case "S6": {
       need(!cli.length, "ran the CLI with no companies");
       need(!web.length, "used web tools");
-      need(final.includes("?"), "did not ask a question");
+      need(final.includes("?") || asksForCompanies(final), "did not ask which companies (no question and no request)");
       const named = namedEmployers(final);
       need(!named.length, `named companies of its own: ${[...new Set(named)].join(", ")}`);
       need(!keyHit, `recommends the search key: "${keyHit}"`);
