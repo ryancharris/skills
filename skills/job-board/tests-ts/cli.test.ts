@@ -84,6 +84,38 @@ describe("main", () => {
     spy.mockRestore();
   });
 
+  describe("--queries output", () => {
+    async function queriesFor(argv: string[]): Promise<string[]> {
+      const written: string[] = [];
+      const original = process.stdout.write.bind(process.stdout);
+      process.stdout.write = ((chunk: unknown) => {
+        written.push(String(chunk));
+        return true;
+      }) as typeof process.stdout.write;
+      try {
+        expect(await main([...argv, "--queries"])).toBe(EXIT_OK);
+      } finally {
+        process.stdout.write = original;
+      }
+      return written.join("").split("\n").filter((l) => l.startsWith("site:"));
+    }
+
+    it("names each --company in every query", async () => {
+      const lines = await queriesFor(["--company", "Stripe", "--company", "Ramp", "--title", "chief of staff"]);
+      const stripe = lines.filter((l) => l.includes('"Stripe"'));
+      const ramp = lines.filter((l) => l.includes('"Ramp"'));
+      expect(stripe.length).toBeGreaterThan(0);
+      expect(ramp).toHaveLength(stripe.length);
+      expect(lines).toHaveLength(stripe.length + ramp.length);
+    });
+
+    it("stays role-wide when no --company is given", async () => {
+      const lines = await queriesFor(["--check", "Stripe", "--title", "chief of staff"]);
+      expect(lines.length).toBeGreaterThan(0);
+      for (const l of lines) expect(l).not.toContain("Stripe");
+    });
+  });
+
   it("emits JSON by default", async () => {
     vi.spyOn(pipeline, "runSearch").mockResolvedValue(stubResult());
     expect(await main(["--company", "Acme"])).toBe(EXIT_OK);

@@ -70,13 +70,18 @@ export function expandTitles(titles: string[]): string[][] {
   });
 }
 
-/** Build a boolean `site:` query, e.g. `site:x.com ("chief of staff" OR "CoS")`. */
+/**
+ * Build a boolean `site:` query, e.g. `site:x.com ("chief of staff" OR "CoS")`.
+ * With `company`, the quoted name follows the domain: `site:x.com "Stripe" (...)`.
+ */
 export function buildSiteQuery(
   domain: string,
   titleGroups: string[][],
   extras: string[] = [],
+  company?: string,
 ): string {
   const parts = [`site:${domain}`];
+  if (company) parts.push(`"${company}"`);
   for (const group of titleGroups) {
     const terms = group.map((t) => `"${t}"`).join(" OR ");
     parts.push(`(${terms})`);
