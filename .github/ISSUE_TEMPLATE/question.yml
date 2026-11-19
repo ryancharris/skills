@@ -1,0 +1,35 @@
+name: Question
+description: Ask how to use a skill
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This project is maintained by one person on a best-effort basis. There is no response-time promise. GitHub Discussions are off, so questions come here.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you already tried or read
+      description: Which docs, files, or commands you looked at.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Skill version
+      description: Run `node <skill-dir>/dist/main.js --version`.
+    validations:
+      required: false
+  - type: input
+    id: harness
+    attributes:
+      label: Agent or harness, and its version
+    validations:
+      required: false

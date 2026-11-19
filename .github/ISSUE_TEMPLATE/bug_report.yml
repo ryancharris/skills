@@ -1,0 +1,83 @@
+name: Bug report
+description: Something the skill did that was wrong, in a real session
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Read [SCOPE.md](https://github.com/ryancharris/skills/blob/main/SCOPE.md) first. One problem per issue. Put the steps that reproduce it before any analysis.
+
+        This project is maintained by one person on a best-effort basis. There is no response-time promise.
+
+        For a vulnerability or an exposed API key, do not file here. Use private vulnerability reporting instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+      description: Say what the skill did, what you expected, and why.
+    validations:
+      required: true
+  - type: input
+    id: skill-version
+    attributes:
+      label: Skill version
+      description: Run `node <skill-dir>/dist/main.js --version` and paste the result.
+      placeholder: "1.2.3"
+    validations:
+      required: true
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: How did you install it?
+      options:
+        - Claude Code plugin
+        - pi package
+        - Copied or symlinked into ~/.agents/skills
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: harness
+    attributes:
+      label: Agent or harness, and its version
+      placeholder: "Claude Code 2.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: The exact prompt or command
+      description: Use `<skill-dir>` for the skill's path.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: The relevant part only. Remove any API key or private data first. For JSON, the fields matter.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model used
+    validations:
+      required: false
+  - type: input
+    id: companies
+    attributes:
+      label: Company names involved
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Before you submit
+      options:
+        - label: I removed any API keys (`JOB_BOARD_*` or others) and private data from this report.
+          required: true
+        - label: I read the "Already decided" section of SCOPE.md. For example, the skill cannot find which companies are hiring; it needs company names.
+          required: true

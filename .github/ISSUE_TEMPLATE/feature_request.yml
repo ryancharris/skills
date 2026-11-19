@@ -1,0 +1,36 @@
+name: Feature request
+description: A change to an existing skill or a new skill, based on a real session
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every issue is judged against the bar in [SCOPE.md](https://github.com/ryancharris/skills/blob/main/SCOPE.md), which says a change is accepted when it clears both parts:
+
+        > **Observed failure.** It describes something that went wrong in a real session: what was run, what the skill did, and what was expected. A hypothetical improvement ("it would be better if...") does not clear this part.
+
+        > **Fits the constraints.** It does not repeat an idea listed under "Already decided" below, it is not a configuration option or a branch for one harness, and it is not a tweak to suit one person's workflow.
+
+        Size does not matter. This project is maintained by one person on a best-effort basis, with no response-time promise. Do not paste full specs or plans; describe the problem.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem you hit in a real session
+      description: What you ran, what the skill did, and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: What the skill should do instead. Keep it short.
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Before you submit
+      options:
+        - label: I read the "Already decided" section of SCOPE.md and this does not repeat a rejected idea (or I have new evidence).
+          required: true
