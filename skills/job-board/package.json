@@ -24,7 +24,8 @@
     "dist",
     "SKILL.md",
     "README.md",
-    "references"
+    "references",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",

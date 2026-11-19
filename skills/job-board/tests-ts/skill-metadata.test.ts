@@ -75,3 +75,14 @@ describe("the version is the same everywhere it is written", () => {
     expect(written.join("").trim()).toBe(`job-board ${version}`);
   });
 });
+
+describe("the skill ships its own LICENSE", () => {
+  it("is a byte-identical copy of the repo-root LICENSE", () => {
+    const copy = readFileSync(resolve(skillDir, "LICENSE"));
+    expect(copy.equals(readFileSync(resolve(repoRoot, "LICENSE")))).toBe(true);
+  });
+
+  it("is listed in package.json files so npm pack includes it", () => {
+    expect(json(resolve(skillDir, "package.json")).files).toContain("LICENSE");
+  });
+});
