@@ -347,6 +347,85 @@ describe("filtering", () => {
   });
 });
 
+describe("seniority filter (title words only)", () => {
+  const titlesFor = (title: string, seniority: string[]): boolean =>
+    filterJobs([job(title)], { ...emptyProfile(), seniority }).length === 1;
+
+  it.each([
+    ["Intern", "intern", true],
+    ["Software Engineering Internship", "intern", true],
+    ["Junior Engineer", "junior", true],
+    ["Jr Engineer", "junior", true],
+    ["Jr. Engineer", "junior", true],
+    ["Entry Level Engineer", "junior", true],
+    ["Associate Engineer", "junior", true],
+    ["Entry-Level Engineer", "junior", false],
+    ["Mid-level Engineer", "mid", true],
+    ["Intermediate Engineer", "mid", true],
+    ["Software Engineer II", "mid", true],
+    ["Senior Engineer", "senior", true],
+    ["Sr Engineer", "senior", true],
+    ["Sr. Engineer", "senior", true],
+    ["Staff Engineer", "senior", true],
+    ["Lead Engineer", "senior", true],
+    ["Principal Engineer", "senior", true],
+    ["Director of Engineering", "director", true],
+    ["VP of Engineering", "director", true],
+    ["Head of Product", "director", true],
+    ["Chief of Staff", "director", true],
+    ["Leadership Coach", "senior", false],
+    ["Internal Tools Engineer", "intern", false],
+  ])("%s under %s -> %s", (title, level, expected) => {
+    expect(titlesFor(title, [level])).toBe(expected);
+  });
+
+  it("maps no level onto titles without a level word", () => {
+    for (const title of ["Software Engineer, Backend", "Software Engineer III", "Software Engineer IV", "Software Engineer L5"]) {
+      for (const level of ["intern", "junior", "mid", "senior", "director"]) {
+        expect(titlesFor(title, [level]), `${title} / ${level}`).toBe(false);
+      }
+    }
+  });
+
+  it("has no 'or above' semantics", () => {
+    expect(titlesFor("Director of Engineering", ["senior"])).toBe(false);
+    expect(titlesFor("Senior Engineer", ["mid"])).toBe(false);
+    expect(titlesFor("Senior Engineer", ["junior"])).toBe(false);
+  });
+
+  it("matches a value that is not a level literally as a title word", () => {
+    expect(titlesFor("Staff Engineer", ["staff"])).toBe(true);
+    expect(titlesFor("Senior Engineer", ["staff"])).toBe(false);
+    expect(titlesFor("Software Engineer L5", ["l5"])).toBe(true);
+    expect(titlesFor("Software Engineer III", ["iii"])).toBe(true);
+  });
+
+  it("ignores case in the level and the title", () => {
+    expect(titlesFor("SENIOR ENGINEER", ["Senior"])).toBe(true);
+    expect(titlesFor("senior engineer", ["SENIOR"])).toBe(true);
+    expect(titlesFor("Staff Engineer", ["SENIOR"])).toBe(true);
+    expect(titlesFor("Associate Engineer", ["Junior"])).toBe(true);
+  });
+
+  it("ORs repeated values", () => {
+    const jobs = [job("Intern"), job("Software Engineer II"), job("Senior Engineer")];
+    const titles = filterJobs(jobs, { ...emptyProfile(), seniority: ["intern", "mid"] }).map((j) => j.title);
+    expect(titles).toEqual(["Intern", "Software Engineer II"]);
+  });
+
+  it("lets one title match two levels", () => {
+    expect(titlesFor("Senior Director, Engineering", ["senior"])).toBe(true);
+    expect(titlesFor("Senior Director, Engineering", ["director"])).toBe(true);
+    expect(titlesFor("Chief of Staff", ["senior"])).toBe(true);
+    expect(titlesFor("Chief of Staff", ["director"])).toBe(true);
+  });
+
+  it("does not read level words from anything but the title", () => {
+    const j = job("Software Engineer, Backend", { department: "Senior Staff", snippet: "senior lead" });
+    expect(filterJobs([j], { ...emptyProfile(), seniority: ["senior"] })).toHaveLength(0);
+  });
+});
+
 describe("rankJobs", () => {
   it("prefers a title match over recency", () => {
     const strongOld = job("Software Engineer", { posted_at: new Date(NOW.getTime() - 50 * 86_400_000).toISOString() });

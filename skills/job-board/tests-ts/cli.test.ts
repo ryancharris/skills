@@ -145,6 +145,29 @@ describe("main", () => {
     vi.restoreAllMocks();
   });
 
+  it("warns that --check ignores --seniority", async () => {
+    vi.spyOn(pipeline, "checkHiring").mockResolvedValue({
+      ...stubResult(),
+      signals: [],
+    });
+    const written: string[] = [];
+    vi.spyOn(process.stderr, "write").mockImplementation((chunk: unknown) => {
+      written.push(String(chunk));
+      return true;
+    });
+    await main(["--check", "Acme", "--seniority", "senior"]);
+    const err = written.join("");
+    expect(err).toContain("--check ignores role filters (--seniority)");
+    vi.restoreAllMocks();
+  });
+
+  it("documents the title-only seniority filter in --help", () => {
+    const res = spawnSync("node", [entry, "--help"], { encoding: "utf8" });
+    expect(res.stdout).toContain("--seniority");
+    expect(res.stdout).toContain("job title only");
+    expect(res.stdout).toContain("match literally");
+  });
+
   it("--check --list-boards prints boards", async () => {
     vi.spyOn(pipeline, "checkHiring").mockResolvedValue({
       ...stubResult(),
