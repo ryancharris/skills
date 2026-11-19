@@ -282,6 +282,7 @@ src/                  # TypeScript source
 dist/                 # compiled JavaScript -- this is what runs
 tests-ts/             # unit, mocked, live, and parity vs the old Python build
 references/           # verified API contracts and caveats
+GLOSSARY.md           # the skill's terms, one meaning each
 ```
 
 ## Developing

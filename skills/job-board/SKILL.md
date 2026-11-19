@@ -316,6 +316,7 @@ names are in `references/providers.md`.
 
 ## Reference files
 
+- `GLOSSARY.md` — the skill's terms (board, posting, unreadable company, search fallback and the rest). Use them as written.
 - `references/ats-endpoints.md` — verified endpoints and payload shapes.
 - `references/providers.md` — search-provider setup (key URLs, `JOB_BOARD_*` settings and defaults, deprecated names) and the Kagi, Brave and Exa API contracts and error codes.
 - `references/layoff-data.md` — WARN dataset schema and caveats.
