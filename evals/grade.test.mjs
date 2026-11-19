@@ -641,6 +641,7 @@ test("S7: a claim or an implied claim next to the same benign wording still fail
     "That will surface where Amazon roles are listed, and they are hiring for engineers.",
     "I couldn't retrieve their roles, but they are hiring across many teams.",
     "Amazon's roles are posted on amazon.jobs and Amazon has many open roles.",
+    "That is where Amazon roles are listed and there are lots of open roles right now.",
     "I can show you Amazon is hiring across many teams, they have lots of openings.",
   ]) fail(run("S7", [S7RAN, text(`${quote("Amazon")}\n\n${t}`)]), /hiring claim/);
 });
