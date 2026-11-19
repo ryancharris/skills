@@ -53,5 +53,6 @@ are listed under "Already decided" in `SCOPE.md`. Read those before proposing a 
 
 - `skills/job-board/SKILL.md` is read by the agent. Keep it true to the code. JSON examples
   must list the keys `toJson` actually emits.
-- Install commands live in `skills/job-board/README.md`. The root README must agree with
-  them.
+- Each skill's install commands and settings live in that skill's README. The root README
+  is about the repo: it lists the skills and gives the generic install routes, and must agree
+  with them. Keep skill-specific content out of it.

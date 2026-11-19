@@ -12,6 +12,17 @@ instead of scraping aggregators.
 - **Structured**: real locations, departments, compensation, post dates.
 - **Complete**: you see *every* open role at a company, not a ranked subset.
 
+It needs **Node.js 20+** and the names of the companies you want to look at: it cannot
+find which companies are hiring. It is free to run and needs no account or key. It makes
+HTTPS requests to the public job-board APIs for the names you give it, and to nothing
+else unless you set the optional search key. It has no telemetry (see
+[What it sends](#what-it-sends)).
+
+```bash
+git clone https://github.com/ryancharris/skills && cd skills
+node skills/job-board/dist/main.js --company Stripe --title "software engineer" --format md
+```
+
 ```
   --company Acme ──► board discovery ─────► fetch postings ─► filter ─► rank ─► JSON/Markdown
   --title/--remote ─────────────────────────────────────────────┘
@@ -146,8 +157,32 @@ with whichever search provider you choose with `JOB_BOARD_SEARCH_PROVIDER`.
 
 An unknown provider name is an error (exit 2), not a silent fallback.
 
-Step-by-step setup for each key (where to create it, where to put the variables, and how to
-test it) is in the [root README](../../README.md#optional-add-on-search-key).
+To set up a key:
+
+1. Create an account with the provider and create a search key in its dashboard (links above).
+2. Put the key and the provider in your shell profile (`~/.zshrc` or `~/.bashrc`), or in the
+   environment your agent runs in:
+
+   ```bash
+   export JOB_BOARD_SEARCH_API_KEY="paste-your-key-here"
+   export JOB_BOARD_SEARCH_PROVIDER=kagi     # or exa, or brave
+   ```
+
+3. Open a new terminal, or run `source ~/.zshrc`, so the variables are set.
+
+To test a key, run one live query from this directory after `npm install` (it is billed to
+that key):
+
+```bash
+LIVE_KAGI_API_KEY="$JOB_BOARD_SEARCH_API_KEY" npm run test:live -- tests-ts/live/search.test.ts
+```
+
+Use `LIVE_EXA_API_KEY` or `LIVE_BRAVE_API_KEY` in place of `LIVE_KAGI_API_KEY` for the other
+providers.
+
+- A run that reaches the search fallback makes up to three billed searches on that account.
+  A run that does not reach it makes none.
+- Keep the key out of chat, commits and shared files. The CLI never prints it.
 
 Caching is read-through and fails safe: any cache error falls back to a normal
 request. Only GETs are cached — the search provider bills per call and its searches
