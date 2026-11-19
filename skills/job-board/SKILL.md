@@ -220,8 +220,8 @@ you can give the right advice instead of "try widening the filters":
 | `no_board` | No readable board. `search` says why the search fallback gave nothing: `no_title` (no `--title`), `no_results` (it ran and found nothing) or `failed` (see `warnings`) | Never offer the key. For `no_title`, ask for a title, then run with `--queries` |
 | `filtered` | The board had roles; every one was filtered out | Widen `--title`/`--location`, drop `--remote` |
 
-Never answer a `no_key` or `no_board` result with "no matching roles" — the
-roles were never read.
+Never answer a `no_key` or `no_board` result with "no matching roles" or "no roles
+found" — the roles were never read. Say that no postings were read for the company.
 
 `unreadable_companies` lists, in the order named, each company you named that has no
 board on a supported system. It is always present, and `[]` when every company was
