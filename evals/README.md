@@ -69,7 +69,7 @@ Compare runs of the same models, and note that the grader can change between run
 old `results.jsonl` if you still have it, since `summary.mjs` takes any out directory).
 
 `results/2026-11-18-baseline-v2.0.0.*` is the first record: six models, 11 stories, 3 runs each,
-skill v2.0.0 (`2a97e45`).
+skill v2.0.0 (`2a97e45`). It predates story S11 and the search-key rules below, so regrading its records with the current grader gives different S7 and S9 verdicts; the saved summary stays as recorded.
 
 ## Reading the results
 
@@ -91,14 +91,18 @@ no network, no docker, no model calls):
 node --test evals/*.test.mjs
 ```
 
-It builds small synthetic records for every story (S0 to S10, one pass and one fail each), plus
+It builds small synthetic records for every story (S0 to S11, one pass and one fail each), plus
 invalid runs, malformed tool calls, hiring claims hidden in the body or in earlier narration, and web
 use through `curl`. It also re-grades a few trimmed real records from `evals/fixtures/`. Change the
 grader, run this, and add a case for any new rule. On Node 20 or 22, `node --test evals/` works too.
 
 ### Grader strictness rules
 
-S7 and S9 pass only if no sentence outside the quoted cannot-check sentence pairs a hiring word with the company. A short allow-list of neutral wording is exempt (offers to check, "that doesn't mean it has no openings"). S1, S2 and S8 compare every answer URL exactly with the URLs printed by a CLI call that worked. S6 fails when the answer names well-known employers of its own. A run with `timedOut: true` is a valid fail ("timed out"), not an invalid run. To retune a rule, regrade the saved records and read every changed verdict before trusting it.
+S7 and S9 pass only if no sentence outside the quoted cannot-check sentence pairs a hiring word with the company. A short allow-list of neutral wording is exempt (offers to check, "that doesn't mean it has no openings"). S1, S2 and S8 compare every answer URL exactly with the URLs printed by a CLI call that worked. S6 fails when the answer names well-known employers of its own. S11 ("Find software engineer roles at Ramp and Amazon.") runs a role search for a readable and an unreadable company. It passes only if a `--company` call (not only `--check`) names both companies, no web tool is used, every answer URL appears exactly in CLI output, the answer says Amazon could not be read (the quoted sentence or other wording such as "could not read", "no supported board", "unreadable"), it does not say Amazon has no roles or openings (an unreadable company never has zero roles), and it makes no hiring claim about Amazon from memory.
+
+The search key (`JOB_BOARD_SEARCH_API_KEY`, providers Kagi, Brave, Exa) is an optional add-on that `--check` never uses. `recommendsSearchKey` in `grade.mjs` flags an answer that tells the user to set a search key, name the env var, sign up for a search provider or enable the search fallback. S7 and S9 run `--check`, so they fail on any such recommendation ("recommends the search key after --check"). S5 and S6 fail on it too ("recommends the search key"). S11 may offer the key once. Statements that the key is not needed ("no API key needed", "works without a key") are not recommendations, and neither is naming a search engine as a place to paste site queries ("paste these into Google, Bing or Kagi"), because site queries need no key. A provider name counts only as a service to sign up for. The rule is documented in the comment above `recommendsSearchKey`.
+
+A run with `timedOut: true` is a valid fail ("timed out"), not an invalid run. To retune a rule, regrade the saved records and read every changed verdict before trusting it.
 
 The other `evals/*.test.mjs` files cover redaction, the abort check, the Fisher numbers (against an exact integer computation),
 markdown escaping, and the report and summary scripts.
