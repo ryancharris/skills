@@ -22,7 +22,8 @@ function build(records, versions) {
 const node = (script, dir) => spawnSync(process.execPath, [new URL(script, import.meta.url).pathname, dir], { encoding: "utf8" });
 
 test("report: all runs invalid does not print -Infinity and lists the invalid runs", () => {
-  const dir = build([rec({ exit: 1, events: "" }), rec({ run: 2, exit: null, timedOut: true, events: "" })]);
+  // exit null without timedOut is a process killed from outside (for example out of memory): invalid, not a failure
+  const dir = build([rec({ exit: 1, events: "" }), rec({ run: 2, exit: null, events: "" })]);
   const r = node("./report.mjs", dir);
   assert.equal(r.status, 0, r.stderr);
   const html = readFileSync(join(dir, "report.html"), "utf8");
@@ -31,7 +32,16 @@ test("report: all runs invalid does not print -Infinity and lists the invalid ru
   assert.match(html, /Invalid runs/);
   assert.match(html, /process exited 1/);
   assert.match(html, /a\|b\/model/);
+  assert.match(html, /process exited null/);
+});
+
+test("report: a run killed by the runner's own time limit is a valid failure, not an invalid run", () => {
+  const dir = build([rec({ exit: null, timedOut: true, events: "" }), rec({ run: 2 })]);
+  assert.equal(node("./report.mjs", dir).status, 0);
+  const html = readFileSync(join(dir, "report.html"), "utf8");
+  assert.ok(!/Invalid runs/.test(html), "a timeout is not listed as invalid");
   assert.match(html, /timed out/);
+  assert.match(html, /0 of 2 valid runs passed/);
 });
 
 test("report: a mix lists invalid runs next to the valid ones and escapes every dynamic value", () => {
