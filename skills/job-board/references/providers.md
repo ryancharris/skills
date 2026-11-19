@@ -14,8 +14,41 @@ export JOB_BOARD_SEARCH_API_KEY=...      # your key, for whichever provider
 export JOB_BOARD_SEARCH_PROVIDER=kagi    # kagi (default), brave, or exa
 ```
 
+Keys are created at: Kagi https://kagi.com/settings/api · Brave
+https://api.search.brave.com/ · Exa https://dashboard.exa.ai/api-keys
+
 An unknown provider fails with exit 2 rather than falling back to kagi: a silent
-fallback would send searches to the wrong engine and bill the wrong account.
+fallback would send searches to the wrong engine and bill the wrong account. The
+same applies if two names for one setting are set to *different* values. The error
+names the variables and never prints a key.
+
+### Tuning
+
+All settings share the `JOB_BOARD_` prefix:
+
+```bash
+export JOB_BOARD_HTTP_TIMEOUT=20         # seconds, must be positive (default 20)
+export JOB_BOARD_CACHE_TTL=300           # seconds to reuse ATS responses; 0 = off (default 0)
+export JOB_BOARD_CACHE_DIR=~/.cache/job-board   # default: $HOME/.cache/job-board
+```
+
+An invalid value (for example a non-numeric or non-positive timeout, or a negative
+TTL) is a hard error (exit 2) rather than a silent default.
+
+### Deprecated names
+
+The former names still work, but each one that is set prints a deprecation warning.
+They will be removed in a future release:
+
+| Setting | Former names |
+|---|---|
+| `JOB_BOARD_SEARCH_API_KEY` | `LAID_OFF_SEARCH_API_KEY`, `SEARCH_API_KEY` |
+| `JOB_BOARD_SEARCH_PROVIDER` | `LAID_OFF_SEARCH_PROVIDER`, `JOBSEARCH_SEARCH_PROVIDER` |
+| `JOB_BOARD_HTTP_TIMEOUT` | `LAID_OFF_HTTP_TIMEOUT`, `JOBSEARCH_HTTP_TIMEOUT` |
+| `JOB_BOARD_CACHE_TTL` | `LAID_OFF_CACHE_TTL`, `JOBSEARCH_CACHE_TTL` |
+| `JOB_BOARD_CACHE_DIR` | `LAID_OFF_CACHE_DIR`, `JOBSEARCH_CACHE_DIR` |
+
+`LAID_OFF_` is the skill's former name. The current name wins over a former one.
 
 ## Kagi (default)
 
