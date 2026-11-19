@@ -103,7 +103,10 @@ code, so it cannot drift. The ones you will reach for first:
 | `--limit` | Max results to print (default 50) |
 
 Filtering also takes `--location`, `--seniority`, `--keyword`,
-`--exclude-keyword`, `--exclude-company` and `--max-age-days`. For the full
+`--exclude-keyword`, `--exclude-company` and `--max-age-days`.
+`--seniority` matches level words in the job title only, so a board whose
+titles carry no level word returns nothing; `SKILL.md` lists the words each
+level matches. For the full
 reference, including `--queries`, `--list-boards` and the cache flags, see
 [`SKILL.md`](SKILL.md), which is the agent-facing source of truth.
 

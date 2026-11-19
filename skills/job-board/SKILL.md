@@ -124,7 +124,7 @@ what they have not already said:
 | Target titles | `--title` (repeatable) | `"chief of staff"`, `"staff engineer"` |
 | Locations | `--location` (repeatable) | `"New York"`, `"Berlin"` |
 | Remote only | `--remote` | — |
-| Seniority | `--seniority` | `intern`, `junior`, `mid`, `senior`, `director` |
+| Seniority (title words only, see Known limitations) | `--seniority` (repeatable, OR) | `intern`, `junior`, `mid`, `senior`, `director` |
 | Must-have keywords | `--keyword` (repeatable, AND) | `python`, `kubernetes` |
 | Deal-breakers | `--exclude-keyword` | `contract`, `on-call` |
 | Companies to skip | `--exclude-company` | `Meta` |
@@ -282,10 +282,22 @@ board in `--check`):
   request, up to 1,000 per board. A larger board is read partially: `partial: true`
   and `partial_boards` name it, in both role search and `--check`, and its total
   is a lower bound. Say "at least N", never "N".
-- **Seniority is title-only.** Ramp, for example, puts no seniority in its
-  titles (all 29 engineer roles are unmarked), so `--seniority senior` correctly
-  returns nothing. An empty seniority result means the board does not encode it,
-  not that no senior roles exist.
+- **Seniority is title-only.** `--seniority` matches whole words in the job
+  title and nothing else. Stripe titles like "Software Engineer, Backend" and
+  Ramp's engineer roles carry no level word, so `--seniority senior` returns
+  nothing for them. Each level matches these words, case-insensitively:
+  `intern` (intern, internship); `junior` (junior, jr, entry level, associate; "Entry-Level" with a hyphen does
+  not match);
+  `mid` (mid, intermediate, II); `senior` (senior, sr, staff, lead, principal);
+  `director` (director, VP, head of, chief). Repeated values are OR-ed, and a
+  title can match two levels ("Senior Director"; "Chief of Staff" matches both
+  `senior` and `director`). A value that is not a level is matched literally as
+  a title word, so `--seniority staff` matches only "staff". There is no "or
+  above" (`senior` does not match a plain "Director"), and III, IV and L-levels
+  are not mapped ("Software Engineer III" matches no level; `--seniority l5`
+  matches only a title with the word "L5"). After an empty seniority result,
+  say the board does not encode level in titles, and offer to rerun without
+  `--seniority` and judge from the titles. Do not say no senior roles exist.
 - **Departments are vendor-specific.** Greenhouse's `/jobs` omits departments,
   so they are resolved from its `/departments` tree and rolled up to the top
   level (Stripe: GTM/Tech/Core). SmartRecruiters often leaves `department` empty
