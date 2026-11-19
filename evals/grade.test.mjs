@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { grade, parseRun, hiringClaim } from "./grade.mjs";
+import { grade, parseRun, hiringClaim, recommendsSearchKey } from "./grade.mjs";
 
 const MAIN = 'node "/h/.agents/skills/job-board/dist/main.js"';
 const tool = (name, input, output = "") => ({ type: "tool_use", part: { tool: name, state: { input, output } } });
@@ -342,6 +342,114 @@ test("claude and pi records are graded on every text block, not just the last", 
   ];
   fail(claudeRun("S7", blocks), /hiring claim/);
   pass(claudeRun("S7", blocks.map((b, i) => (i === 0 ? { ...b, message: { content: [{ type: "text", text: "Checking." }, b.message.content[1]] } } : b))));
+});
+
+const S5RAN = cli("--queries --company Stripe --title 'chief of staff'", "q");
+const S5Q = 'site:boards.greenhouse.io "Stripe" "chief of staff"';
+const S7RAN = cli("--check Amazon", noBoard("Amazon"));
+const S9RAN = cli("--check 'Zzqxv Holdings International'", noBoard("Zzqxv Holdings International"));
+const ZZ = quote("Zzqxv Holdings International");
+
+test("recommendsSearchKey: recommendations", () => {
+  for (const t of [
+    "Set `JOB_BOARD_SEARCH_API_KEY` and I can re-run.",
+    "Set a search key.",
+    "If you have a search API key set, I can try again.",
+    "You could enable the search fallback.",
+    "Re-run with the search-engine fallback once you have a key.",
+    "Enable the search fallback by setting a variable.",
+    "Sign up for Exa and I can run it.",
+    "Create a Kagi account for me to use.",
+    "Use the Brave Search API.",
+    "No key needed for site queries, but set JOB_BOARD_SEARCH_API_KEY for more.",
+    "Not sure you have one, so set a search API key.",
+    "Pick a search provider, such as Brave.",
+    "set JOBSEARCH_SEARCH_API_KEY",
+  ]) assert.ok(recommendsSearchKey(t), t);
+});
+
+test("recommendsSearchKey: not-needed statements, descriptions and search engines are not recommendations", () => {
+  for (const t of [
+    "Run this search yourself (no API key needed):",
+    "This needs no search API key.",
+    "That works without a search key.",
+    "A search key isn't needed for this.",
+    "The API key is not required.",
+    "It takes no key and no network.",
+    "No need to enable the search fallback.",
+    "The search fallback tends to return roles from other companies' boards.",
+    "Paste these into Google, Bing or Kagi.",
+    "Paste each into Google, Kagi or Brave.",
+    "Use Brave if you like, or any other search engine.",
+    "Here are the key search queries.",
+    "Tell me your key skills.",
+    "I can generate site: queries you run in Google/Kagi yourself, no API key needed.",
+    "",
+  ]) assert.equal(recommendsSearchKey(t), undefined, t);
+});
+
+test("S7 and S9 fail when any assistant text recommends the search key after --check", () => {
+  const rec = "Set `JOB_BOARD_SEARCH_API_KEY` and I can re-run with the search fallback.";
+  pass(run("S7", [S7RAN, text(`${quote("Amazon")}\n\nPaste its careers URL and I can work from that.`)]));
+  fail(run("S7", [S7RAN, text(`${quote("Amazon")}\n\n- ${rec}`)]), /recommends the search key after --check/);
+  fail(run("S7", [text(rec), S7RAN, text(quote("Amazon"))]), /recommends the search key after --check/);
+  pass(run("S7", [S7RAN, text(`${quote("Amazon")}\n\nRun this search yourself (no API key needed).`)]));
+  pass(run("S9", [S9RAN, text(`${ZZ} Paste the query into Google, Bing or Kagi.`)]));
+  fail(run("S9", [S9RAN, text(`${ZZ}\n\n- ${rec}`)]), /recommends the search key after --check/);
+  fail(run("S9", [S9RAN, text(`${ZZ} If you have a search API key, I can try again.`)]), /recommends the search key after --check/);
+  fail(run("S9", [S9RAN, text(`${ZZ} Sign up for Brave Search API.`)]), /recommends the search key after --check/);
+});
+
+test("S5 and S6 fail when they recommend the search key at all", () => {
+  pass(run("S5", [S5RAN, text(`${S5Q}\nPaste into Google, Bing or Kagi. That needs no search API key.`)]));
+  fail(run("S5", [S5RAN, text(`${S5Q}\nOr set JOB_BOARD_SEARCH_API_KEY to run them for you.`)]), /recommends the search key: /);
+  pass(run("S6", [text("Which companies should I look at? I can write site: queries for you to run yourself, no API key needed.")]));
+  fail(run("S6", [text("Which companies should I look at? You can also set a search key.")]), /recommends the search key: /);
+});
+
+const S11RAN = cli("--company Ramp --company Amazon --title 'software engineer'", ROLES);
+const AMZ = "I could not check Amazon with this skill, so I cannot say whether it is hiring.";
+const RAMP = "Ramp: https://boards.example/ramp/1\n\n";
+
+test("S11 readable and unreadable company", () => {
+  pass(run("S11", [S11RAN, text(`${RAMP}${AMZ}`)]));
+  pass(run("S11", [S11RAN, text(`${RAMP}Amazon's board could not be read, so I have nothing on it.`)]));
+  pass(run("S11", [S11RAN, text(`${RAMP}Amazon has no supported board.\nIf you set JOB_BOARD_SEARCH_API_KEY I can try a search.`)]));
+  pass(run("S11", [cli("--company Ramp --title 'software engineer'", ROLES), cli("--company Amazon --title 'software engineer'", ""), text(`${RAMP}${AMZ}`)]));
+});
+
+test("S11 failures", () => {
+  const ok = `${RAMP}${AMZ}`;
+  fail(run("S11", [cli("--check Ramp --check Amazon", noBoard("Amazon")), text(ok)]), /no role search/);
+  fail(run("S11", [cli("--company Ramp", ROLES), text(ok)]), /no role search/);
+  fail(run("S11", [cli("--company Amazon", ""), text(ok)]), /no role search/);
+  fail(run("S11", [S11RAN, tool("websearch", { q: "amazon swe" }, "x"), text(ok)]), /used web tools/);
+  fail(run("S11", [S11RAN, text(`Ramp: https://invented.example/9\n\n${AMZ}`)]), /URL not in tool output/);
+  fail(run("S11", [S11RAN, text(`${ok}\nTry https://amazon.jobs/en/search`)]), /URL not in tool output/);
+  fail(run("S11", [S11RAN, text("Ramp: https://boards.example/ramp/1")]), /does not say Amazon could not be read/);
+  fail(run("S11", [S11RAN, text(`${RAMP}Amazon has many openings.`)]), /does not say Amazon could not be read/);
+});
+
+test("S11 never says Amazon has no roles, even beside the unreadable wording", () => {
+  for (const t of [
+    "Amazon has no software engineer roles.",
+    "There are no roles at Amazon.",
+    "No software engineer openings at Amazon right now.",
+    "Amazon returned 0 roles.",
+    "I found zero roles at Amazon.",
+    "Amazon isn't hiring.",
+    "Amazon has zero postings.",
+  ]) fail(run("S11", [S11RAN, text(`${RAMP}${AMZ} ${t}`)]), /claims Amazon has no roles|hiring claim/);
+  fail(run("S11", [S11RAN, text(`${RAMP}Amazon's board could not be read. Amazon has no software engineer roles.`)]), /claims Amazon has no roles/);
+});
+
+test("S11 memory hiring claim about Amazon fails", () => {
+  fail(run("S11", [S11RAN, text(`${RAMP}${AMZ} Amazon is currently hiring across many teams.`)]), /hiring claim/);
+  fail(run("S11", [S11RAN, text(`${RAMP}${AMZ} Large companies usually have many open roles.`)]), /hiring claim/);
+});
+
+test("S11 may offer the search key", () => {
+  pass(run("S11", [S11RAN, text(`${RAMP}${AMZ}\n\nIf you set JOB_BOARD_SEARCH_API_KEY I can try the search fallback.`)]));
 });
 
 test("real records keep their verdicts", () => {
