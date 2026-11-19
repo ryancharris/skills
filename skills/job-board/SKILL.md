@@ -1,10 +1,10 @@
 ---
 name: job-board
-description: Use for "is X hiring?", "open roles at X", post-layoff checks, site: queries and HTML role pages, on Greenhouse, Lever, Ashby, SmartRecruiters, BambooHR. No company named: ask; do not web-search.
+description: 'Use for "is X hiring?", "open roles at X", post-layoff checks, site: queries and HTML role pages, on Greenhouse, Lever, Ashby, SmartRecruiters, BambooHR. No company named: ask; do not web-search.'
 license: MIT
 compatibility: Node.js 20+ (no runtime dependencies). Optional search key (JOB_BOARD_SEARCH_API_KEY) enables the search fallback.
 metadata:
-  version: "2.1.0"
+  version: "2.1.1"
 ---
 
 # Job board

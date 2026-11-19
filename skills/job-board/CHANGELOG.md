@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 2.1.1 — 2026-11-19
+
+**Fixed: `SKILL.md` was not valid YAML in 2.1.0, so strict loaders skipped the skill.** The 2.1.0 description contains `site: queries`, written without quotes. A plain YAML value cannot contain `: `, so a spec-compliant parser rejects the whole frontmatter ("Nested mappings are not allowed in compact mappings"). pi uses one, and it did not load the skill at all; opencode and Claude Code are lenient and did, which is why the measurements for the new description did not catch it. The description is now single-quoted, with the same text. 2.0.0 was not affected.
+
+To keep it from happening again:
+- The test suite now parses the `SKILL.md` frontmatter with a real YAML library (`yaml`, a dev dependency only; the runtime still has no dependencies) and checks that the name, description and metadata are well formed.
+- `scripts/validate-skill.mjs`, which CI runs without installing anything, now rejects a plain value that contains `: ` or ` #`, or starts with a YAML indicator character, and it counts description length without the quotes.
+- The suite checks that the version is the same in `SKILL.md`, both `package.json` files, the lockfile, the plugin manifests and `--version`.
+
+Found by running the pi install route in the evals harness against 2.1.0 (`evals/routes/install-check.sh pi`): pi's `get_commands` listed no `skill:job-board`.
+
 ## 2.1.0 — 2026-11-19
 
 **An unreadable company no longer gets "No roles found".** In a role search where the skill found no board for a company and no search key was set, the md, detail and html output said "No roles found for **Amazon**. This company uses a careers site this skill cannot read directly." Some agents repeated "No roles found", which reads as a claim that the company has none, and "uses a careers site" stated a fact the skill does not know. It now says "No postings were read for **Amazon**: this skill found no board it can read for it. That is not the same as having no roles." The mixed-run warning, for a search where other companies were read, now ends "Its absence is not the same as having no roles." instead of quoting "no roles". The careers query, the optional search key text, the headline, the `--check` verdict, the "none matched" wording for a board that was read, JSON keys and `empty_reason` kinds are unchanged. `SKILL.md` tells agents to say that no postings were read. Covered by `tests-ts/unreadable-wording.test.ts`.
