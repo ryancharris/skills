@@ -27,7 +27,8 @@ if [ -n "$tar" ]; then cp "$tar" "$ctx/repo.tar"; label=$(basename "$tar")
 else git -C "$root" archive "$ref" > "$ctx/repo.tar" || { echo "FAIL: cannot archive ref '$ref'" >&2; exit 1; }
      label=$(git -C "$root" rev-parse --short "$ref"); fi
 cp "$here/Dockerfile.$route" "$ctx/Dockerfile"
-cp "$here/verify.mjs" "$here/run-$route.mjs" "$here/adapt.mjs" "$root/evals/stories.json" "$ctx/"
+cp "$here/verify.mjs" "$here/run-$route.mjs" "$here/adapt.mjs" "$root/evals/stories.json" \
+   "$root/evals/redact.mjs" "$root/evals/abort.mjs" "$root/evals/versions.mjs" "$ctx/"
 tag=jb-route-$route:$label
 
 echo "== build $route image for $label (installs the agent, then the skill via its install route)"

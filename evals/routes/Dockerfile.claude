@@ -11,6 +11,6 @@ ENV DISABLE_AUTOUPDATER=1
 COPY --chown=tester repo.tar /tmp/repo.tar
 RUN mkdir -p ~/src/skills && tar -xf /tmp/repo.tar -C ~/src/skills && rm /tmp/repo.tar
 RUN claude plugin marketplace add ~/src/skills && claude plugin install job-board@ryancharris-skills
-COPY --chown=tester verify.mjs run-claude.mjs adapt.mjs stories.json /evals/
+COPY --chown=tester verify.mjs run-claude.mjs adapt.mjs redact.mjs abort.mjs versions.mjs stories.json /evals/
 RUN mkdir -p /home/tester/work
 WORKDIR /home/tester/work

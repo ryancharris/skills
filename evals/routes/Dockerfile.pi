@@ -10,6 +10,6 @@ WORKDIR /home/tester
 COPY --chown=tester repo.tar /tmp/repo.tar
 RUN mkdir -p ~/src/skills && tar -xf /tmp/repo.tar -C ~/src/skills && rm /tmp/repo.tar
 RUN pi install ~/src/skills && pi list
-COPY --chown=tester verify.mjs run-pi.mjs adapt.mjs stories.json /evals/
+COPY --chown=tester verify.mjs run-pi.mjs adapt.mjs redact.mjs abort.mjs versions.mjs stories.json /evals/
 RUN mkdir -p /home/tester/work
 WORKDIR /home/tester/work

@@ -36,7 +36,7 @@ seed=${seed:-$(( RANDOM * 32768 + RANDOM ))}
 
 ctx=$(mktemp -d); trap 'rm -rf "$ctx"' EXIT
 git -C "$root" archive "$ref" skills/job-board > "$ctx/skill.tar"
-cp "$here/Dockerfile" "$here/stories.json" "$here/run.mjs" "$ctx/"
+cp "$here/Dockerfile" "$here/stories.json" "$here/run.mjs" "$here/redact.mjs" "$here/abort.mjs" "$here/versions.mjs" "$ctx/"
 tag=jb-evals:$(git -C "$root" rev-parse --short "$ref")
 docker build -q -t "$tag" "$ctx" >/dev/null
 
