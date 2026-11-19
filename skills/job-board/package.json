@@ -1,6 +1,6 @@
 {
   "name": "job-board-skill",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Find open roles, or check whether a company is hiring, by reading its ATS job board directly.",
   "type": "module",
   "license": "MIT",
