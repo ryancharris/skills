@@ -120,6 +120,7 @@ export function toJson(jobs, options = {}) {
         warnings,
         // Structured so an agent need not parse the warning text to learn why.
         empty_reason: options.emptyReason ?? null,
+        unreadable_companies: options.unreadableCompanies ?? [],
         boards: boards.map((b) => ({ ...b })),
         queries,
         jobs: jobDicts,

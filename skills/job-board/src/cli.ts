@@ -432,6 +432,7 @@ export async function main(argv: string[]): Promise<number> {
       warnings: result.warnings,
       limit: opts.limit,
       emptyReason: result.empty_reason,
+      unreadableCompanies: result.unreadable_companies,
       partialBoards: result.partial_boards,
       provenance,
     }) + "\n",
@@ -476,6 +477,7 @@ export interface RenderOptions {
   warnings: string[];
   limit: number | null;
   emptyReason: EmptyReason | null;
+  unreadableCompanies?: string[];
   partialBoards: PartialBoard[];
   provenance?: Provenance;
 }
@@ -491,6 +493,7 @@ export function renderJobs(jobs: Job[], format: string, opts: RenderOptions): st
     boards: opts.boards,
     meta: opts.meta,
     emptyReason: opts.emptyReason,
+    unreadableCompanies: opts.unreadableCompanies,
     queries: opts.queries,
     warnings: opts.warnings,
     partialBoards: opts.partialBoards,
