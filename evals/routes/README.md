@@ -52,6 +52,30 @@ answers like a model API without being one.
   `ANTHROPIC_AUTH_TOKEN=$OPENROUTER_API_KEY` and an empty `ANTHROPIC_API_KEY`.
 - pi: `pi --mode json --no-session --provider openrouter --model M PROMPT`, key from `OPENROUTER_API_KEY`.
 
+### Launcher: `evals/routes/run.sh`
+
+```bash
+evals/routes/run.sh claude --models anthropic/claude-sonnet-5.5 --env-file ~/.jb-evals.env --runs 3
+evals/routes/run.sh pi --models anthropic/claude-sonnet-5.5,openai/gpt-5 --env-file ~/.jb-evals.env --save pi-baseline
+```
+
+It mirrors `evals/run.sh` (same flags, validation, exit codes, `--save` rules), with the route as the first argument. Differences:
+
+- It first calls `install-check.sh` for the same commit: the route image is built and `verify.mjs` runs in it (no model, no key). If that fails, nothing else happens.
+- The runner container is `docker create --env-file` plus `docker cp`, never a bind mount, and is removed by name on exit.
+- `meta.json` carries `route` and the agent `versions`; `--save NAME` writes `evals/results/<date>-<route>-NAME.*`.
+- Default `--concurrency` is 2. The model-free validation of this launcher used 1.
+- The env-file must hold `OPENROUTER_API_KEY=value` (no quotes).
+
+Key handling on OpenRouter:
+
+| Route | What the runner does with `OPENROUTER_API_KEY` | Models |
+|---|---|---|
+| claude | sets `ANTHROPIC_BASE_URL=https://openrouter.ai/api`, `ANTHROPIC_AUTH_TOKEN=$OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY=` (empty) and points Claude Code's haiku/sonnet/opus defaults at the model | Anthropic only (`anthropic/<name>`); the launcher rejects others |
+| pi | pi reads `OPENROUTER_API_KEY` itself; the runner passes `--provider openrouter` | any model on OpenRouter |
+
+`--ref` still selects only the skill; the runners come from your working tree. Not verified against a real OpenRouter account: the exact error text for a 401/402/403 (see "Event shapes" below), so the abort on a credit or key error is proven only against `mock-model.mjs`.
+
 Both runners redact secret values from the records, mark a killed run `timedOut: true` (limit `RUN_TIMEOUT_MS`, default
 420000), stop the matrix only on a structured 401/402/403 error event, and write `/out/versions.json`. See `evals/README.md`.
 Their image needs `redact.mjs`, `abort.mjs` and `versions.mjs` next to the runner; the Dockerfiles and `install-check.sh` copy them.
@@ -63,7 +87,7 @@ pi has no skill tool: the adapter reports a `read` of a `SKILL.md` as a `skill` 
 ## Tests
 
 ```bash
-node --test evals/routes/*.test.mjs
+node --test "evals/*.test.mjs" "evals/routes/*.test.mjs"
 ```
 
 (Node 24 does not accept the bare directory form `node --test evals/routes/`; the glob works on 20, 22 and 24.)
