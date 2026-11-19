@@ -761,3 +761,20 @@ test("narration of what the agent ran is not a hiring claim; a claim after it st
     "I searched and Amazon has many openings.",
   ]) fail(run("S7", [S7RAN, text(`${t}\n\n${quote("Amazon")}`)]), /hiring claim/);
 });
+
+test("review 3 fixtures (Claude Code and pi routes): the grader agrees with the reviewer on all 27 answers", () => {
+  const rows = readFileSync(new URL("./fixtures/review3-routes.jsonl", import.meta.url), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  assert.equal(rows.length, 27);
+  const count = (f) => rows.filter(f).length;
+  assert.equal(count((r) => r.hand === "pass"), 23);
+  assert.equal(count((r) => r.hand === "fail"), 4);
+  // The grader on main passed 14 and failed 13: 9 of those failures were correct answers.
+  assert.equal(count((r) => r.mainGrader === "pass"), 14);
+  assert.equal(count((r) => r.mainGrader === "fail" && r.hand === "pass"), 9);
+  assert.equal(count((r) => r.mainGrader === "pass" && r.hand === "fail"), 0);
+  for (const row of rows) {
+    const events = [...row.calls.map((c) => tool(c.tool, { command: c.cmd }, c.out)), text(row.final)];
+    const g = grade(run(row.story, events));
+    assert.equal(g.pass, row.hand === "pass", `#${row.n} ${row.story} ${row.route} ${row.model} r${row.run}: ${g.why}`);
+  }
+});
