@@ -10,6 +10,8 @@
  *  - Lever returns a bare array; `createdAt` is epoch MILLISECONDS.
  *  - Ashby REQUIRES a User-Agent (403 without one) and exposes no company name.
  *    Its `compensationTierSummary` quotes only the FIRST tier, usually US.
+ *  - Lever, Ashby and BambooHR give no company name, so their jobs carry the name
+ *    the board was found under (`fetch`'s `company`), falling back to the slug.
  *  - SmartRecruiters returns HTTP 200 + `totalFound: 0` for an unknown slug, so
  *    the status code is not a validity signal. It paginates at 100.
  *  - BambooHR is per-tenant and answers an unknown tenant with HTML, not JSON.
@@ -56,15 +58,19 @@ export abstract class ATSAdapter {
     return (data ?? {}) as Record<string, unknown>;
   }
 
-  abstract fetch(slug: string): Promise<Job[]>;
+  /**
+   * `company` is the name to put on a job when the vendor supplies none. It
+   * defaults to the slug, which is only right when no better name is known.
+   */
+  abstract fetch(slug: string, company?: string): Promise<Job[]>;
 
   /**
    * Fetch the postings and the vendor's own total from the same request(s).
    * Reading the total in a second call could skew the comparison if postings
    * change in between, so adapters that report one override this.
    */
-  async fetchRead(slug: string): Promise<BoardRead> {
-    return { jobs: await this.fetch(slug), reported: null };
+  async fetchRead(slug: string, company?: string): Promise<BoardRead> {
+    return { jobs: await this.fetch(slug, company), reported: null };
   }
 
   /** Authoritative company name for this board, if the vendor exposes one. */
@@ -173,7 +179,7 @@ export class GreenhouseAdapter extends ATSAdapter {
   /** Populated during fetch(), so boardCompany() need not refetch. */
   private readonly lastCompany = new Map<string, string>();
 
-  async fetch(slug: string): Promise<Job[]> {
+  async fetch(slug: string, company?: string): Promise<Job[]> {
     const data = await this.get(this.jobsUrl.replace("{slug}", slug));
     const rawJobs = asArray(data.jobs);
     const departments = rawJobs.length > 0 ? await this.departmentMap(slug) : new Map<string, string>();
@@ -188,7 +194,7 @@ export class GreenhouseAdapter extends ATSAdapter {
       jobs.push(
         makeJob({
           title: str(raw.title).trim(),
-          company: companyName || slug,
+          company: companyName || company || slug,
           url: str(raw.absolute_url),
           source: "greenhouse",
           location,
@@ -209,7 +215,7 @@ export class LeverAdapter extends ATSAdapter {
   override readonly name = "lever";
   private readonly TEMPLATE = "https://api.lever.co/v0/postings/{slug}?mode=json";
 
-  async fetch(slug: string): Promise<Job[]> {
+  async fetch(slug: string, company?: string): Promise<Job[]> {
     const data = await this.get(this.TEMPLATE.replace("{slug}", slug));
     // Lever returns 200 + {"ok": false} for some malformed slugs.
     if (!Array.isArray(data)) return [];
@@ -225,7 +231,7 @@ export class LeverAdapter extends ATSAdapter {
       jobs.push(
         makeJob({
           title: str(raw.text).trim(),
-          company: slug,
+          company: company || slug,
           url: str(raw.hostedUrl),
           source: "lever",
           location,
@@ -305,7 +311,7 @@ export class AshbyAdapter extends ATSAdapter {
   private readonly TEMPLATE =
     "https://api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true";
 
-  async fetch(slug: string): Promise<Job[]> {
+  async fetch(slug: string, company?: string): Promise<Job[]> {
     const data = await this.get(this.TEMPLATE.replace("{slug}", slug));
     const jobs: Job[] = [];
     for (const raw of asArray(data.jobs)) {
@@ -313,7 +319,7 @@ export class AshbyAdapter extends ATSAdapter {
       jobs.push(
         makeJob({
           title: str(raw.title).trim(),
-          company: slug,
+          company: company || slug,
           url: str(raw.jobUrl),
           source: "ashby",
           location,
@@ -363,8 +369,8 @@ export class SmartRecruitersAdapter extends ATSAdapter {
     return num(data.totalFound) ?? 0;
   }
 
-  override async fetch(slug: string): Promise<Job[]> {
-    return (await this.fetchRead(slug)).jobs;
+  override async fetch(slug: string, company?: string): Promise<Job[]> {
+    return (await this.fetchRead(slug, company)).jobs;
   }
 
   /**
@@ -374,7 +380,7 @@ export class SmartRecruitersAdapter extends ATSAdapter {
    * MAX_PAGES * PAGE_SIZE (1,000) postings the read stops, so `reported` (the
    * board's totalFound) can exceed the number of jobs returned.
    */
-  override async fetchRead(slug: string): Promise<BoardRead> {
+  override async fetchRead(slug: string, company?: string): Promise<BoardRead> {
     const jobs: Job[] = [];
     let total: number | null = null;
 
@@ -385,13 +391,13 @@ export class SmartRecruitersAdapter extends ATSAdapter {
       const content = asArray(data.content);
       if (total === null) total = num(data.totalFound) ?? 0;
       if (content.length === 0) break;
-      jobs.push(...this.toJobs(content, slug));
+      jobs.push(...this.toJobs(content, slug, company));
       if (jobs.length >= (total ?? 0)) break;
     }
     return { jobs, reported: total };
   }
 
-  private toJobs(content: RawJob[], slug: string): Job[] {
+  private toJobs(content: RawJob[], slug: string, company?: string): Job[] {
     const jobs: Job[] = [];
     for (const raw of content) {
       const loc = (raw.location ?? {}) as RawJob;
@@ -402,7 +408,7 @@ export class SmartRecruitersAdapter extends ATSAdapter {
       jobs.push(
         makeJob({
           title: str(raw.name).trim(),
-          company: companyName || slug,
+          company: companyName || company || slug,
           url: `https://jobs.smartrecruiters.com/${slug}/${String(raw.id ?? "")}`,
           source: "smartrecruiters",
           location,
@@ -432,7 +438,7 @@ export class BambooHRAdapter extends ATSAdapter {
   override readonly name = "bamboohr";
   private readonly TEMPLATE = "https://{slug}.bamboohr.com/careers/list";
 
-  async fetch(slug: string): Promise<Job[]> {
+  async fetch(slug: string, company?: string): Promise<Job[]> {
     const data = await this.get(this.TEMPLATE.replace("{slug}", slug));
     const jobs: Job[] = [];
     for (const raw of asArray(data.result)) {
@@ -442,7 +448,7 @@ export class BambooHRAdapter extends ATSAdapter {
       jobs.push(
         makeJob({
           title: str(raw.jobOpeningName).trim(),
-          company: slug,
+          company: company || slug,
           url: `https://${slug}.bamboohr.com/careers/${jobId}`,
           source: "bamboohr",
           location,

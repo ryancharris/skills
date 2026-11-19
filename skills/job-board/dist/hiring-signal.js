@@ -23,8 +23,9 @@ export function friendlyDepartment(department) {
 /**
  * Brands whose capitalisation plain title-casing would mangle.
  *
- * Ashby exposes no company name, so the slug is displayed. "openai" title-cased
- * becomes "Openai", which looks wrong to anyone who works there.
+ * A job's company can be a lowercase name the user typed ("openai"), a vendor
+ * name, or a name guessed from a search-result URL ("Openai"). Title-casing
+ * "openai" gives "Openai", which looks wrong to anyone who works there.
  */
 const BRAND_NAMES = {
     openai: "OpenAI",

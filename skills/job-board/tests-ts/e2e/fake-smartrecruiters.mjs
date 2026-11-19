@@ -1,14 +1,38 @@
 // Test-only preload for the end-to-end suite. Loaded with `node --import` into
 // the CLI's child process, it replaces global fetch so the CLI sees a synthetic
-// SmartRecruiters board of FAKE_SR_TOTAL postings. Every other host gets a 404.
+// SmartRecruiters board of FAKE_SR_TOTAL postings. When FAKE_ASHBY_SLUG is set it
+// also serves a three-posting Ashby board under that slug, which, like the real
+// Ashby API, carries no company name. Every other host gets a 404.
 //
 // Nothing here reaches the network. If this file fails to load, Node aborts the
 // child process, so the CLI cannot fall through to a real request either.
 
 const total = Number(process.env.FAKE_SR_TOTAL ?? "800");
 
+const ashbySlug = process.env.FAKE_ASHBY_SLUG ?? "";
+
 globalThis.fetch = async (input) => {
   const url = new URL(typeof input === "string" ? input : input.url);
+  if (
+    ashbySlug &&
+    url.hostname === "api.ashbyhq.com" &&
+    url.pathname === `/posting-api/job-board/${ashbySlug}`
+  ) {
+    const jobs = [0, 1, 2].map((i) => ({
+      id: `ashby-${i}`,
+      title: `Engineer ${i}`,
+      location: "Toronto, Canada",
+      jobUrl: `https://jobs.ashbyhq.com/${ashbySlug}/ashby-${i}`,
+      publishedAt: "2026-01-01T00:00:00.000+00:00",
+      isRemote: false,
+      department: "Engineering",
+      employmentType: "FullTime",
+    }));
+    return new Response(JSON.stringify({ apiVersion: "1", jobs }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  }
   if (url.hostname !== "api.smartrecruiters.com") {
     return new Response("not found", { status: 404 });
   }

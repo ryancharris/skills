@@ -10,6 +10,8 @@
  *  - Lever returns a bare array; `createdAt` is epoch MILLISECONDS.
  *  - Ashby REQUIRES a User-Agent (403 without one) and exposes no company name.
  *    Its `compensationTierSummary` quotes only the FIRST tier, usually US.
+ *  - Lever, Ashby and BambooHR give no company name, so their jobs carry the name
+ *    the board was found under (`fetch`'s `company`), falling back to the slug.
  *  - SmartRecruiters returns HTTP 200 + `totalFound: 0` for an unknown slug, so
  *    the status code is not a validity signal. It paginates at 100.
  *  - BambooHR is per-tenant and answers an unknown tenant with HTML, not JSON.
@@ -46,8 +48,8 @@ export class ATSAdapter {
      * Reading the total in a second call could skew the comparison if postings
      * change in between, so adapters that report one override this.
      */
-    async fetchRead(slug) {
-        return { jobs: await this.fetch(slug), reported: null };
+    async fetchRead(slug, company) {
+        return { jobs: await this.fetch(slug, company), reported: null };
     }
     /** Authoritative company name for this board, if the vendor exposes one. */
     boardCompany(_slug) {
@@ -139,7 +141,7 @@ export class GreenhouseAdapter extends ATSAdapter {
     }
     /** Populated during fetch(), so boardCompany() need not refetch. */
     lastCompany = new Map();
-    async fetch(slug) {
+    async fetch(slug, company) {
         const data = await this.get(this.jobsUrl.replace("{slug}", slug));
         const rawJobs = asArray(data.jobs);
         const departments = rawJobs.length > 0 ? await this.departmentMap(slug) : new Map();
@@ -152,7 +154,7 @@ export class GreenhouseAdapter extends ATSAdapter {
                 this.lastCompany.set(slug, companyName);
             jobs.push(makeJob({
                 title: str(raw.title).trim(),
-                company: companyName || slug,
+                company: companyName || company || slug,
                 url: str(raw.absolute_url),
                 source: "greenhouse",
                 location,
@@ -169,7 +171,7 @@ export class GreenhouseAdapter extends ATSAdapter {
 export class LeverAdapter extends ATSAdapter {
     name = "lever";
     TEMPLATE = "https://api.lever.co/v0/postings/{slug}?mode=json";
-    async fetch(slug) {
+    async fetch(slug, company) {
         const data = await this.get(this.TEMPLATE.replace("{slug}", slug));
         // Lever returns 200 + {"ok": false} for some malformed slugs.
         if (!Array.isArray(data))
@@ -182,7 +184,7 @@ export class LeverAdapter extends ATSAdapter {
             const posted = typeof createdAt === "number" ? new Date(createdAt).toISOString() : null;
             jobs.push(makeJob({
                 title: str(raw.text).trim(),
-                company: slug,
+                company: company || slug,
                 url: str(raw.hostedUrl),
                 source: "lever",
                 location,
@@ -257,14 +259,14 @@ export function ashbyPayForLocation(compensation, location) {
 export class AshbyAdapter extends ATSAdapter {
     name = "ashby";
     TEMPLATE = "https://api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true";
-    async fetch(slug) {
+    async fetch(slug, company) {
         const data = await this.get(this.TEMPLATE.replace("{slug}", slug));
         const jobs = [];
         for (const raw of asArray(data.jobs)) {
             const location = str(raw.location);
             jobs.push(makeJob({
                 title: str(raw.title).trim(),
-                company: slug,
+                company: company || slug,
                 url: str(raw.jobUrl),
                 source: "ashby",
                 location,
@@ -304,8 +306,8 @@ export class SmartRecruitersAdapter extends ATSAdapter {
         const data = await this.get(`https://api.smartrecruiters.com/v1/companies/${slug}/postings?limit=1`);
         return num(data.totalFound) ?? 0;
     }
-    async fetch(slug) {
-        return (await this.fetchRead(slug)).jobs;
+    async fetch(slug, company) {
+        return (await this.fetchRead(slug, company)).jobs;
     }
     /**
      * Fetch the whole board, paging past the 100-per-request limit.
@@ -314,7 +316,7 @@ export class SmartRecruitersAdapter extends ATSAdapter {
      * MAX_PAGES * PAGE_SIZE (1,000) postings the read stops, so `reported` (the
      * board's totalFound) can exceed the number of jobs returned.
      */
-    async fetchRead(slug) {
+    async fetchRead(slug, company) {
         const jobs = [];
         let total = null;
         for (let page = 0; page < this.MAX_PAGES; page++) {
@@ -324,13 +326,13 @@ export class SmartRecruitersAdapter extends ATSAdapter {
                 total = num(data.totalFound) ?? 0;
             if (content.length === 0)
                 break;
-            jobs.push(...this.toJobs(content, slug));
+            jobs.push(...this.toJobs(content, slug, company));
             if (jobs.length >= (total ?? 0))
                 break;
         }
         return { jobs, reported: total };
     }
-    toJobs(content, slug) {
+    toJobs(content, slug, company) {
         const jobs = [];
         for (const raw of content) {
             const loc = (raw.location ?? {});
@@ -340,7 +342,7 @@ export class SmartRecruitersAdapter extends ATSAdapter {
                 this.lastCompany.set(slug, companyName);
             jobs.push(makeJob({
                 title: str(raw.name).trim(),
-                company: companyName || slug,
+                company: companyName || company || slug,
                 url: `https://jobs.smartrecruiters.com/${slug}/${String(raw.id ?? "")}`,
                 source: "smartrecruiters",
                 location,
@@ -366,7 +368,7 @@ export class SmartRecruitersAdapter extends ATSAdapter {
 export class BambooHRAdapter extends ATSAdapter {
     name = "bamboohr";
     TEMPLATE = "https://{slug}.bamboohr.com/careers/list";
-    async fetch(slug) {
+    async fetch(slug, company) {
         const data = await this.get(this.TEMPLATE.replace("{slug}", slug));
         const jobs = [];
         for (const raw of asArray(data.result)) {
@@ -375,7 +377,7 @@ export class BambooHRAdapter extends ATSAdapter {
             const jobId = String(raw.id ?? "");
             jobs.push(makeJob({
                 title: str(raw.jobOpeningName).trim(),
-                company: slug,
+                company: company || slug,
                 url: `https://${slug}.bamboohr.com/careers/${jobId}`,
                 source: "bamboohr",
                 location,
