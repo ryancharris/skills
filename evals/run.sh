@@ -3,7 +3,7 @@
 # Manual only: it calls paid model APIs. Never run it from CI.
 set -euo pipefail
 
-ref=HEAD models="" runs=3 concurrency=4 stories="" envfile="" seed="" out=""
+ref=HEAD save="" models="" runs=3 concurrency=3 stories="" envfile="" seed="" out=""
 usage() {
   cat <<'U'
 usage: evals/run.sh --models a,b --env-file FILE [options]
@@ -12,9 +12,10 @@ usage: evals/run.sh --models a,b --env-file FILE [options]
   --ref REF           git ref whose committed skills/job-board is installed (default HEAD; use origin/main to test what is public)
   --runs N            runs per model and story (default 3)
   --stories S1,S5     only these stories (default all)
-  --concurrency N     parallel runs (default 4)
+  --concurrency N     parallel runs (default 3; Docker Desktop's 2 GB VM runs out of memory at 6)
   --seed N            shuffle seed (default random)
   --out DIR           output directory (default evals/out/<timestamp>)
+  --save NAME         also copy summary.md and summary.json to evals/results/<date>-NAME.* (commit these to compare later)
 U
   exit 2
 }
@@ -22,7 +23,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --models) models=$2; shift 2 ;; --env-file) envfile=$2; shift 2 ;; --ref) ref=$2; shift 2 ;;
     --runs) runs=$2; shift 2 ;; --stories) stories=$2; shift 2 ;; --concurrency) concurrency=$2; shift 2 ;;
-    --seed) seed=$2; shift 2 ;; --out) out=$2; shift 2 ;; *) usage ;;
+    --seed) seed=$2; shift 2 ;; --save) save=$2; shift 2 ;; --out) out=$2; shift 2 ;; *) usage ;;
   esac
 done
 [ -n "$models" ] && [ -n "$envfile" ] || usage
@@ -39,7 +40,7 @@ cp "$here/Dockerfile" "$here/stories.json" "$here/run.mjs" "$ctx/"
 tag=jb-evals:$(git -C "$root" rev-parse --short "$ref")
 docker build -q -t "$tag" "$ctx" >/dev/null
 
-printf '{"date":"%s","ref":"%s","commit":"%s"}\n' "$(date +%F)" "$ref" "$(git -C "$root" rev-parse --short "$ref")" > "$out/meta.json"
+printf '{"date":"%s","ref":"%s","commit":"%s","name":"%s"}\n' "$(date +%F)" "$ref" "$(git -C "$root" rev-parse --short "$ref")" "${save:-$ref}" > "$out/meta.json"
 cid=$(docker create --env-file "$envfile" \
   -e MODELS="$models" -e RUNS="$runs" -e CONCURRENCY="$concurrency" -e SEED="$seed" -e STORIES="$stories" \
   "$tag" node /evals/run.mjs)
@@ -47,4 +48,11 @@ trap 'docker rm -f "$cid" >/dev/null 2>&1; rm -rf "$ctx"' EXIT
 docker start -a "$cid" || true
 docker cp "$cid:/out/." "$out/"
 node "$here/report.mjs" "$out"
+node "$here/summary.mjs" "$out" >/dev/null
+if [ -n "$save" ]; then
+  mkdir -p "$here/results"
+  cp "$out/summary.md" "$here/results/$(date +%F)-$save.md"
+  cp "$out/summary.json" "$here/results/$(date +%F)-$save.json"
+  echo "saved evals/results/$(date +%F)-$save.{md,json}"
+fi
 echo "open $out/report.html"

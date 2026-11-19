@@ -20,7 +20,29 @@ evals/run.sh \
 - Keys are passed at `docker run` time and are not stored in the image.
 - Runs are shuffled (seed recorded in `order.json`), each in a fresh session and directory.
 - Output (copied out of the container when the run ends): `evals/out/<timestamp>/` with `results.jsonl` (full event streams), `order.json`,
-  `meta.json` and `report.html`. `evals/out/` is gitignored.
+  `meta.json`, `report.html` (every prompt, tool call and answer) and `summary.md` / `summary.json`
+  (pass counts only). `evals/out/` is gitignored.
+- Docker Desktop's default 2 GB VM runs out of memory at about 6 parallel runs and kills them
+  (`exit=null`). The default is 3. Raise `--concurrency` only if you raised the VM's memory.
+
+## Keeping results to compare against
+
+Add `--save NAME` and the summary is copied to `evals/results/<date>-NAME.md` and `.json`.
+Commit those two small files. They are the record of how the skill behaved at that commit.
+
+```bash
+evals/run.sh --models ... --env-file ~/jb.env --save my-change
+node evals/compare.mjs evals/results/2026-11-18-baseline-v2.0.0.json evals/results/<date>-my-change.json
+```
+
+`compare.mjs` lines the two runs up per story and per model, using only the models and stories
+both runs have. Its `p` is a one-sided Fisher exact test that the second run passes more often.
+With 3 runs per cell it is weak evidence: use 10 or more runs before calling a change real.
+Compare runs of the same models, and note that the grader can change between runs (re-grade the
+old `results.jsonl` if you still have it, since `summary.mjs` takes any out directory).
+
+`results/2026-11-18-baseline-v2.0.0.*` is the first record: six models, 11 stories, 3 runs each,
+skill v2.0.0 (`2a97e45`).
 
 ## Reading the results
 

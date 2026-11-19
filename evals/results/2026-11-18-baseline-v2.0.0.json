@@ -1,0 +1,376 @@
+{
+  "meta": {
+    "date": "2026-11-18",
+    "ref": "v2.0.0",
+    "commit": "2a97e45",
+    "name": "baseline-v2.0.0",
+    "seed": 20261118,
+    "runs": 198
+  },
+  "stories": {
+    "S0": "Skill is discovered",
+    "S1": "Roles at one named company",
+    "S2": "Several companies, remote only",
+    "S3": "Hiring check after a layoff",
+    "S4": "Which ATS boards a company has",
+    "S5": "Search queries, no API key",
+    "S6": "No companies named",
+    "S7": "Unsupported company (no verdict from memory)",
+    "S8": "Filters and format",
+    "S9": "Company that does not exist",
+    "S10": "HTML output"
+  },
+  "cells": {
+    "anthropic/claude-sonnet-5.5": {
+      "S0": {
+        "pass": 3,
+        "n": 3
+      },
+      "S1": {
+        "pass": 3,
+        "n": 3
+      },
+      "S2": {
+        "pass": 3,
+        "n": 3
+      },
+      "S3": {
+        "pass": 3,
+        "n": 3
+      },
+      "S4": {
+        "pass": 3,
+        "n": 3
+      },
+      "S5": {
+        "pass": 3,
+        "n": 3
+      },
+      "S6": {
+        "pass": 3,
+        "n": 3
+      },
+      "S7": {
+        "pass": 3,
+        "n": 3
+      },
+      "S8": {
+        "pass": 3,
+        "n": 3
+      },
+      "S9": {
+        "pass": 3,
+        "n": 3
+      },
+      "S10": {
+        "pass": 3,
+        "n": 3
+      }
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "S0": {
+        "pass": 3,
+        "n": 3
+      },
+      "S1": {
+        "pass": 3,
+        "n": 3
+      },
+      "S2": {
+        "pass": 3,
+        "n": 3
+      },
+      "S3": {
+        "pass": 3,
+        "n": 3
+      },
+      "S4": {
+        "pass": 3,
+        "n": 3
+      },
+      "S5": {
+        "pass": 0,
+        "n": 3
+      },
+      "S6": {
+        "pass": 3,
+        "n": 3
+      },
+      "S7": {
+        "pass": 3,
+        "n": 3
+      },
+      "S8": {
+        "pass": 3,
+        "n": 3
+      },
+      "S9": {
+        "pass": 3,
+        "n": 3
+      },
+      "S10": {
+        "pass": 3,
+        "n": 3
+      }
+    },
+    "moonshotai/kimi-k3": {
+      "S0": {
+        "pass": 3,
+        "n": 3
+      },
+      "S1": {
+        "pass": 3,
+        "n": 3
+      },
+      "S2": {
+        "pass": 3,
+        "n": 3
+      },
+      "S3": {
+        "pass": 3,
+        "n": 3
+      },
+      "S4": {
+        "pass": 3,
+        "n": 3
+      },
+      "S5": {
+        "pass": 3,
+        "n": 3
+      },
+      "S6": {
+        "pass": 3,
+        "n": 3
+      },
+      "S7": {
+        "pass": 3,
+        "n": 3
+      },
+      "S8": {
+        "pass": 3,
+        "n": 3
+      },
+      "S9": {
+        "pass": 3,
+        "n": 3
+      },
+      "S10": {
+        "pass": 3,
+        "n": 3
+      }
+    },
+    "qwen/qwen3-coder": {
+      "S0": {
+        "pass": 3,
+        "n": 3
+      },
+      "S1": {
+        "pass": 3,
+        "n": 3
+      },
+      "S2": {
+        "pass": 3,
+        "n": 3
+      },
+      "S3": {
+        "pass": 3,
+        "n": 3
+      },
+      "S4": {
+        "pass": 3,
+        "n": 3
+      },
+      "S5": {
+        "pass": 0,
+        "n": 3
+      },
+      "S6": {
+        "pass": 3,
+        "n": 3
+      },
+      "S7": {
+        "pass": 3,
+        "n": 3
+      },
+      "S8": {
+        "pass": 3,
+        "n": 3
+      },
+      "S9": {
+        "pass": 3,
+        "n": 3
+      },
+      "S10": {
+        "pass": 0,
+        "n": 3
+      }
+    },
+    "qwen/qwen3-coder-flash": {
+      "S0": {
+        "pass": 3,
+        "n": 3
+      },
+      "S1": {
+        "pass": 3,
+        "n": 3
+      },
+      "S2": {
+        "pass": 0,
+        "n": 3
+      },
+      "S3": {
+        "pass": 0,
+        "n": 3
+      },
+      "S4": {
+        "pass": 0,
+        "n": 3
+      },
+      "S5": {
+        "pass": 0,
+        "n": 3
+      },
+      "S6": {
+        "pass": 1,
+        "n": 3
+      },
+      "S7": {
+        "pass": 0,
+        "n": 3
+      },
+      "S8": {
+        "pass": 3,
+        "n": 3
+      },
+      "S9": {
+        "pass": 0,
+        "n": 3
+      },
+      "S10": {
+        "pass": 0,
+        "n": 3
+      }
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "S0": {
+        "pass": 3,
+        "n": 3
+      },
+      "S1": {
+        "pass": 3,
+        "n": 3
+      },
+      "S2": {
+        "pass": 3,
+        "n": 3
+      },
+      "S3": {
+        "pass": 3,
+        "n": 3
+      },
+      "S4": {
+        "pass": 3,
+        "n": 3
+      },
+      "S5": {
+        "pass": 2,
+        "n": 3
+      },
+      "S6": {
+        "pass": 3,
+        "n": 3
+      },
+      "S7": {
+        "pass": 3,
+        "n": 3
+      },
+      "S8": {
+        "pass": 3,
+        "n": 3
+      },
+      "S9": {
+        "pass": 3,
+        "n": 3
+      },
+      "S10": {
+        "pass": 3,
+        "n": 3
+      }
+    }
+  },
+  "perModel": {
+    "anthropic/claude-sonnet-5.5": {
+      "pass": 33,
+      "n": 33,
+      "skillLoaded": 30,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 11,
+      "tokens": 1560387,
+      "cost": 0.88
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "pass": 30,
+      "n": 33,
+      "skillLoaded": 27,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 10,
+      "tokens": 1544861,
+      "cost": 0.069
+    },
+    "moonshotai/kimi-k3": {
+      "pass": 33,
+      "n": 33,
+      "skillLoaded": 30,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 12,
+      "tokens": 1165213,
+      "cost": 0.691
+    },
+    "qwen/qwen3-coder": {
+      "pass": 27,
+      "n": 33,
+      "skillLoaded": 27,
+      "usedWeb": 4,
+      "malformedToolCalls": 0,
+      "avgSeconds": 11,
+      "tokens": 1116445,
+      "cost": 0.154
+    },
+    "qwen/qwen3-coder-flash": {
+      "pass": 10,
+      "n": 33,
+      "skillLoaded": 8,
+      "usedWeb": 9,
+      "malformedToolCalls": 15,
+      "avgSeconds": 11,
+      "tokens": 949264,
+      "cost": 0.096
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "pass": 32,
+      "n": 33,
+      "skillLoaded": 29,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 11,
+      "tokens": 1187569,
+      "cost": 0.05
+    }
+  },
+  "failures": {
+    "S3: no --check Notion": 3,
+    "S3: used web tools": 2,
+    "S5: did not use --queries": 10,
+    "S5: no site": 4,
+    "S9: did not say not found": 3,
+    "S7: no cannot-read statement": 3,
+    "S2: CLI missing Ramp/Figma/--remote": 3,
+    "S2: used web tools": 1,
+    "S10: did not use --format html": 6,
+    "S4: no --list-boards Notion": 3,
+    "S6: did not ask a question": 2
+  }
+}
