@@ -45,5 +45,5 @@ What it showed about the grader
 
 Effect on saved raw runs (all 1248 records regraded, grader on `main` against this fix)
 - S11: 65 fail to pass, 78 pass to pass, 5 fail to fail. S7: 7 fail to pass, 1 pass to fail, 102 pass to pass, 92 fail to fail. No other story changed (S0 to S6, S8 to S10 are identical).
-- The summaries in this directory were regenerated with the final grader. The five that existed before are byte-identical, so earlier comparisons still hold. Five new ones were added from this session's experiments. `2026-11-19-s11-after-key-wording-partial` had 2 runs killed by an API error (no credit); its header says so. Do not compare it until the run is repeated.
+- The summaries in this directory were regenerated with the final grader. Five of the six summaries that existed before were regenerated and are byte-identical, so earlier comparisons still hold. Five new ones were added from this session's experiments. `2026-11-19-s11-after-key-wording-partial` had 2 runs killed by an API error (no credit); its header says so. Do not compare it until the run is repeated.
 - The v2.0.0 baseline summary stays as recorded (see the README).
