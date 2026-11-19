@@ -32,6 +32,10 @@ Where each agent keeps the skill:
   (`~/src/skills/skills/job-board`), not the cache copy. Both are intact; the CLI works from either.
 - pi loads a local-path package in place, so the skill is at the package path.
 
+`--ref` selects only the skill (the `git archive`). The harness files copied into the image (`verify.mjs`, `run-*.mjs`, `adapt.mjs`,
+`redact.mjs`, `abort.mjs`, `versions.mjs`, `stories.json`) always come from your working tree, so uncommitted edits to them
+are used even when `--ref` names an old commit. The same is true of `evals/run.sh`.
+
 `--tar FILE` replaces `--ref` with a ready-made `git archive` tarball. It is how the failure paths were
 tested (invalid `plugin.json`, missing skill directory, missing `SKILL.md`, throwing extension, missing `dist/`).
 
@@ -47,6 +51,11 @@ answers like a model API without being one.
   --no-session-persistence --model M`, using OpenRouter through `ANTHROPIC_BASE_URL=https://openrouter.ai/api`,
   `ANTHROPIC_AUTH_TOKEN=$OPENROUTER_API_KEY` and an empty `ANTHROPIC_API_KEY`.
 - pi: `pi --mode json --no-session --provider openrouter --model M PROMPT`, key from `OPENROUTER_API_KEY`.
+
+Both runners redact secret values from the records, mark a killed run `timedOut: true` (limit `RUN_TIMEOUT_MS`, default
+420000), stop the matrix only on a structured 401/402/403 error event, and write `/out/versions.json`. See `evals/README.md`.
+Their image needs `redact.mjs`, `abort.mjs` and `versions.mjs` next to the runner; the Dockerfiles and `install-check.sh` copy them.
+The runner for the key: `claude` receives it as `ANTHROPIC_AUTH_TOKEN` too, and that value is redacted as well.
 
 Tool names are lowercased so the existing grader checks (`bash`, `webfetch`, `websearch`, `skill`, `write`) work.
 pi has no skill tool: the adapter reports a `read` of a `SKILL.md` as a `skill` call.
