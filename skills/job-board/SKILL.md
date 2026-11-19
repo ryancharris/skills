@@ -2,7 +2,7 @@
 name: job-board
 description: Use for "is X hiring?", "open roles at X", post-layoff checks, site: queries and HTML role pages, on Greenhouse, Lever, Ashby, SmartRecruiters, BambooHR. No company named: ask; do not web-search.
 license: MIT
-compatibility: Node.js 20+ (no runtime dependencies). Optional JOB_BOARD_SEARCH_API_KEY for search-engine fallback.
+compatibility: Node.js 20+ (no runtime dependencies). Optional search key (JOB_BOARD_SEARCH_API_KEY) enables the search fallback.
 metadata:
   version: "2.0.0"
 ---
@@ -33,7 +33,8 @@ Large enterprises (Amazon, Google, Meta, Microsoft) have no supported board; see
 *Known limitations* for what you get instead.
 
 Tell the user which case they are in **before** they invest effort, and offer the
-fallbacks in *Known limitations* rather than running a search that returns nothing.
+careers query and the site queries described in *Known limitations* rather than
+running a search that returns nothing.
 
 ## Quick start
 
@@ -53,7 +54,7 @@ node "<skill-dir>/dist/main.js" --check Stripe --check Notion --format md
 # 3. See which ATS boards a company actually has
 node "<skill-dir>/dist/main.js" --company Notion --list-boards
 
-# 4. Generate boolean site: queries (no API key needed)
+# 4. Print site queries for the user to paste into a search engine (no search key needed)
 node "<skill-dir>/dist/main.js" --company Stripe --title "chief of staff" --queries
 ```
 
@@ -67,8 +68,8 @@ for the JSON shape.
 ## How it works
 
 ```
-  user inputs                       discovery                 fetching
-  ───────────                       ─────────                 ────────
+  user inputs                       board discovery           fetching
+  ───────────                       ───────────────           ────────
   --company Acme ─────────────────► slug candidates ──► probe each ATS ──► live boards
                                                               │
   --title/--location ────────────────────────────────────┐    ▼
@@ -77,14 +78,13 @@ for the JSON shape.
                                                               ▼
                                               filter ──► dedupe ──► rank ──► JSON / Markdown
 
-  --check Acme ──────────────► same discover+fetch ──► hiring signal
+  --check Acme ──────────────► same board discovery + fetch ► hiring signal
                                                        (open roles, recency,
                                                         top departments)
 ```
 
-1. **Seed** — explicit `--company` names. The skill does not seed from layoff
-   filings (`references/layoff-data.md` says why).
-2. **Discover** — derive slug candidates (`"Cisco Systems, Inc."` → `ciscosystems`,
+1. **Seed** — explicit `--company` names. The skill does no company discovery.
+2. **Board discovery** — derive slug candidates (`"Cisco Systems, Inc."` → `ciscosystems`,
    `cisco`, `cisco-systems`) and probe each ATS. Boards are **identity-verified**:
    a board is accepted only if its company name covers the queried company, which
    rejects look-alikes such as `general motors` → a board named "General Interest".
@@ -95,17 +95,14 @@ for the JSON shape.
 
 ## When the user has no companies
 
-Do not run a search. Ask one question, offering the three viable routes:
+Do not run a search. Ask one question, offering the two viable routes:
 
 1. **"Which companies do you want to work at?"** — the strongest path. Even two
    or three names produces useful results.
 2. **"Give me a role and I'll write searches you can run yourself"** — run
-   `--queries` (no API key, no network) and hand over the boolean `site:` URLs.
-3. **"Which companies just laid people off?"** — a layoff feed is a decent *name
-   generator* (`references/layoff-data.md` has the one-liner), but most large
-   filers are enterprises this skill cannot read. Say so up front.
+   `--queries` (no search key, no network) and hand over the site queries.
 
-Be explicit that open-ended discovery is out of scope for this skill. Do not
+Be explicit that open-ended company discovery is out of scope for this skill. Do not
 improvise a company list and present it as comprehensive.
 
 **Never choose companies yourself, even to be helpful.** That covers names from
@@ -181,7 +178,9 @@ mode. Parse `jobs` for `--company`, and `signals` for `--check`.
 
 ```json
 {
-  "generated_at": "...", "count": 1, "warnings": [], "queries": [],
+  "generated_at": "...", "fetched_at": "...", "cached": false, "count": 1,
+  "total": 1, "truncated": false, "warnings": [],
+  "queries": ["\"Acme\" (careers OR jobs) ..."],
   "signals": [{"company": "Cohere", "open_roles": 124, "board_count": 1,
                "recent_roles": 40, "recent_days": 30, "hiring_recently": true,
                "top_departments": [{"department": "Engineering & Infra", "open_roles": 12}],
@@ -197,7 +196,7 @@ For a company with `unknown: true`, `open_roles`, `recent_roles` and `hiring_rec
 
 `jobs[].company` is the company name the vendor sends for Greenhouse and
 SmartRecruiters. For Lever, Ashby and BambooHR it is the name you searched for,
-the same as `boards[].company`. Jobs from the search fallback (`source: "search"`)
+the same as `boards[].company`. Search results in `jobs[]` (`source: "search"`)
 carry a name guessed from the result's title or URL, which may be another company.
 
 `url` is always an `http(s)` link or `""`. Titles are single lines, at most 200
@@ -217,8 +216,8 @@ you can give the right advice instead of "try widening the filters":
 
 | `kind` | Meaning | What to tell the user |
 |---|---|---|
-| `no_key` | No readable board, and the search fallback has no API key | Set `JOB_BOARD_SEARCH_API_KEY` and re-run |
-| `no_board` | No supported ATS board exists for the named companies | Try a smaller company, or set the key |
+| `no_key` | No readable board, a `--title` was given, and no search key is set. Also has `provider` and `variable` (the setting's name). Both and the `Search fallback skipped` warning are informational | Follow the offering order in *When a company cannot be read*: careers query and site queries first, the search key once, last |
+| `no_board` | No readable board. `search` says why the search fallback gave nothing: `no_title` (no `--title`), `no_results` (it ran and found nothing) or `failed` (see `warnings`) | Never offer the key. For `no_title`, ask for a title, then run with `--queries` |
 | `filtered` | The board had roles; every one was filtered out | Widen `--title`/`--location`, drop `--remote` |
 
 Never answer a `no_key` or `no_board` result with "no matching roles" — the
@@ -229,7 +228,9 @@ board on a supported system. It is always present, and `[]` when every company w
 read. Its postings were NOT read: never say such a company has no roles, and never
 count it as a hit or a miss. When some other company was read, `warnings` also says
 so. Treat each name like any other unreadable company: tell the user, and offer its
-careers query from `queries` so they can find which system it uses.
+careers query so they can find which system it uses. It is in `queries` (the
+`--check` and role-search JSON). When no named company could be read, the md, detail
+and html role-search output prints it too.
 
 Always parse `warnings` — a thin result is explained there. Exit codes: `0` on
 success, `2` on a usage error (no target, or `--queries` without `--title`).
@@ -251,8 +252,10 @@ Diagnose a zero result from `meta`:
 ```
 
 - `raw postings: 0`, `live boards: 0` → the company has no supported ATS board
-  (common for enterprises; see below). Give the user the offered `site:` queries;
-  do not run them yourself.
+  (common for enterprises; see below). Give the user the careers query from
+  `queries`, and the site queries from `--queries --title` (the `queries` array in a
+  role-search result has role-wide site queries that do not name the company; `--queries`
+  names it when you pass `--company`). Do not run them yourself.
 - `raw postings > 0`, `matched postings: 0` → the boards had jobs, but the
   profile excluded them all. Widen `--title`/`--location` or drop filters.
 - `partial: true` or `unknown: true` (in `--check`) → follow the "at least N" rule
@@ -267,19 +270,30 @@ board in `--check`):
 - Then stop. Do not add a hiring opinion, a "yes" or "no", general context about
   the company, or any hiring trend. Those come from memory, not from a board.
 - Do not fill the gap yourself: no web search, and no fetching its careers site.
-- Offer the options instead: a search key (`JOB_BOARD_SEARCH_API_KEY`), the
-  `site:` queries for the user to run, or the careers URL if the user pastes it.
+- Offer the options instead, in this order: the careers query and, for a role search
+  with a `--title`, the site queries (from `--queries`) for the user to run, then the
+  careers URL if the user pastes it.
+- After a hiring check (`--check`), stop there. `--check` never reads the search key:
+  never mention it. Say the skill cannot tell, and hand over the careers query only
+  (a `--check` result carries no site queries).
+- For a role search of an unreadable company that had a `--title` and no search key
+  (`no_key`), you may add one last line, once, after those options: the search key
+  is optional and returns search results that may be other companies' roles, not
+  theirs. Setup is in `references/providers.md`.
+- Never offer the search key when there is no `--title`: the answer is to add one.
 
 ## Known limitations
 
 - **Enterprises use bespoke career sites.** Amazon, Microsoft, Meta, Intel,
   Walmart and Google resolve on **none** of the supported ATSes, so direct board
-  reading returns nothing. `--check` returns `unknown: true` and a discovery
-  query, not `0 open roles`. With `JOB_BOARD_SEARCH_API_KEY` set, role search
-  falls back to a search engine, which returns roles from ATS-hosted boards at
-  other companies, not the named company's own postings; the output warns of
-  this, so do not present them as that company's. Without a key, hand the user
-  the generated `site:` query.
+  reading returns nothing. `--check` returns `unknown: true` and a careers
+  query, not `0 open roles`. For a role search the skill works without a search
+  key: hand the user the careers query and, with a `--title`, the site queries. An
+  optional search key adds the search fallback, which runs once per run, only when
+  no named company yielded a posting and a `--title` was given. It makes a general
+  search of the supported systems' sites and returns search results that may be
+  other companies' roles, not the named company's; the output warns of this, so do
+  not present them as that company's.
 - **BambooHR is supported but per-tenant.** `<company>.bamboohr.com/careers/list`
   returns JSON, so it works by slug probing only — never via `site:`.
 - **iCIMS and Workday are per-tenant.** They live at
@@ -313,11 +327,12 @@ board in `--check`):
   and only fills `function`, which is used instead. Anything still unlabeled is
   reported as "unspecified" rather than dropped.
 
-## Search-engine fallback (optional)
+## Search fallback (optional add-on)
 
-The `site:` query generator works with no key. Executing queries needs
-`JOB_BOARD_SEARCH_API_KEY`, and `JOB_BOARD_SEARCH_PROVIDER` selects the engine
-(`kagi` default, `brave`, `exa`). An unknown provider or an invalid value is a hard
+Everything above works with no search key, including `--queries`. The search key
+(`JOB_BOARD_SEARCH_API_KEY`) only enables the search fallback, and
+`JOB_BOARD_SEARCH_PROVIDER` selects the search provider (`kagi` default, `brave`,
+`exa`). An unknown provider or an invalid value is a hard
 error (exit 2), not a silent fallback. `JOB_BOARD_HTTP_TIMEOUT`, `JOB_BOARD_CACHE_TTL`
 and `JOB_BOARD_CACHE_DIR` also exist. Key URLs, tuning, defaults and deprecated
 names are in `references/providers.md`.
@@ -327,4 +342,3 @@ names are in `references/providers.md`.
 - `GLOSSARY.md` — the skill's terms (board, posting, unreadable company, search fallback and the rest). Use them as written.
 - `references/ats-endpoints.md` — verified endpoints and payload shapes.
 - `references/providers.md` — search-provider setup (key URLs, `JOB_BOARD_*` settings and defaults, deprecated names) and the Kagi, Brave and Exa API contracts and error codes.
-- `references/layoff-data.md` — WARN dataset schema and caveats.

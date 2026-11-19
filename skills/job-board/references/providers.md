@@ -1,13 +1,35 @@
 # Search providers
 
-The search engine is only used for the **fallback** path: generating and
-executing `site:<ats-domain> ("title" OR "synonym")` queries when a company has
-no supported ATS board. Query *generation* needs no key — only execution does.
+## What the search key is for
+
+The search key is an **optional add-on**. The skill is fully useful without it, because
+the user can paste queries into a search engine, and none of these need a key:
+
+- site queries: `--queries --title T` prints them. They name each `--company` you pass;
+- the careers query for an unreadable company: `--check` prints it in every format, a
+  role search of unreadable companies prints it in md, detail and html, and the JSON
+  `queries` array of both holds it.
+
+The key enables the search fallback, and nothing else. The search fallback:
+
+- runs **once per run**, only when no named company yielded a posting and a `--title`
+  was given;
+- makes a general search of the supported systems' sites through the search provider,
+  one search for each of the first three systems (Greenhouse, Lever, Ashby), in the form
+  `site:<ats-domain> ("title" OR "synonym")`. The searches do not name the company;
+- returns search results (title, link, snippet, and a company name guessed from the
+  title or link). They may be other companies' roles, not the one you named, and the
+  output says so;
+- never adds to postings read from a board, and never follows a link.
+
+`--check` never reads the key.
+
+The output links to this page when it offers the key. Setup follows.
 
 ## Configuration
 
 A single `JOB_BOARD_SEARCH_API_KEY` serves whichever provider is selected, so
-switching backends is a one-variable change:
+switching search providers is a one-variable change:
 
 ```bash
 export JOB_BOARD_SEARCH_API_KEY=...      # your key, for whichever provider
@@ -18,7 +40,7 @@ Keys are created at: Kagi https://kagi.com/settings/api · Brave
 https://api.search.brave.com/ · Exa https://dashboard.exa.ai/api-keys
 
 An unknown provider fails with exit 2 rather than falling back to kagi: a silent
-fallback would send searches to the wrong engine and bill the wrong account. The
+fallback would send searches to the wrong search provider and bill the wrong account. The
 same applies if two names for one setting are set to *different* values. The error
 names the variables and never prints a key.
 
@@ -102,9 +124,9 @@ returning zero results.
 
 ### Pricing
 
-Billed per query (~$25 / 1000 searches). The fallback only runs for companies
-that resolve to no ATS board, and it stops at the first fatal error rather than
-retrying per domain, so cost stays bounded. Prefer ATS API discovery (free).
+Billed per query (~$25 / 1000 searches). A run makes at most three searches, and only
+when the search fallback runs (see above). It stops at the first fatal error rather than
+retrying per domain, so cost stays bounded. Board discovery is free; prefer it.
 
 ## Brave
 

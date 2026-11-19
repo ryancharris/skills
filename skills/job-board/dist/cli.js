@@ -312,7 +312,7 @@ export async function main(argv) {
             process.stderr.write("error: --queries needs at least one --title.\n");
             return EXIT_USAGE;
         }
-        process.stdout.write("Boolean site: queries (export JOB_BOARD_SEARCH_API_KEY to execute):\n\n");
+        process.stdout.write("Site queries to paste into a search engine:\n\n");
         // With --company, each query names the company. Without it the queries are role-wide.
         const targets = opts.company.length > 0 ? opts.company : [undefined];
         for (const company of targets) {

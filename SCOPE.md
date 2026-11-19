@@ -58,7 +58,7 @@ known case, along with JS-rendered custom career sites.
   [`skills/job-board/references/ats-endpoints.md`](skills/job-board/references/ats-endpoints.md).
 
 The skill reports the company as unreadable, names the platform, and hands over a
-discovery query. It never reports "not hiring" from a board it could not read.
+careers query. It never reports "not hiring" from a board it could not read.
 
 ### Seeding searches from layoff filings
 
@@ -78,8 +78,8 @@ companies). It was removed after measurement:
    look-alikes that identity verification later rejected.
 
 `--check` starts from a company the user cares about and asks whether it is still
-hiring, and for what. `skills/job-board/references/layoff-data.md` documents the filing data
-as a name generator only, with the caveats.
+hiring, and for what. The skill does not use the filing data as a name generator
+either: the largest filers are the companies it cannot read.
 
 The removed behaviour is described in the history of `skills/job-board/CHANGELOG.md`.
 
@@ -98,7 +98,7 @@ Indeed, or other aggregators.
 These are product reasons. Any legal or terms-of-service question about scraping those
 sites has not been assessed, and this section does not claim it has been.
 
-### Open-ended discovery ("who is hiring?")
+### Open-ended company discovery ("who is hiring?")
 
 **Rejected.** The skill needs company names. It does not produce a list of companies to
 search.
@@ -109,14 +109,13 @@ search.
 - **A curated list goes stale and becomes an endorsement.** Someone has to decide which
   companies belong, and keep that decision current. That is editorial work the tool
   cannot do honestly.
-- **Discovery quietly fails on enterprises.** The companies people most want to find are
-  the ones on bespoke career sites this skill cannot read. A discovery list would hide
+- **Company discovery quietly fails on enterprises.** The companies people most want to find are
+  the ones on bespoke career sites this skill cannot read. A discovered list would hide
   that.
 
-The skill tells the user this up front, then offers three routes: names the user already
-has, `--queries` for boolean `site:` searches they can run themselves, or the layoff
-filings as a name generator (see "Seeding searches from layoff filings" above). The
-agent must not present an improvised list as comprehensive.
+The skill tells the user this up front, then offers two routes: names the user already
+has, or `--queries` for site queries they can paste into a search engine themselves.
+The agent must not present an improvised list as comprehensive.
 
 Each skill also states its own boundary in its `SKILL.md`, under "what this can and
 cannot do".

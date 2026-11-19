@@ -59,7 +59,11 @@ describe("unreadable_companies in a role search", () => {
     });
     expect(result.unreadable_companies).toEqual(["Zzqx Holdings", "Qqxz Group"]);
     expect(result.warnings.filter(isNotice)).toEqual([]);
-    expect(result.empty_reason).toEqual({ kind: "no_board", companies: ["Zzqx Holdings", "Qqxz Group"] });
+    expect(result.empty_reason).toEqual({
+      kind: "no_board",
+      companies: ["Zzqx Holdings", "Qqxz Group"],
+      search: "no_results",
+    });
   });
 
   it("does not repeat the notice when the search fallback warning already names the company", async () => {

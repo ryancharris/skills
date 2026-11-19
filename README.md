@@ -48,10 +48,26 @@ package for that (see the skill README).
 
 </details>
 
-### 2. Optional: add a search key
+### 2. Ready
 
-You need a search key only for companies the skill cannot read directly (Amazon, Google,
-Meta and similar). Companies with a supported job board work without one.
+Ask your agent for roles at companies you name, or run the CLI directly:
+
+```bash
+node skills/job-board/dist/main.js --company Stripe --title "software engineer" --format md
+```
+
+## Optional add-on: search key
+
+The skill is fully useful without a search key. Most companies with a supported job
+board need nothing. For a company it cannot read (Amazon, Google, Meta and similar), a
+role search prints its careers query, and `--queries` with a `--title` prints site queries,
+to paste into a search engine.
+
+A search key adds one thing: the search fallback. It runs once per run, only when no
+company you named yielded a posting and you gave a `--title`. It makes a general search
+of the first three supported systems' sites (not naming the company) through your search
+provider and returns search results: a title, a link and a snippet. These may be other companies'
+roles, not the one you asked about. It does not add to postings read from a board.
 
 The skill uses one search provider at a time, chosen with `JOB_BOARD_SEARCH_PROVIDER`.
 
@@ -61,7 +77,7 @@ The skill uses one search provider at a time, chosen with `JOB_BOARD_SEARCH_PROV
 | Exa | `exa` | https://dashboard.exa.ai/api-keys | Yes, one live query, 2026-11-11 |
 | Brave | `brave` | https://api.search.brave.com/ | Not yet ([issue #60](https://github.com/ryancharris/skills/issues/60)) |
 
-1. Create an account with the provider and create an API key in its dashboard (links above).
+1. Create an account with the provider and create a search key in its dashboard (links above).
 2. Put the key and the provider in your shell profile (`~/.zshrc` or `~/.bashrc`), or in the environment your agent runs in:
 
    ```bash
@@ -81,17 +97,9 @@ LIVE_KAGI_API_KEY="$JOB_BOARD_SEARCH_API_KEY" npm run test:live -- tests-ts/live
 Use `LIVE_EXA_API_KEY` or `LIVE_BRAVE_API_KEY` in place of `LIVE_KAGI_API_KEY` for the other providers.
 
 - An unknown provider name is an error, not a silent fallback.
-- Each search the skill runs for an unreadable company makes up to three billed searches on that account.
+- A run that reaches the search fallback makes up to three billed searches on that account. A run that does not reach it makes none.
 - Keep the key out of chat, commits and shared files. The CLI never prints it.
 - Tuning variables and the rest of the configuration are in the [skill README](skills/job-board/README.md#search-providers).
-
-### 3. Ready
-
-Ask your agent for roles at companies you name, or run the CLI directly:
-
-```bash
-node skills/job-board/dist/main.js --company Stripe --title "software engineer" --format md
-```
 
 ## Skills
 

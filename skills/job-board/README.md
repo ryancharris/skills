@@ -11,14 +11,12 @@ instead of scraping aggregators.
   them later, after the first wave of applicants.
 - **Structured**: real locations, departments, compensation, post dates.
 - **Complete**: you see *every* open role at a company, not a ranked subset.
-- **Layoff-aware**: `--check` reads a company's live board, so after a layoff
-  announcement you can see whether it is *still hiring* and in which areas.
 
 ```
-  --company Acme ──► discover ATS boards ─► fetch postings ─► filter ─► rank ─► JSON/Markdown
+  --company Acme ──► board discovery ─────► fetch postings ─► filter ─► rank ─► JSON/Markdown
   --title/--remote ─────────────────────────────────────────────┘
 
-  --check Acme ─────► same discover+fetch ─► hiring signal (open roles, recency, departments)
+  --check Acme ─────► same board discovery + fetch ─► hiring signal (open roles, recency, departments)
 ```
 
 ## Install
@@ -81,7 +79,7 @@ node dist/main.js --check Stripe --check Notion --format md
 # Which ATS boards does a company have?
 node dist/main.js --company Notion --list-boards
 
-# Generate boolean site: queries (no API key needed)
+# Print site queries to paste into a search engine (no search key needed)
 node dist/main.js --company Stripe --title "chief of staff" --queries
 
 # Markdown report for humans
@@ -113,8 +111,8 @@ reference, including `--queries`, `--list-boards` and the cache flags, see
 ## Configuration
 
 ```bash
-# Every user-facing setting shares the JOB_BOARD_ prefix. The key is only needed
-# for the search fallback; a company with a readable ATS board works without one.
+# Every user-facing setting shares the JOB_BOARD_ prefix. The search key is an
+# optional add-on for the search fallback; the skill is fully useful without it.
 export JOB_BOARD_SEARCH_API_KEY=...
 export JOB_BOARD_SEARCH_PROVIDER=kagi     # the example; or brave, or exa (table below)
 
@@ -128,9 +126,12 @@ export JOB_BOARD_CACHE_DIR=~/.cache/job-board
 
 ### Search providers
 
-The search fallback (used for companies with no readable board) needs one key,
-`JOB_BOARD_SEARCH_API_KEY`, and a provider. Kagi is the example above. The same key
-works with any provider you choose with `JOB_BOARD_SEARCH_PROVIDER`.
+The search key is optional. It enables the search fallback, which runs once per run,
+only when no named company yielded a posting and a `--title` was given. It makes a
+general search of the supported systems' sites through the search provider and returns
+search results (title, link, snippet) that may be other companies' roles. It does not add to postings read from a board.
+The key is `JOB_BOARD_SEARCH_API_KEY`; Kagi is the example above. The same key works
+with whichever search provider you choose with `JOB_BOARD_SEARCH_PROVIDER`.
 
 | Provider | `JOB_BOARD_SEARCH_PROVIDER` | Get a key | What has been verified |
 |---|---|---|---|
@@ -141,11 +142,11 @@ works with any provider you choose with `JOB_BOARD_SEARCH_PROVIDER`.
 An unknown provider name is an error (exit 2), not a silent fallback.
 
 Step-by-step setup for each key (where to create it, where to put the variables, and how to
-test it) is in the [root README](../../README.md#2-optional-add-a-search-key).
+test it) is in the [root README](../../README.md#optional-add-on-search-key).
 
 Caching is read-through and fails safe: any cache error falls back to a normal
-request. Only GETs are cached — the search API is billed per call and is never
-replayed.
+request. Only GETs are cached — the search provider bills per call and its searches
+are never replayed.
 JSON output reports `cached` and `fetched_at`, so a cached result is not presented as
 fresh.
 
@@ -188,15 +189,15 @@ node dist/main.js --company Cohere --title platform --format html > jobs.html
 - **Enterprises** (Amazon, Microsoft, Meta, Intel, Walmart, Google) use bespoke
   career sites and resolve on none of the supported ATSes.
 - **`--check` cannot read enterprises** for the same reason; it returns
-  `unknown: true` plus a discovery query rather than implying "not hiring".
+  `unknown: true` plus a careers query rather than implying "not hiring".
 - **Boards paginate**: SmartRecruiters returns 100 per page and the read stops at
   1,000 postings. A larger board is reported as `partial` in both role search and
   `--check`, with its true total, so the count is never silently understated.
-- Measured discovery rate: **23 of 26 (88.5%; 95% interval 71–96%)** on a fixed sample of
+- Measured board discovery rate: **23 of 26 (88.5%; 95% interval 71–96%)** on a fixed sample of
   26 tech company names, run with `scripts/measure-discovery.mjs` (2026-11-11). The three
   misses (Rippling, Monday.com, Wiz) have no board under the slugs the skill tries.
 - **Agents can still add hiring context from memory.** For a company the skill
-  cannot read (Amazon, no key), agents sometimes write "yes, still hiring" or
+  cannot read (Amazon), agents sometimes write "yes, still hiring" or
   "large companies typically keep hiring".
   - **pi:** Installing the pi package (`pi install git:github.com/ryancharris/skills`)
     installs an extension (`./skills/job-board/pi/hiring-rule.ts`, declared in the root
@@ -242,7 +243,7 @@ never spent by these tests.
 
 The end-to-end tests (`tests-ts/e2e.test.ts`) run the built `dist/main.js` against a
 synthetic board served by a preload module, so they exercise the shipped build with
-no network and no API keys.
+no network and no search key.
 
 **`npm test` can never make a live API call.** That is enforced, not assumed:
 
@@ -270,11 +271,11 @@ SKILL.md              # agent-facing instructions (required by the spec)
 src/                  # TypeScript source
   main.ts             # self-locating entrypoint
   cli.ts              # argument parsing + exit codes
-  pipeline.ts         # orchestration: discover -> fetch -> filter -> rank
+  pipeline.ts         # orchestration: board discovery -> fetch -> filter -> rank
   ats.ts              # ATS adapters + identity verification
-  discovery.ts        # company -> live boards
+  discovery.ts        # board discovery: company -> live boards
   filtering.ts        # profile expansion + filtering + ranking
-  hiring-signal.ts    # "is it still hiring?" + why the WARN feed was dropped
+  hiring-signal.ts    # "is it still hiring?" + why the WARN feed was dropped (see SCOPE.md)
   search.ts           # pluggable search providers (Kagi, Brave, Exa)
   output.ts           # dedupe + JSON/Markdown
   http.ts / cache.ts  # fetch + retries, optional TTL cache

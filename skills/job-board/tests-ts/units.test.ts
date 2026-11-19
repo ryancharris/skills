@@ -659,7 +659,6 @@ describe("empty-state messages", () => {
     expect(md).toContain("No roles found for **Amazon**");
     expect(md).toContain("cannot read directly");
     expect(md).toContain("JOB_BOARD_SEARCH_API_KEY");
-    expect(md).toContain("provider: kagi");
     expect(md).not.toContain("widening titles");
   });
 
@@ -674,15 +673,14 @@ describe("empty-state messages", () => {
     });
     expect(md).toContain("No roles found for **Amazon, Google**");
     expect(md).toContain("These companies use");
-    expect(md).toContain("provider: brave");
   });
 
   it("explains a no-board result", () => {
     const md = toMarkdown([], {
-      emptyReason: { kind: "no_board", companies: ["Acme"] },
+      emptyReason: { kind: "no_board", companies: ["Acme"], search: "no_title" },
     });
     expect(md).toContain("No job board found for Acme");
-    expect(md).toContain("JOB_BOARD_SEARCH_API_KEY");
+    expect(md).not.toContain("JOB_BOARD_SEARCH_API_KEY");
   });
 
   it("explains a filtered-out result once, from the warning the pipeline supplies", () => {

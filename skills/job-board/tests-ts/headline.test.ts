@@ -9,7 +9,9 @@ import { describe, expect, it } from "vitest";
 import { renderJobs } from "../src/cli.js";
 import { BraveProvider, KagiProvider } from "../src/search.js";
 import { SYMBOLS } from "../src/format-detail.js";
-import { makeJob, resultHeadline, unreadableCompanies } from "../src/models.js";
+import { configFromEnv } from "../src/config.js";
+import { emptyProfile, makeJob, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies } from "../src/models.js";
+import { runSearch } from "../src/pipeline.js";
 
 const job = makeJob({
   title: "Engineer",
@@ -40,7 +42,7 @@ function opts(emptyReason: unknown) {
 describe("unreadableCompanies", () => {
   it("names the companies when nothing was read for a reason the user can fix", () => {
     expect(unreadableCompanies(0, NO_KEY)).toEqual(["Amazon"]);
-    expect(unreadableCompanies(0, { kind: "no_board", companies: ["Acme", "Globex"] })).toEqual([
+    expect(unreadableCompanies(0, { kind: "no_board", companies: ["Acme", "Globex"], search: "no_title" })).toEqual([
       "Acme",
       "Globex",
     ]);
@@ -142,13 +144,23 @@ describe("the key instruction is said once", () => {
     expect(msg).not.toMatch(/export|Create a/i);
   });
 
-  it("the markdown, detail and HTML unreadable paragraphs do not repeat the key advice", () => {
+  it("the markdown, detail and HTML unreadable paragraphs carry the variable and setup link once", () => {
     for (const fmt of ["md", "detail", "html"] as const) {
       const out = renderJobs([], fmt, opts(NO_KEY));
       expect(out, fmt).not.toContain("needs an API key");
       expect(out, fmt).not.toMatch(/\bExport\b/);
-      expect(out, fmt).toContain("JOB_BOARD_SEARCH_API_KEY");
+      expect(out.split("JOB_BOARD_SEARCH_API_KEY").length - 1, fmt).toBe(1);
+      expect(out.split(SEARCH_KEY_SETUP_URL).length - 1, fmt).toBe(fmt === "html" ? 2 : 1);
     }
   });
-});
 
+  it("the missing-key warning only says the fallback did not run, and repeats neither the variable nor a link", async () => {
+    const result = await runSearch(
+      { ...emptyProfile(), titles: ["engineer"] },
+      { companies: ["Zzqx"], adapters: [], provider: null, config: configFromEnv({}) },
+    );
+    expect(result.empty_reason?.kind).toBe("no_key");
+    const warning = result.warnings.find((w) => w.startsWith("Search fallback skipped")) ?? "";
+    expect(warning).toBe("Search fallback skipped: no search key is set.");
+  });
+});
