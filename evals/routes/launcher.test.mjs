@@ -21,7 +21,7 @@ case "$1" in
   create) echo stubcid ;;
   start) [ "$2" = -a ] && echo "runner output"; exit \${STUB_RUN_RC:-0} ;;
   wait) echo 0 ;;
-  cp) case "$2" in *:/out/.) cp -R "$STUB_OUT/." "$3" ;; esac ;;
+  cp) case "$2" in *:/out/.) [ -n "\${STUB_OUT:-}" ] && cp -R "$STUB_OUT/." "$3" ;; esac ;;
 esac
 exit 0
 `);
