@@ -39,12 +39,12 @@ export function findUnreadable(companies, byCompany) {
 }
 /**
  * Warning for a role search where some named companies were read and others could not be.
- * Without it the results look complete, and an unreadable company reads as "no roles".
+ * Without it the results look complete, and an unreadable company reads as having no roles.
  */
 export function unreadableWarning(companies) {
     return (`Could not read a board for ${companies.join(", ")}, so no postings from ` +
         `${companies.length > 1 ? "them are" : "it are"} included in these results. ` +
-        `Do not read ${companies.length > 1 ? "their" : "its"} absence as "no roles".`);
+        `${companies.length > 1 ? "Their" : "Its"} absence is not the same as having no roles.`);
 }
 /**
  * Stage-by-stage counts, so a zero result is diagnosable.

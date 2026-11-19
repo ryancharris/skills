@@ -41,7 +41,7 @@ describe("unreadable_companies in a role search", () => {
     expect(result.warnings.filter(isNotice)).toEqual([unreadableWarning(["Zzqx Holdings"])]);
     expect(result.warnings[0]).toContain("Zzqx Holdings");
     expect(result.warnings[0]).toContain("no postings from it are included");
-    expect(result.warnings[0]).toContain('"no roles"');
+    expect(result.warnings[0]).toContain("not the same as having no roles");
   });
 
   it("is empty, with no warning, when every company has a board", async () => {

@@ -9,7 +9,7 @@ import { displayCompany, friendlyDepartment, isPartial, signalToDict, verdict } 
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, hiringBadge, jobBadges } from "./format-detail.js";
 import type { HiringSignal } from "./hiring-signal.js";
 import { CAREERS_STEP_HEADING, nextSteps } from "./next-steps.js";
-import { daysSince, noBoardAdvice, noKeyTail, parseIso, SEARCH_KEY_SETUP_URL, possessive, resultHeadline, unreadableCompanies, type Board, type Job, type PartialBoard } from "./models.js";
+import { daysSince, noBoardAdvice, noKeyTail, parseIso, SEARCH_KEY_SETUP_URL, possessive, resultHeadline, unreadableCompanies, unreadableNotice, type Board, type Job, type PartialBoard } from "./models.js";
 import type { EmptyReason } from "./pipeline.js";
 
 // --------------------------------------------------------------------- dedupe
@@ -257,11 +257,7 @@ export function toMarkdown(jobs: Job[], options: MarkdownOptions = {}): string {
     };
     if (reason?.kind === "no_key") {
       const who = reason.companies.join(", ");
-      const plural = reason.companies.length > 1;
-      lines.push(
-        `No roles found for **${who}**. ${plural ? "These companies use" : "This company uses"} ` +
-          `a careers site this skill cannot read directly.`,
-      );
+      lines.push(unreadableNotice(`**${who}**`, reason.companies.length));
       lines.push("");
       lines.push(...stepLines());
       lines.push(

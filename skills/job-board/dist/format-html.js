@@ -10,7 +10,7 @@
  * page or inject markup.
  */
 import { displayCompany } from "./hiring-signal.js";
-import { noBoardAdvice, noKeyTail, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies } from "./models.js";
+import { noBoardAdvice, noKeyTail, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies, unreadableNotice } from "./models.js";
 import { CAREERS_STEP_HEADING, nextSteps } from "./next-steps.js";
 import { FRESH_DAYS, STALE_DAYS, SYMBOLS, ageLabel, jobBadges } from "./format-detail.js";
 import { friendlyDepartment, verdict } from "./hiring-signal.js";
@@ -148,10 +148,7 @@ function nextStepHtml(reason) {
 function emptyHtml(reason) {
     if (reason?.kind === "no_key") {
         const who = escapeHtml(reason.companies.join(", "));
-        const plural = reason.companies.length > 1;
-        return (`${SYMBOLS.unreadable} No roles found for <strong>${who}</strong>. ` +
-            `${plural ? "These companies use" : "This company uses"} a careers site this skill ` +
-            `cannot read directly.` +
+        return (`${SYMBOLS.unreadable} ${unreadableNotice(`<strong>${who}</strong>`, reason.companies.length)}` +
             nextStepHtml(reason) +
             `<p>Optional: set <code>${escapeHtml(reason.variable)}</code> ` +
             `${escapeHtml(noKeyTail(possessive(reason.companies)))} ` +

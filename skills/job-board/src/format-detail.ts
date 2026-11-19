@@ -12,7 +12,7 @@
 
 import { displayCompany, friendlyDepartment, isPartial, verdict } from "./hiring-signal.js";
 import type { HiringSignal } from "./hiring-signal.js";
-import { daysSince, noBoardAdvice, noKeyTail, parseIso, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies, type Board, type Job } from "./models.js";
+import { daysSince, noBoardAdvice, noKeyTail, parseIso, possessive, resultHeadline, SEARCH_KEY_SETUP_URL, unreadableCompanies, unreadableNotice, type Board, type Job } from "./models.js";
 import { CAREERS_STEP_HEADING, nextSteps } from "./next-steps.js";
 import type { EmptyReason } from "./pipeline.js";
 
@@ -184,11 +184,8 @@ function nextStepBlock(reason: EmptyReason | null | undefined): string[] {
 function emptyBlock(reason: EmptyReason | null | undefined): string[] {
   if (reason?.kind === "no_key") {
     const who = reason.companies.join(", ");
-    const plural = reason.companies.length > 1;
     return [
-      `${SYMBOLS.unreadable} No roles found for **${who}**. ` +
-        `${plural ? "These companies use" : "This company uses"} a careers site this ` +
-        `skill cannot read directly.`,
+      `${SYMBOLS.unreadable} ${unreadableNotice(`**${who}**`, reason.companies.length)}`,
       "",
       ...nextStepBlock(reason),
       `Optional: set \`${reason.variable}\` ${noKeyTail(possessive(reason.companies))} ${SEARCH_KEY_SETUP_URL}`,
