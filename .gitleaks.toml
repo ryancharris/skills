@@ -1,0 +1,13 @@
+# The redaction tests and the model-free e2e check use obviously fake keys on purpose,
+# to prove a key printed by an agent is scrubbed. Nothing else is allowlisted.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "fake keys in the evals redaction tests"
+paths = [
+  '''evals/redact\.test\.mjs''',
+  '''evals/runner\.test\.mjs''',
+  '''evals/report\.test\.mjs''',
+  '''evals/e2e/run-e2e\.sh''',
+]
