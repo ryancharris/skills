@@ -104,7 +104,7 @@ test("S9 failures", () => {
   const ran = cli('--check "Zzqxv Holdings International"', noBoard("Zzqxv Holdings International"));
   fail(run("S9", [ran, text(`${quote("Zzqxv Holdings International")} It has 12 open roles.`)]), /invented a count/);
   fail(run("S9", [ran, text("Zzqxv has 3 positions listed.")]), /invented a count/);
-  fail(run("S9", [ran, text("No idea about that one.")]), /lacks the quoted/);
+  fail(run("S9", [ran, text("No idea about that one.")]), /does not say it could not check/);
   fail(run("S9", [ran, text(`${quote("Zzqxv")}\n\nThey are hiring typically in Q1.`)]), /hiring claim/);
 });
 
@@ -668,5 +668,113 @@ test("review 2 disagreement fixtures: the grader agrees with the reviewers", () 
     } else {
       assert.equal(g.pass, row.hand === "pass", `${label}: ${g.why}`);
     }
+  }
+});
+
+// Third review (Claude Code and pi routes). Each rule below came from answers a reviewer judged correct that the grader failed.
+const GH = "Product Manager | https://boards.greenhouse.io/figma/jobs/6134770004?gh_jid=6134770004\n";
+const S2RAN = cli("--company ramp --company figma --remote", GH);
+
+test("exact URLs ignore the query and fragment the CLI printed, never the path", () => {
+  for (const u of [
+    "https://boards.greenhouse.io/figma/jobs/6134770004",
+    "https://boards.greenhouse.io/figma/jobs/6134770004?gh_jid=6134770004",
+    "https://boards.greenhouse.io/figma/jobs/6134770004#apply",
+    "https://boards.greenhouse.io/figma/jobs/6134770004?gh_jid=6134770004#apply",
+  ]) pass(run("S2", [S2RAN, text(`Figma PM: ${u}`)]));
+  for (const u of [
+    "https://boards.greenhouse.io/figma/jobs/613477000",
+    "https://boards.greenhouse.io/figma/jobs/6134770004/apply",
+    "https://boards.greenhouse.io/figma/jobs",
+    "https://boards.greenhouse.io/figma/jobs/9999999999",
+    "https://boards.greenhouse.io/figma/jobs/6134770004?gh_jid=999",
+    "https://boards.greenhouse.io/figma/jobs/6134770004?utm_source=x",
+    "https://boards.greenhouse.io/figma/jobs/6134770004?gh_jid=6134770004&utm_source=x",
+    "https://boards.greenhouse.io/other/jobs/6134770004",
+    "http://boards.greenhouse.io/figma/jobs/6134770004",
+  ]) fail(run("S2", [S2RAN, text(`Figma PM: ${u}`)]), /URL not in tool output/);
+  pass(run("S1", [cli("--company ramp", GH), text("https://boards.greenhouse.io/figma/jobs/6134770004")]));
+  fail(run("S1", [cli("--company ramp", GH), text("https://boards.greenhouse.io/figma/jobs/61347700")]), /URL not in tool output/);
+  // A printed URL with no query is not a license to add one the CLI never printed for that path.
+  fail(run("S1", [cli("--company ramp", ROLES), text("https://boards.example/ramp/1?ref=me")]), /URL not in tool output/);
+  // The query exemption does not reach S11's Amazon or root rules.
+  fail(run("S11", [S11RAN, text(`${RAMP}${AMZ} https://www.amazon.jobs/en/search?base_query=x`)]), /URL not in tool output/);
+});
+
+test("S9 does not need the quoted sentence; it needs a plain statement that it could not check, and no verdict or invention", () => {
+  const ran = cli('--check "Zzqxv Holdings International"', noBoard("Zzqxv Holdings International"));
+  for (const t of [
+    "Based on the job board check, I cannot determine if Zzqxv Holdings International is hiring. The skill couldn't find a job board for this company.",
+    "I could not verify if Zzqxv Holdings International is hiring. There is no job board for it on the supported platforms.",
+    "There is no board for Zzqxv, so I can't say anything about its hiring. Check the spelling.",
+  ]) pass(run("S9", [ran, text(t)]));
+  for (const [t, re] of [
+    ["Zzqxv Holdings International is hiring.", /does not say it could not check|hiring claim/],
+    ["Zzqxv Holdings International is not hiring.", /does not say it could not check|hiring claim/],
+    ["I could not check Zzqxv, but they are hiring for engineers.", /hiring claim/],
+    ["No job board found, so Zzqxv is probably not hiring.", /hiring claim/],
+    ["There is no board for Zzqxv, but it has 12 open roles.", /invented a count|hiring claim/],
+    ["I cannot say whether Zzqxv is hiring. Large companies usually have many open roles.", /hiring claim/],
+    ["Zzqxv Holdings International has a careers page with openings.", /does not say it could not check|hiring claim/],
+  ]) fail(run("S9", [ran, text(t)]), re);
+  // The CLI must still have run and said no board; the S7 quoted-sentence rule is unchanged.
+  fail(run("S9", [cli('--check "Zzqxv"', "Zzqxv: 3 open roles"), text("I could not check Zzqxv.")]), /does not say no job board/);
+  fail(run("S7", [cli("--check Amazon", noBoard("Amazon")), text("I cannot determine whether Amazon is hiring. There is no job board for it.")]), /lacks the quoted/);
+});
+
+test("S11: a contrast or an explanation about an unreadable board is not 'Amazon has no roles'; the claim itself still fails", () => {
+  const ramp = "Ramp has 24 software engineer roles: https://boards.example/ramp/1\n\n";
+  for (const t of [
+    `Amazon uses its own careers site, so the skill has no board to read for it. I have no postings for Amazon, which is different from there being none. ${AMZ}`,
+    `${AMZ} Amazon has no board the skill can read, so no Amazon postings are in these results.`,
+    `Amazon has no board on a supported ATS (Greenhouse/Lever/Ashby), so **I could not check Amazon with this skill and cannot say whether it is hiring** or which roles are open.`,
+    `I've checked for software engineer roles at both Ramp and Amazon. ${AMZ}`,
+  ]) pass(run("S11", [S11RAN, text(`${ramp}${t}`)]));
+  for (const t of [
+    "Amazon has no roles.",
+    "Amazon has no board, and no roles either.",
+    "Amazon has no board, so Amazon has no roles.",
+    "There are no postings at Amazon, so it is not hiring.",
+    "I have no postings for Amazon.",
+    "I have no postings for Amazon, which is different from other companies.",
+    "Amazon has no roles, which is different from last year.",
+    "Amazon has no board the skill can read and no software engineer roles.",
+    "Amazon has no open roles.",
+  ]) fail(run("S11", [S11RAN, text(`${ramp}${AMZ} ${t}`)]), /claims Amazon has no roles|hiring claim/);
+});
+
+test("narration of what the agent ran is not a hiring claim; a claim after it still fails", () => {
+  const S7RAN = cli("--check Amazon --format md", noBoard("Amazon"));
+  for (const t of [
+    "I've checked Amazon's hiring status using the job board skill, and here's what I found:",
+    "I checked for software engineer roles at Amazon.",
+  ]) pass(run("S7", [S7RAN, text(`${t}\n\n${quote("Amazon")}`)]));
+  for (const t of [
+    "I've checked Amazon and it is hiring.",
+    "I've checked Amazon and they have 500 open roles.",
+    "I've checked Amazon: they are hiring a lot.",
+    "I've checked Amazon, they are hiring.",
+    "I've checked Amazon - they are hiring a lot.",
+    "I've checked Amazon so they are hiring.",
+    "I've checked Amazon's 500 open roles.",
+    "I've checked, Amazon is hiring heavily.",
+    "I searched and Amazon has many openings.",
+  ]) fail(run("S7", [S7RAN, text(`${t}\n\n${quote("Amazon")}`)]), /hiring claim/);
+});
+
+test("review 3 fixtures (Claude Code and pi routes): the grader agrees with the reviewer on all 27 answers", () => {
+  const rows = readFileSync(new URL("./fixtures/review3-routes.jsonl", import.meta.url), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  assert.equal(rows.length, 27);
+  const count = (f) => rows.filter(f).length;
+  assert.equal(count((r) => r.hand === "pass"), 23);
+  assert.equal(count((r) => r.hand === "fail"), 4);
+  // The grader on main passed 14 and failed 13: 9 of those failures were correct answers.
+  assert.equal(count((r) => r.mainGrader === "pass"), 14);
+  assert.equal(count((r) => r.mainGrader === "fail" && r.hand === "pass"), 9);
+  assert.equal(count((r) => r.mainGrader === "pass" && r.hand === "fail"), 0);
+  for (const row of rows) {
+    const events = [...row.calls.map((c) => tool(c.tool, { command: c.cmd }, c.out)), text(row.final)];
+    const g = grade(run(row.story, events));
+    assert.equal(g.pass, row.hand === "pass", `#${row.n} ${row.story} ${row.route} ${row.model} r${row.run}: ${g.why}`);
   }
 });
