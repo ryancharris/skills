@@ -462,6 +462,7 @@ test("hiringClaim: instructions, reasons and refusals are not claims", () => {
     "Your best moves: check Amazon's own careers page (hiring.amazon.com).",
     "Amazon runs its own careers site instead of a supported job platform.",
     "Amazon runs its own hiring site.",
+    "Amazon's careers site is hiring.amazon.com.",
     "Amazon uses a bespoke careers site rather than the supported boards, so the check returns \u201cunknown,\u201d not \u201cnot hiring.\u201d",
     "Amazon doesn't publish its jobs on any of the job board platforms this skill can read.",
     "The check found no board to read, so I have nothing to report on its openings.",
@@ -472,6 +473,8 @@ test("hiringClaim: instructions, reasons and refusals are not claims", () => {
     "I won't guess at their hiring status from memory.",
     "That means no supported-board evidence, not \u201cno hiring.\u201d You can check Amazon Jobs directly.",
     "Give me a few names and I can see what they have open.",
+    "If you're open to looking beyond Amazon, give me a few target companies and a role/title, and I can check their live job boards directly.",
+    "Check other companies - if you name two or three you'd want to work at, I can check whether they're still hiring and list their open roles right now.",
     "To get accurate information about their hiring status, I'd recommend checking the careers page.",
   ]) assert.equal(hiringClaim(t, ["amazon"]), undefined, t);
 });

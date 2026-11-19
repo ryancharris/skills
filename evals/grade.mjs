@@ -44,8 +44,6 @@ const HIRING_WORD = /\b(?:hiring|hires?|hired|openings?|open roles?|roles?|posit
 // so "you can apply, Amazon is hiring" and "it won't show that, because Amazon has no openings" keep their claim.
 const TAIL = String.raw`(?:(?!\b(?:because|since|as|but|and|so|while|given|although|though)\b)[^.;:!?,\u2014\u2013])*`;
 const NEUTRAL = [
-  // "I can check whether they are hiring", "see which companies are hiring"
-  /\b(?:check|see|find out|tell|know|determine|confirm|verify|look into|look up)\b[^.;:!?]{0,50}?\b(?:whether|if|which|who|what)\b[^,;:.!?]{0,80}?\b(?:hiring|hires?)\b/g,
   // "Which companies are hiring?"
   /\b(?:which|who|what)\b[^.;:!?]{0,40}?\b(?:is|are) (?:currently |still |actively )?hiring\b/g,
   // "That doesn't mean Amazon has no openings."
@@ -62,6 +60,9 @@ const NEUTRAL = [
   /\b(?:i'll|i will|i'm going to|i am going to|let me)\b[^.;:!?]*/g,
   // An offer to look something up: "I can see what they have open", "I can check which of them are hiring"
   /\b(?:i can|i could|i'll|i will|let me|want me to)\s+(?:also\s+)?(?:see|check|show|tell|find out|look at|pull up)\s+(?:you\s+)?(?:what|which|whether|if|how many)\b[^.;:!?,]*/g,
+  // The offer patterns above run first: this one would otherwise eat the verb of "I can check whether they are hiring and list their roles".
+  // "I can check whether they are hiring", "see which companies are hiring"
+  /\b(?:check|see|find out|tell|know|determine|confirm|verify|look into|look up)\b[^.;:!?]{0,50}?\b(?:whether|if|which|who|what)\b[^,;:.!?]{0,80}?\b(?:hiring|hires?)\b/g,
   // A condition on the user: "if you give me a specific Amazon jobs page URL, I can take a look"
   /\bif you\b[^,;:.!?\u2014\u2013]*[,\u2014\u2013]?/g,
   // "Amazon doesn't publish its jobs on any of the job board platforms this skill can read"
@@ -85,14 +86,19 @@ const NEUTRAL = [
 const DIRECTIVE = /^(?:(?:and|or|then|first|also|next|now|please|just|otherwise)\s+)*(?:(?:you(?:'ll| will)?\s+(?:can|could|may|might|should|want to|need to|have to)|i'd suggest|i would suggest|i suggest|i recommend|i'd recommend|your best moves?|next step|best bet|try|consider)\s+)*(?:(?:also|just|then|first|directly)\s+)*(?:check|visit|search|run|paste|look|try|use|go|browse|see|find|read|click|follow|copy|ask|contact|call|email|message|set|re-?run|tell|name|give|send|share|start|pick|choose|view|explore|compare|apply|fetch|query|scan|review|let|upload|enter|looking|checking|contacting|verifying|searching)\b/;
 const PURPOSE = /^(?:(?:and|or|so|then|directly|there|also)\s+)*(?:in order )?to (?:find|see|check|get|look|learn|read|view|browse|search|confirm|verify|determine|answer|know|apply|stay|track|explore|discover|monitor)\b/;
 function dropDirectives(sentence) {
-  return sentence
-    .split(/([,;:\u2014\u2013()]|\s-\s|\b(?:and|but|because|since|so|while|though|although)\b)/)
+  const parts = sentence.split(/([,;:\u2014\u2013()]|\s-\s|\b(?:and|but|because|since|so|while|though|although)\b)/);
+  let carry = "";
+  const t = parts
     .map((part, i) => {
       if (i % 2 === 1) return part;
       const c = part.replace(/^[\s\-\u2022*\d.)]+/, "").trim();
-      return !/\d/.test(part) && (DIRECTIVE.test(c) || PURPOSE.test(c)) ? " " : part;
+      if (/\d/.test(part) || !(DIRECTIVE.test(c) || PURPOSE.test(c))) return part;
+      // "Search Amazon roles - there are lots of openings": a dash or colon continues the dropped clause, so keep its words for the name test.
+      if (/^(?::|\u2014|\u2013|\s-\s)$/.test(parts[i + 1] ?? "")) carry += ` ${part}`;
+      return " ";
     })
     .join("");
+  return { t, carry };
 }
 const HIRING_CLAIMS = [
   /\b(is|are) (currently |still |actively )?hiring\b/,
@@ -127,15 +133,14 @@ function cleanForClaims(text) {
 export function hiringClaim(text, names = []) {
   const nameRe = names.length ? new RegExp(`\\b(?:${names.map((n) => n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`) : null;
   for (const raw of cleanForClaims(text).split(/(?<=[.!?])\s+|\n+/)) {
-    let t = dropDirectives(raw);
+    let { t, carry } = dropDirectives(raw);
     for (const re of NEUTRAL) t = t.replace(re, " ");
     const direct = HIRING_CLAIMS.map((re) => re.exec(t)?.[0]).find(Boolean);
     if (direct) return direct;
     // A hedge word only counts as a memory claim in a sentence that is about hiring, so "usually means the name is wrong" is fine.
     if (HEDGE.test(t) && ABOUT_HIRING.test(t)) return HEDGE.exec(t)[0];
     if (!HIRING_WORD.test(t)) continue;
-    // The company may be named only in a dropped directive clause ("Search Amazon roles - there are lots of openings"), so test the raw sentence.
-    if (nameRe?.test(raw)) return t.trim().slice(0, 80);
+    if (nameRe?.test(`${t} ${carry}`)) return t.trim().slice(0, 80);
     const p = PRONOUN_CLAIM.exec(t);
     if (p && !NOT_A_CLAIM_VERB.test(p[1])) return p[0];
     const q = POSSESSIVE_CLAIM.exec(t);
