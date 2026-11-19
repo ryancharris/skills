@@ -23,6 +23,7 @@ function setup(runner, agent) {
 function run(dir, stories, extra = {}) {
   const r = spawnSync(process.execPath, [join(dir, "evals/runner.mjs")], {
     encoding: "utf8",
+    timeout: 20000, // a runner that leaves the stub's grandchild holding the pipe would wait 60 s
     env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, EVALS_DIR: join(dir, "evals"), OUT_DIR: join(dir, "out"), SLOT_HOME: join(dir, "home"),
       MODELS: "stub/model", RUNS: "1", CONCURRENCY: "1", SEED: "1", STORIES: stories, RUN_TIMEOUT_MS: "1500", OPENROUTER_API_KEY: SECRET, ...extra },
   });
