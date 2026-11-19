@@ -4,6 +4,10 @@
     "ref": "fix/queries-name-the-company",
     "commit": "92c4d29",
     "name": "queries-fix-routing-10runs",
+    "versions": {
+      "opencode": "1.19.6",
+      "node": "22.23.5"
+    },
     "seed": 11,
     "runs": 80,
     "invalidRuns": 0

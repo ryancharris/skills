@@ -1,6 +1,7 @@
 # Agent eval: queries-fix-routing-10runs (2026-11-18)
 
 - Skill: `fix/queries-name-the-company` at `92c4d29`
+- Agent versions: opencode 1.19.6, node 22.23.5
 - 80 valid runs, 4 models, stories S5, S10, shuffle seed 11
 - Each run is a fresh opencode session in Docker. Grading is strict and keyword-based (`evals/grade.mjs`); S7 and S9 match wording, so a pass there is weaker evidence.
 

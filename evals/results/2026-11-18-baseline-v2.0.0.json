@@ -4,6 +4,10 @@
     "ref": "v2.0.0",
     "commit": "2a97e45",
     "name": "baseline-v2.0.0",
+    "versions": {
+      "opencode": "1.19.6",
+      "node": "22.23.5"
+    },
     "seed": 20261118,
     "runs": 198,
     "invalidRuns": 0
@@ -56,7 +60,7 @@
         "n": 3
       },
       "S8": {
-        "pass": 3,
+        "pass": 2,
         "n": 3
       },
       "S9": {
@@ -262,7 +266,7 @@
         "n": 3
       },
       "S2": {
-        "pass": 3,
+        "pass": 2,
         "n": 3
       },
       "S3": {
@@ -301,7 +305,7 @@
   },
   "perModel": {
     "anthropic/claude-sonnet-5.5": {
-      "pass": 33,
+      "pass": 32,
       "n": 33,
       "invalid": 0,
       "skillLoaded": 30,
@@ -356,7 +360,7 @@
       "cost": 0.096
     },
     "~deepseek/deepseek-v4-flash-latest": {
-      "pass": 32,
+      "pass": 31,
       "n": 33,
       "invalid": 0,
       "skillLoaded": 29,
@@ -380,7 +384,9 @@
     "S10: did not use --format html": 6,
     "S4: no --list-boards Notion": 3,
     "S3: malformed tool call, never ran": 1,
-    "S6: malformed tool call, never ran": 2
+    "S6: malformed tool call, never ran": 2,
+    "S2: URL not in tool output": 1,
+    "S8: URL not in tool output": 1
   },
   "invalidReasons": {}
 }
