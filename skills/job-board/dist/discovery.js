@@ -12,6 +12,7 @@
  */
 import { allAdapters } from "./ats.js";
 import { HttpError } from "./http.js";
+import { oneLine } from "./models.js";
 const NON_ALNUM = /[^a-z0-9]+/g;
 /** Fraction of a board's own name tokens that must be covered by the query. */
 const IDENTITY_COVERAGE = 0.66;
@@ -92,6 +93,18 @@ export function boardBelongsTo(company, adapter, slug) {
     return shared / have.size >= IDENTITY_COVERAGE;
 }
 /**
+ * The name to show for an accepted board: the vendor's own name when it has one
+ * (the same name `boardBelongsTo` just verified), else the name that was typed.
+ */
+function boardDisplayName(company, adapter, slug) {
+    try {
+        return oneLine(adapter.boardCompany(slug) ?? "") || company;
+    }
+    catch {
+        return company;
+    }
+}
+/**
  * Probe ATSes for a company and return every live board, biggest first.
  *
  * `errors` matters: swallowing every failure made a DNS blip indistinguishable
@@ -121,7 +134,8 @@ export async function discoverBoards(company, options = {}) {
                         /* keep the page length */
                     }
                 }
-                return [{ company, ats: adapter.name, slug, job_count: count, url: "" }];
+                const name = boardDisplayName(company, adapter, slug);
+                return [{ company: name, ats: adapter.name, slug, job_count: count, url: "" }];
             }
             catch (err) {
                 const transient = err instanceof HttpError ? !err.isMissingBoard : true;
