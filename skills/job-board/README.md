@@ -365,5 +365,11 @@ npm run test:live    # real ATS APIs; opt-in, makes network calls
 
 `dist/` is what consumers run; `node_modules` is never needed at runtime.
 
+`npm run build` and `npm run typecheck` run TypeScript 7, the native compiler. It is installed as a
+per-platform binary (`@typescript/typescript-<platform>`) through npm's optional dependencies, so
+do not install with `--omit=optional`: that leaves no compiler, and `tsc` then fails with
+"Unable to resolve @typescript/typescript-<platform>". The committed `dist/` is the same
+JavaScript the previous compiler (TypeScript 5.9) produced.
+
 
 
