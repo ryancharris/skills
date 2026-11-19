@@ -43,14 +43,40 @@ tested (invalid `plugin.json`, missing skill directory, missing `SKILL.md`, thro
 
 `run-claude.mjs` and `run-pi.mjs` run inside the images and write the same `results.jsonl` records as
 `evals/run.mjs`, with an extra `harness` field. `grade.mjs` picks the adapter in `adapt.mjs` from that field,
-so `report.mjs` and `summary.mjs` work on these records unchanged. Neither runner has been run against a
-real model. They have been run end to end, and graded, against `mock-model.mjs`, a local script that
-answers like a model API without being one.
+so `report.mjs` and `summary.mjs` work on these records unchanged. Both runners have been run against a
+real model through OpenRouter (2026-11-19, `anthropic/claude-sonnet-5.5`, Claude Code 2.1.328 and pi 1.5.2):
+the agent loaded the skill, ran the CLI and gave correct answers on S1 and S7, and the records graded. They
+were first run end to end against `mock-model.mjs`, a local script that answers like a model API without being
+one, which is what the offline tests still use.
 
 - Claude Code: `claude -p PROMPT --output-format stream-json --verbose --dangerously-skip-permissions
   --no-session-persistence --model M`, using OpenRouter through `ANTHROPIC_BASE_URL=https://openrouter.ai/api`,
   `ANTHROPIC_AUTH_TOKEN=$OPENROUTER_API_KEY` and an empty `ANTHROPIC_API_KEY`.
 - pi: `pi --mode json --no-session --provider openrouter --model M PROMPT`, key from `OPENROUTER_API_KEY`.
+
+### Launcher: `evals/routes/run.sh`
+
+```bash
+evals/routes/run.sh claude --models anthropic/claude-sonnet-5.5 --env-file ~/.jb-evals.env --runs 3
+evals/routes/run.sh pi --models anthropic/claude-sonnet-5.5,openai/gpt-5 --env-file ~/.jb-evals.env --save pi-baseline
+```
+
+It mirrors `evals/run.sh` (same flags, validation, exit codes, `--save` rules), with the route as the first argument. Differences:
+
+- It first calls `install-check.sh` for the same commit: the route image is built and `verify.mjs` runs in it (no model, no key). If that fails, nothing else happens.
+- The runner container is `docker create --env-file` plus `docker cp`, never a bind mount, and is removed by name on exit.
+- `meta.json` carries `route` and the agent `versions`; `--save NAME` writes `evals/results/<date>-<route>-NAME.*`.
+- Default `--concurrency` is 2. The model-free validation of this launcher used 1.
+- The env-file must hold `OPENROUTER_API_KEY=value` (no quotes).
+
+Key handling on OpenRouter:
+
+| Route | What the runner does with `OPENROUTER_API_KEY` | Models |
+|---|---|---|
+| claude | sets `ANTHROPIC_BASE_URL=https://openrouter.ai/api`, `ANTHROPIC_AUTH_TOKEN=$OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY=` (empty) and points Claude Code's haiku/sonnet/opus defaults at the model | Anthropic only (`anthropic/<name>`); the launcher rejects others |
+| pi | pi reads `OPENROUTER_API_KEY` itself; the runner passes `--provider openrouter` | any model on OpenRouter |
+
+`--ref` still selects only the skill; the runners come from your working tree. The abort on a key error is proven against a real OpenRouter 401 on both routes (a deliberately bad key: the launcher stopped after the first run, marked it invalid, refused `--save`, exited 1, and the key appeared in no output file). A real 402 or 403 was not observed on these two routes (a 402 was seen with `opencode run`); those two are proven only against `mock-model.mjs` (see "Event shapes" below).
 
 Both runners redact secret values from the records, mark a killed run `timedOut: true` (limit `RUN_TIMEOUT_MS`, default
 420000), stop the matrix only on a structured 401/402/403 error event, and write `/out/versions.json`. See `evals/README.md`.
@@ -63,7 +89,7 @@ pi has no skill tool: the adapter reports a `read` of a `SKILL.md` as a `skill` 
 ## Tests
 
 ```bash
-node --test evals/routes/*.test.mjs
+node --test "evals/*.test.mjs" "evals/routes/*.test.mjs"
 ```
 
 (Node 24 does not accept the bare directory form `node --test evals/routes/`; the glob works on 20, 22 and 24.)
@@ -83,7 +109,8 @@ Claude Code stream-json (one object per line):
 - V: final `result {subtype, is_error, result, usage.input_tokens/output_tokens, total_cost_usd, api_error_status}`.
 - V (capture): an API failure arrives as a synthetic `assistant` message with `is_api_error_message: true` and
   text `API Error: 402 ...`, then `result` with `is_error: true` while `subtype` is still `"success"`; exit code 1.
-- U: the exact text OpenRouter returns for a real 401/402/403 (the capture used a mock with a 402 body).
+- V (real OpenRouter, bad key): the failure arrives as `system` events with `subtype: "api_retry"`, `error_status: 401` and `error: "authentication_failed"` (up to 10 retries), then an `assistant` message and a `result`; the exit code is 1. The abort matches the first `api_retry` 401.
+- U: a real 402 or 403 on this route (only a mock 402 body was captured).
 
 pi `--mode json` (one object per line):
 
@@ -93,4 +120,5 @@ pi `--mode json` (one object per line):
   (docs `json.md`, `message-types.md`, typings in `pi-ai` and `pi-agent-core`, and a capture).
 - V (capture): a provider failure is `stopReason: "error"` with `errorMessage: "402: {...}"`; pi still exits 0.
 - D: `auto_retry_start`, `auto_retry_end {success, finalError}` (docs only; the order relative to the failed `message_end` is not verified).
-- U: the exact `errorMessage` text for a real OpenRouter failure.
+- V (real OpenRouter, bad key): `message_start`/`message_end` with `stopReason: "error"` and an `errorMessage` that starts `401 {"type":"error"...`; pi exits 0. The abort matches that `401`.
+- U: a real 402 or 403 on this route.
