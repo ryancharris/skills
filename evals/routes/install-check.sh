@@ -33,7 +33,7 @@ tag=jb-route-$route:$label
 echo "== build $route image for $label (installs the agent, then the skill via its install route)"
 if ! docker build -t "$tag" "$ctx" > "$log" 2>&1; then
   echo "FAIL: image build failed. Last lines of the build log:" >&2
-  tail -25 "$log" >&2
+  tail -8 "$log" >&2
   echo "FAIL: the $route install route did not complete for $label" >&2
   exit 1
 fi
