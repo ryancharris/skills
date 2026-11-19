@@ -241,7 +241,7 @@ export async function runSearch(
     return result;
   }
 
-  const { boards } = await resolveBoards(result.companies, adapters, result);
+  const { boards, byCompany } = await resolveBoards(result.companies, adapters, result);
   if (!result.boards) result.boards = [];
   result.boards = boards;
 
@@ -255,9 +255,9 @@ export async function runSearch(
   }
 
   // For companies with no live board, hand the agent a discovery query.
-  const resolved = new Set(boards.map((b) => b.company));
+  // Match on the name that was typed: a board's own `company` may be the vendor's name.
   for (const name of result.companies) {
-    if (!resolved.has(name)) result.queries.push(buildDiscoveryQuery(name));
+    if ((byCompany.get(name) ?? []).length === 0) result.queries.push(buildDiscoveryQuery(name));
   }
 
   // Offer boolean site: queries the agent can execute via the search API.
@@ -283,7 +283,7 @@ export async function runSearch(
     result.jobs = await searchFallback(profile, result, config, options.provider ?? null, options.searchLimit ?? 15);
     // The fallback query does not name the company, so its results are other companies'
     // roles. Say so, for each named company that has no readable board.
-    const unreadable = result.companies.filter((c) => !live.some((b) => b.company === c));
+    const unreadable = result.companies.filter((c) => !(byCompany.get(c) ?? []).some((b) => b.job_count > 0));
     if (result.jobs.length > 0 && unreadable.length > 0) {
       result.warnings.push(peerWarning(unreadable, result.jobs.length));
     }
