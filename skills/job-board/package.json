@@ -4,6 +4,15 @@
   "description": "Find open roles, or check whether a company is hiring, by reading its ATS job board directly.",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryancharris/skills.git",
+    "directory": "skills/job-board"
+  },
+  "homepage": "https://github.com/ryancharris/skills/tree/main/skills/job-board",
+  "bugs": {
+    "url": "https://github.com/ryancharris/skills/issues"
+  },
   "engines": {
     "node": ">=20"
   },
