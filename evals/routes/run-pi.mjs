@@ -7,7 +7,11 @@ import { redactRecord, secretValues, extraNamesFromEnv } from "./redact.mjs";
 import { fatalStatus } from "./abort.mjs";
 import { collectVersions } from "./versions.mjs";
 
-const all = JSON.parse(readFileSync("/evals/stories.json", "utf8"));
+// Paths default to the container layout; the offline runner tests point them at a temp directory.
+const EVALS_DIR = process.env.EVALS_DIR ?? "/evals";
+const OUT_DIR = process.env.OUT_DIR ?? "/out";
+const HOME_DIR = process.env.SLOT_HOME ?? "/home/tester";
+const all = JSON.parse(readFileSync(`${EVALS_DIR}/stories.json`, "utf8"));
 const only = process.env.STORIES ? process.env.STORIES.split(",") : null;
 const stories = all.filter((s) => !only || only.includes(s.id));
 const models = (process.env.MODELS ?? "").split(",").filter(Boolean).map((m) => m.replace(/^openrouter\//, ""));
@@ -34,15 +38,15 @@ for (let i = jobs.length - 1; i > 0; i--) {
   [jobs[i], jobs[j]] = [jobs[j], jobs[i]];
 }
 const versions = { ...collectVersions({ pi: "pi" }), harness: "pi" };
-writeFileSync("/out/versions.json", JSON.stringify(versions) + "\n");
-writeFileSync("/out/order.json", JSON.stringify({ seed, order: jobs.map((j) => [j.model, j.s.id, j.run]) }));
+writeFileSync(`${OUT_DIR}/versions.json`, JSON.stringify(versions) + "\n");
+writeFileSync(`${OUT_DIR}/order.json`, JSON.stringify({ seed, order: jobs.map((j) => [j.model, j.s.id, j.run]) }));
 
 let next = 0;
 let done = 0;
 let aborted = null;
 function runOne(job, slot) {
   return new Promise((resolve) => {
-    const cwd = `/home/tester/slot${slot}`;
+    const cwd = `${HOME_DIR}/slot${slot}`;
     mkdirSync(cwd, { recursive: true });
     const t = Date.now();
     let stdout = "";
@@ -63,10 +67,14 @@ function runOne(job, slot) {
         p.kill("SIGKILL");
       }
     }, timeoutMs);
+    let finished = false;
+    // a failed spawn emits both "error" and "close"; write one record
     const finish = (exit) => {
+      if (finished) return;
+      finished = true;
       clearTimeout(timer);
       const rec = redactRecord({ ...job.s, harness: "pi", model: job.model, run: job.run, exit, seconds: Math.round((Date.now() - t) / 1000), ...(timedOut ? { timedOut: true } : {}), events: stdout, stderr }, secrets);
-      appendFileSync("/out/results.jsonl", JSON.stringify(rec) + "\n");
+      appendFileSync(`${OUT_DIR}/results.jsonl`, JSON.stringify(rec) + "\n");
       console.error(`${++done}/${jobs.length} ${job.model} ${job.s.id}#${job.run} exit=${exit}`);
       // Out of credit or bad key: every later run would fail the same way, so stop instead of burning the matrix.
       const fatal = fatalStatus(stdout, "pi");

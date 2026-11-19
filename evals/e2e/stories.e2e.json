@@ -1,5 +1,26 @@
 [
- {"id":"S1","title":"leak","prompt":"LEAK please","expect":"x"},
- {"id":"S2","title":"sleep","prompt":"SLEEP please","expect":"x"},
- {"id":"S3","title":"tool401","prompt":"TOOL401 please","expect":"x"}
+ {
+  "id": "S1",
+  "title": "leak",
+  "prompt": "LEAK please",
+  "expect": "x"
+ },
+ {
+  "id": "S2",
+  "title": "sleep",
+  "prompt": "SLEEP please",
+  "expect": "x"
+ },
+ {
+  "id": "S3",
+  "title": "tool401",
+  "prompt": "TOOL401 please",
+  "expect": "x"
+ },
+ {
+  "id": "S4",
+  "title": "err401",
+  "prompt": "ERR401 please",
+  "expect": "x"
+ }
 ]
