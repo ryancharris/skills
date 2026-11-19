@@ -34,7 +34,7 @@ jobs:
         # 20 is the declared minimum; 22 and 24 catch forward-compat drift.
         node: ["20", "22", "24"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -59,7 +59,7 @@ jobs:
     name: dist matches src
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -81,7 +81,7 @@ jobs:
     name: runs standalone (no node_modules)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -104,7 +104,7 @@ jobs:
     name: SKILL.md is valid
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
