@@ -1,0 +1,114 @@
+{
+  "meta": {
+    "date": "2026-11-19",
+    "ref": "origin/main",
+    "commit": "f864a02",
+    "name": "s11-after-unreadable-fix",
+    "versions": {
+      "opencode": "1.19.6",
+      "node": "22.23.5"
+    },
+    "seed": 22,
+    "runs": 50,
+    "invalidRuns": 0
+  },
+  "stories": {
+    "S11": "Roles at a readable and an unreadable company"
+  },
+  "cells": {
+    "anthropic/claude-sonnet-5.5": {
+      "S11": {
+        "pass": 10,
+        "n": 10
+      }
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "S11": {
+        "pass": 10,
+        "n": 10
+      }
+    },
+    "moonshotai/kimi-k3": {
+      "S11": {
+        "pass": 9,
+        "n": 10
+      }
+    },
+    "qwen/qwen3-coder": {
+      "S11": {
+        "pass": 9,
+        "n": 10
+      }
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "S11": {
+        "pass": 9,
+        "n": 10
+      }
+    }
+  },
+  "perModel": {
+    "anthropic/claude-sonnet-5.5": {
+      "pass": 10,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 20,
+      "tokens": 549819,
+      "cost": 0.467
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "pass": 10,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 17,
+      "tokens": 453921,
+      "cost": 0.028
+    },
+    "moonshotai/kimi-k3": {
+      "pass": 9,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 22,
+      "tokens": 430418,
+      "cost": 0.377
+    },
+    "qwen/qwen3-coder": {
+      "pass": 9,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 8,
+      "tokens": 489746,
+      "cost": 0.059
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "pass": 9,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 16,
+      "tokens": 451366,
+      "cost": 0.017
+    }
+  },
+  "failures": {
+    "S11: S11 possible hiring claim from memory": 1,
+    "S11: answer has no URLs and neither the CLI's Ramp count nor a returned role": 1,
+    "S11: answer does not say Amazon could not be read": 1,
+    "S11: URL not in tool output": 1
+  },
+  "invalidReasons": {}
+}
