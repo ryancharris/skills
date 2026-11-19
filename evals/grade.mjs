@@ -64,8 +64,6 @@ const NEUTRAL = [
   /\b(?:i can|i could|i'll|i will|let me|want me to)\s+(?:also\s+)?(?:see|check|show|tell|find out|look at|pull up)\s+(?:you\s+)?(?:what|which|whether|if|how many)\b[^.;:!?,]*/g,
   // A condition on the user: "if you give me a specific Amazon jobs page URL, I can take a look"
   /\bif you\b[^,;:.!?\u2014\u2013]*[,\u2014\u2013]?/g,
-  // Why the skill cannot read the company: "Amazon runs its own careers site", "Amazon uses a bespoke careers site"
-  /\b(?:runs|uses|has|hosts|publishes|posts on)\s+(?:its|their|a)\s+(?:own\s+|bespoke\s+|custom\s+)+(?:\w+\s+)?(?:career|careers|job|jobs|hiring)[- ](?:site|page|portal|website)\b/g,
   // "Amazon doesn't publish its jobs on any of the job board platforms this skill can read"
   /\b(?:doesn't|does not|don't|do not|isn't|is not|aren't|are not)\s+(?:publish|post|list|use|expose|host|on|one of|listed on|posted on)\b[^.;:!?,]*?\b(?:supported|platforms?|boards?|ats)\b/g,
   // What a search or the tool does not return: "it won't list Amazon's own openings"
