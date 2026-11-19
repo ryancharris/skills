@@ -5,7 +5,8 @@
     "commit": "2a97e45",
     "name": "baseline-v2.0.0",
     "seed": 20261118,
-    "runs": 198
+    "runs": 198,
+    "invalidRuns": 0
   },
   "stories": {
     "S0": "Skill is discovered",
@@ -207,7 +208,7 @@
     },
     "qwen/qwen3-coder-flash": {
       "S0": {
-        "pass": 3,
+        "pass": 0,
         "n": 3
       },
       "S1": {
@@ -302,6 +303,7 @@
     "anthropic/claude-sonnet-5.5": {
       "pass": 33,
       "n": 33,
+      "invalid": 0,
       "skillLoaded": 30,
       "usedWeb": 0,
       "malformedToolCalls": 0,
@@ -312,9 +314,10 @@
     "deepseek/deepseek-v4.1-flash-1017": {
       "pass": 30,
       "n": 33,
+      "invalid": 0,
       "skillLoaded": 27,
-      "usedWeb": 0,
-      "malformedToolCalls": 0,
+      "usedWeb": 1,
+      "malformedToolCalls": 3,
       "avgSeconds": 10,
       "tokens": 1544861,
       "cost": 0.069
@@ -322,6 +325,7 @@
     "moonshotai/kimi-k3": {
       "pass": 33,
       "n": 33,
+      "invalid": 0,
       "skillLoaded": 30,
       "usedWeb": 0,
       "malformedToolCalls": 0,
@@ -332,17 +336,19 @@
     "qwen/qwen3-coder": {
       "pass": 27,
       "n": 33,
+      "invalid": 0,
       "skillLoaded": 27,
       "usedWeb": 4,
-      "malformedToolCalls": 0,
+      "malformedToolCalls": 2,
       "avgSeconds": 11,
       "tokens": 1116445,
       "cost": 0.154
     },
     "qwen/qwen3-coder-flash": {
-      "pass": 10,
+      "pass": 7,
       "n": 33,
-      "skillLoaded": 8,
+      "invalid": 0,
+      "skillLoaded": 7,
       "usedWeb": 9,
       "malformedToolCalls": 15,
       "avgSeconds": 11,
@@ -352,25 +358,29 @@
     "~deepseek/deepseek-v4-flash-latest": {
       "pass": 32,
       "n": 33,
+      "invalid": 0,
       "skillLoaded": 29,
       "usedWeb": 0,
-      "malformedToolCalls": 0,
+      "malformedToolCalls": 1,
       "avgSeconds": 11,
       "tokens": 1187569,
       "cost": 0.05
     }
   },
   "failures": {
-    "S3: no --check Notion": 3,
+    "S3: no --check Notion": 2,
     "S3: used web tools": 2,
-    "S5: did not use --queries": 10,
+    "S5: did not use --queries": 4,
     "S5: no site": 4,
-    "S9: did not say not found": 3,
-    "S7: no cannot-read statement": 3,
-    "S2: CLI missing Ramp/Figma/--remote": 3,
-    "S2: used web tools": 1,
+    "S9: malformed tool call, never ran": 3,
+    "S7: malformed tool call, never ran": 3,
+    "S5: malformed tool call, never ran": 6,
+    "S0: malformed tool call, never ran": 3,
+    "S2: malformed tool call, never ran": 3,
     "S10: did not use --format html": 6,
     "S4: no --list-boards Notion": 3,
-    "S6: did not ask a question": 2
-  }
+    "S3: malformed tool call, never ran": 1,
+    "S6: malformed tool call, never ran": 2
+  },
+  "invalidReasons": {}
 }
