@@ -10,11 +10,9 @@
 
 import { describe, expect, it } from "vitest";
 
-import { makeJob, tidyLocation } from "../src/models.js";
-
 import { toDetail } from "../src/format-detail.js";
 import { toHtml } from "../src/format-html.js";
-import { httpUrl, makeJob, oneLine, SNIPPET_MAX, TITLE_MAX } from "../src/models.js";
+import { httpUrl, makeJob, oneLine, SNIPPET_MAX, tidyLocation, TITLE_MAX } from "../src/models.js";
 import { mdEscapeText, mdUrl, toMarkdown } from "../src/output.js";
 
 const job = (extra: { title?: string; url?: string; snippet?: string } = {}) =>
