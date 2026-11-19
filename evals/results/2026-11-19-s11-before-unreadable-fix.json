@@ -1,0 +1,111 @@
+{
+  "meta": {
+    "date": "2026-11-19",
+    "ref": "c5f8f40",
+    "commit": "c5f8f40",
+    "name": "s11-before-unreadable-fix",
+    "versions": {
+      "opencode": "1.19.6",
+      "node": "22.23.5"
+    },
+    "seed": 21,
+    "runs": 50,
+    "invalidRuns": 0
+  },
+  "stories": {
+    "S11": "Roles at a readable and an unreadable company"
+  },
+  "cells": {
+    "anthropic/claude-sonnet-5.5": {
+      "S11": {
+        "pass": 10,
+        "n": 10
+      }
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "S11": {
+        "pass": 9,
+        "n": 10
+      }
+    },
+    "moonshotai/kimi-k3": {
+      "S11": {
+        "pass": 9,
+        "n": 10
+      }
+    },
+    "qwen/qwen3-coder": {
+      "S11": {
+        "pass": 10,
+        "n": 10
+      }
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "S11": {
+        "pass": 10,
+        "n": 10
+      }
+    }
+  },
+  "perModel": {
+    "anthropic/claude-sonnet-5.5": {
+      "pass": 10,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 19,
+      "tokens": 532013,
+      "cost": 0.519
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "pass": 9,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 17,
+      "tokens": 507228,
+      "cost": 0.031
+    },
+    "moonshotai/kimi-k3": {
+      "pass": 9,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 23,
+      "tokens": 466895,
+      "cost": 0.406
+    },
+    "qwen/qwen3-coder": {
+      "pass": 10,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 8,
+      "tokens": 485934,
+      "cost": 0.061
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "pass": 10,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 12,
+      "tokens": 483499,
+      "cost": 0.013
+    }
+  },
+  "failures": {
+    "S11: URL not in tool output": 2
+  },
+  "invalidReasons": {}
+}

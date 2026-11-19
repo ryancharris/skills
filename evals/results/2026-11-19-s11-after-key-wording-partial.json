@@ -1,0 +1,114 @@
+{
+  "meta": {
+    "date": "2026-11-19",
+    "ref": "docs/search-key-optional",
+    "commit": "4945889",
+    "name": "s11-after-key-wording",
+    "versions": {
+      "opencode": "1.19.6",
+      "node": "22.23.5"
+    },
+    "seed": 24,
+    "runs": 48,
+    "invalidRuns": 2
+  },
+  "stories": {
+    "S11": "Roles at a readable and an unreadable company"
+  },
+  "cells": {
+    "anthropic/claude-sonnet-5.5": {
+      "S11": {
+        "pass": 9,
+        "n": 9,
+        "invalid": 1
+      }
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "S11": {
+        "pass": 10,
+        "n": 10
+      }
+    },
+    "moonshotai/kimi-k3": {
+      "S11": {
+        "pass": 9,
+        "n": 9,
+        "invalid": 1
+      }
+    },
+    "qwen/qwen3-coder": {
+      "S11": {
+        "pass": 10,
+        "n": 10
+      }
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "S11": {
+        "pass": 10,
+        "n": 10
+      }
+    }
+  },
+  "perModel": {
+    "anthropic/claude-sonnet-5.5": {
+      "pass": 9,
+      "n": 9,
+      "invalid": 1,
+      "skillLoaded": 9,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 22,
+      "tokens": 489667,
+      "cost": 0.454
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "pass": 10,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 18,
+      "tokens": 501647,
+      "cost": 0.032
+    },
+    "moonshotai/kimi-k3": {
+      "pass": 9,
+      "n": 9,
+      "invalid": 1,
+      "skillLoaded": 9,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 27,
+      "tokens": 435095,
+      "cost": 0.443
+    },
+    "qwen/qwen3-coder": {
+      "pass": 10,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 10,
+      "tokens": 509220,
+      "cost": 0.059
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "pass": 10,
+      "n": 10,
+      "invalid": 0,
+      "skillLoaded": 10,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 14,
+      "tokens": 476487,
+      "cost": 0.013
+    }
+  },
+  "failures": {},
+  "invalidReasons": {
+    "This request requires more credits, or fewer max_tokens. You requested up to 32000 tokens, but can only afford 10141. To": 1,
+    "This request requires more credits, or fewer max_tokens. You requested up to 32000 tokens, but can only afford 6761. To ": 1
+  }
+}
