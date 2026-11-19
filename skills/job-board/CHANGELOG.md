@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.0.0 — 2026-11-18
+
+First public release. Everything below, from the rewrite to the latest fixes, ships in it.
+
 **Piped output is no longer cut off at 64 KiB.** The CLI called `process.exit()` while writes to a pipe were still queued, so an agent reading a large result (for example `--company Stripe --title engineer --limit 500`, about 70 KB) got truncated, invalid JSON. It now sets the exit code and lets the output drain. Exit codes are unchanged, and a reader that closes early (`| head`) still ends quietly. Covered by `tests-ts/e2e.test.ts`.
 
 **JSON change: `jobs[].company` on a Lever, Ashby or BambooHR board is now the name you searched for, not the board's slug.** `--company Cohere` returned `boards[0].company` as `"Cohere"` but `jobs[0].company` as `"cohere"`, because those three vendors send no company name and the adapter used the slug. The job now carries the same name as its board, so a parser can join the two. Greenhouse and SmartRecruiters still use the name the vendor sends. If you matched on the old lowercase slug, match case-insensitively or on `source` and the job URL. `--exclude-company` is a case-insensitive substring match on that name, so it works with the spelling you searched. Markdown, detail and HTML output are unchanged, because they already capitalised the name. Covered by `tests-ts/board-company.test.ts` and `tests-ts/e2e.test.ts`.
@@ -222,7 +226,8 @@ still hiring?", so the name now states the situation rather than the mechanism.
   `SEARCH_API_KEY` still works but prints a deprecation warning; it will be
   removed in a future release. Other variables (`JOBSEARCH_*`) are unchanged.
 
-## 2.0.0
+
+### The TypeScript rewrite
 
 **Rewritten in TypeScript.** Same behaviour, same output, same flags — verified
 by parity tests against the previous Python implementation on live data.
@@ -237,7 +242,7 @@ by parity tests against the previous Python implementation on live data.
   (verified by `diff` on live results, and by golden-vector tests).
 - `--version` added.
 
-### Notes for maintainers
+#### Notes for maintainers
 The port preserved Python semantics that are *not* 1:1, and each is deliberate:
 
 - `discovery.ts` uses `normalize("NFKD")` + a `\p{M}` strip, because JS
@@ -254,7 +259,7 @@ The port preserved Python semantics that are *not* 1:1, and each is deliberate:
 - `dist/` is committed: the compiled JavaScript is what users run, so it must
   not be gitignored.
 
-### Migration notes
+#### Migration notes
 - `./jobsearch.py` → `node dist/main.js`
 - `python -m pytest` → `npm test` (or `npm run test:live`)
 - Env vars are unchanged (`SEARCH_API_KEY`, `JOBSEARCH_*`).
