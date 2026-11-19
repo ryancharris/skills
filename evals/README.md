@@ -68,3 +68,7 @@ It builds small synthetic records for every story (S0 to S10, one pass and one f
 invalid runs, malformed tool calls, hiring claims hidden in the body or in earlier narration, and web
 use through `curl`. It also re-grades a few trimmed real records from `evals/fixtures/`. Change the
 grader, run this, and add a case for any new rule. On Node 20 or 22, `node --test evals/` works too.
+
+## Other install routes
+
+`evals/routes/` covers the Claude Code plugin and pi package install routes. See `evals/routes/README.md`.
