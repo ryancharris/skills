@@ -9,10 +9,10 @@
 
 | Model | S1 | S3 | S6 | S7 | S9 | Total |
 |---|---|---|---|---|---|---|
-| anthropic/claude-sonnet-5.5 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 15/15 |
-| deepseek/deepseek-v4.1-flash-1017 | 3/3 | 3/3 | 3/3 | 2/3 | 3/3 | 14/15 |
-| qwen/qwen3-coder | 3/3 | 3/3 | 2/3 | 3/3 | 3/3 | 14/15 |
-| ~deepseek/deepseek-v4-flash-latest | 3/3 | 3/3 | 3/3 | 2/3 | 3/3 | 14/15 |
+| anthropic/claude-sonnet-5.5 | 3/3 | 3/3 | 3/3 | 0/3 | 0/3 | 9/15 |
+| deepseek/deepseek-v4.1-flash-1017 | 3/3 | 3/3 | 3/3 | 0/3 | 2/3 | 11/15 |
+| qwen/qwen3-coder | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 15/15 |
+| ~deepseek/deepseek-v4-flash-latest | 3/3 | 3/3 | 3/3 | 1/3 | 2/3 | 12/15 |
 
 ## Stories
 
@@ -33,7 +33,8 @@
 
 ## Failed checks
 
-- S6: did not ask a question (1)
 - S7: CLI never run for Amazon (2)
 - S7: CLI output does not say no job board found (2)
 - S7: answer lacks the quoted cannot-check sentence (1)
+- S7: recommends the search key after --check (7)
+- S9: recommends the search key after --check (5)

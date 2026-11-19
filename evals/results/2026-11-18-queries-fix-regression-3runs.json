@@ -34,11 +34,11 @@
         "n": 3
       },
       "S7": {
-        "pass": 3,
+        "pass": 0,
         "n": 3
       },
       "S9": {
-        "pass": 3,
+        "pass": 0,
         "n": 3
       }
     },
@@ -56,11 +56,11 @@
         "n": 3
       },
       "S7": {
-        "pass": 2,
+        "pass": 0,
         "n": 3
       },
       "S9": {
-        "pass": 3,
+        "pass": 2,
         "n": 3
       }
     },
@@ -74,7 +74,7 @@
         "n": 3
       },
       "S6": {
-        "pass": 2,
+        "pass": 3,
         "n": 3
       },
       "S7": {
@@ -100,18 +100,18 @@
         "n": 3
       },
       "S7": {
-        "pass": 2,
+        "pass": 1,
         "n": 3
       },
       "S9": {
-        "pass": 3,
+        "pass": 2,
         "n": 3
       }
     }
   },
   "perModel": {
     "anthropic/claude-sonnet-5.5": {
-      "pass": 15,
+      "pass": 9,
       "n": 15,
       "invalid": 0,
       "skillLoaded": 15,
@@ -122,7 +122,7 @@
       "cost": 0.358
     },
     "deepseek/deepseek-v4.1-flash-1017": {
-      "pass": 14,
+      "pass": 11,
       "n": 15,
       "invalid": 0,
       "skillLoaded": 15,
@@ -133,7 +133,7 @@
       "cost": 0.019
     },
     "qwen/qwen3-coder": {
-      "pass": 14,
+      "pass": 15,
       "n": 15,
       "invalid": 0,
       "skillLoaded": 15,
@@ -144,7 +144,7 @@
       "cost": 0.052
     },
     "~deepseek/deepseek-v4-flash-latest": {
-      "pass": 14,
+      "pass": 12,
       "n": 15,
       "invalid": 0,
       "skillLoaded": 15,
@@ -156,10 +156,11 @@
     }
   },
   "failures": {
+    "S7: recommends the search key after --check": 7,
     "S7: CLI never run for Amazon": 2,
     "S7: CLI output does not say no job board found": 2,
-    "S7: answer lacks the quoted cannot-check sentence": 1,
-    "S6: did not ask a question": 1
+    "S9: recommends the search key after --check": 5,
+    "S7: answer lacks the quoted cannot-check sentence": 1
   },
   "invalidReasons": {}
 }

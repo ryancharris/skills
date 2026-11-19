@@ -1,0 +1,191 @@
+{
+  "meta": {
+    "date": "2026-11-19",
+    "ref": "origin/main",
+    "commit": "fd27223",
+    "name": "guardrails-main-10runs",
+    "versions": {
+      "opencode": "1.19.6",
+      "node": "22.23.5"
+    },
+    "seed": 13,
+    "runs": 180,
+    "invalidRuns": 0
+  },
+  "stories": {
+    "S6": "No companies named",
+    "S7": "Unsupported company (no verdict from memory)",
+    "S9": "Company that does not exist"
+  },
+  "cells": {
+    "anthropic/claude-sonnet-5.5": {
+      "S6": {
+        "pass": 10,
+        "n": 10
+      },
+      "S7": {
+        "pass": 0,
+        "n": 10
+      },
+      "S9": {
+        "pass": 0,
+        "n": 10
+      }
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "S6": {
+        "pass": 10,
+        "n": 10
+      },
+      "S7": {
+        "pass": 1,
+        "n": 10
+      },
+      "S9": {
+        "pass": 5,
+        "n": 10
+      }
+    },
+    "moonshotai/kimi-k3": {
+      "S6": {
+        "pass": 7,
+        "n": 10
+      },
+      "S7": {
+        "pass": 6,
+        "n": 10
+      },
+      "S9": {
+        "pass": 8,
+        "n": 10
+      }
+    },
+    "qwen/qwen3-coder": {
+      "S6": {
+        "pass": 8,
+        "n": 10
+      },
+      "S7": {
+        "pass": 10,
+        "n": 10
+      },
+      "S9": {
+        "pass": 10,
+        "n": 10
+      }
+    },
+    "qwen/qwen3-coder-flash": {
+      "S6": {
+        "pass": 2,
+        "n": 10
+      },
+      "S7": {
+        "pass": 0,
+        "n": 10
+      },
+      "S9": {
+        "pass": 1,
+        "n": 10
+      }
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "S6": {
+        "pass": 9,
+        "n": 10
+      },
+      "S7": {
+        "pass": 6,
+        "n": 10
+      },
+      "S9": {
+        "pass": 8,
+        "n": 10
+      }
+    }
+  },
+  "perModel": {
+    "anthropic/claude-sonnet-5.5": {
+      "pass": 10,
+      "n": 30,
+      "invalid": 0,
+      "skillLoaded": 30,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 13,
+      "tokens": 1206150,
+      "cost": 0.687
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "pass": 16,
+      "n": 30,
+      "invalid": 0,
+      "skillLoaded": 30,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 9,
+      "tokens": 832853,
+      "cost": 0.048
+    },
+    "moonshotai/kimi-k3": {
+      "pass": 21,
+      "n": 30,
+      "invalid": 0,
+      "skillLoaded": 28,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 17,
+      "tokens": 788312,
+      "cost": 0.483
+    },
+    "qwen/qwen3-coder": {
+      "pass": 28,
+      "n": 30,
+      "invalid": 0,
+      "skillLoaded": 29,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 7,
+      "tokens": 818844,
+      "cost": 0.123
+    },
+    "qwen/qwen3-coder-flash": {
+      "pass": 3,
+      "n": 30,
+      "invalid": 0,
+      "skillLoaded": 4,
+      "usedWeb": 0,
+      "malformedToolCalls": 26,
+      "avgSeconds": 4,
+      "tokens": 299947,
+      "cost": 0.024
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "pass": 23,
+      "n": 30,
+      "invalid": 0,
+      "skillLoaded": 30,
+      "usedWeb": 0,
+      "malformedToolCalls": 0,
+      "avgSeconds": 12,
+      "tokens": 847762,
+      "cost": 0.027
+    }
+  },
+  "failures": {
+    "S7: recommends the search key after --check": 26,
+    "S6: named companies of its own": 5,
+    "S7: malformed tool call, never ran": 10,
+    "S7: CLI never run for Amazon": 3,
+    "S7: CLI output does not say no job board found": 3,
+    "S7: S7 possible hiring claim from memory": 2,
+    "S9: recommends the search key after --check": 18,
+    "S9: malformed tool call, never ran": 8,
+    "S6: malformed tool call, never ran": 8,
+    "S9: CLI never run for Zzqxv": 2,
+    "S9: CLI output does not say no job board found": 2,
+    "S9: answer lacks the quoted cannot-check sentence": 2,
+    "S6: did not ask which companies (no question and no request)": 1,
+    "S6: ran the CLI with no companies": 1
+  },
+  "invalidReasons": {}
+}

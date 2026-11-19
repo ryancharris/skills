@@ -39,14 +39,15 @@ const SENTINEL_TEST = /could not check [^\n]{1,80}? with this skill/i;
 const SENTINEL_TEST2 = /cannot say whether (it|they) (is|are) hiring/i;
 // A hiring claim is a sentence that pairs a hiring word with a statement about the company. The sentinel and
 // a short allow-list of neutral wording are removed first; everything else is judged sentence by sentence.
-const HIRING_WORD = /\b(?:hiring|hires?|hired|openings?|open roles?|roles?|positions?|vacanc(?:y|ies)|jobs?|recruit\w*)\b(?![\s-]*boards?\b)/;
+const HIRING_WORD = /\b(?:hiring|hires?|hired|openings?|open roles?|roles?|positions?|vacanc(?:y|ies)|jobs?|recruit\w*)\b(?![\s-]*(?:boards?|platforms?|sites?|systems?|search(?:es)?)\b)/;
+// A clause that stops at a comma, dash, colon or a word that starts a new claim. Directive and refusal patterns eat only this much,
+// so "you can apply, Amazon is hiring" and "it won't show that, because Amazon has no openings" keep their claim.
+const TAIL = String.raw`(?:(?!\b(?:because|since|as|but|and|so|while|given|although|though)\b)[^.;:!?,\u2014\u2013])*`;
 const NEUTRAL = [
-  // "I can check whether they are hiring", "see which companies are hiring"
-  /\b(?:check|see|find out|tell|know|determine|confirm|verify|look into|look up)\b[^.;:!?]{0,50}?\b(?:whether|if|which|who|what)\b[^,;:.!?]{0,80}?\b(?:hiring|hires?)\b/g,
   // "Which companies are hiring?"
   /\b(?:which|who|what)\b[^.;:!?]{0,40}?\b(?:is|are) (?:currently |still |actively )?hiring\b/g,
   // "That doesn't mean Amazon has no openings."
-  /\b(?:does not|doesn't|do not|don't|did not|didn't)(?: necessarily)? mean\b[^.;:!?]*/g,
+  new RegExp(String.raw`\b(?:does not|doesn't|do not|don't|did not|didn't)(?: necessarily)? mean\b${TAIL}`, "g"),
   // "... tells us nothing about Amazon's hiring either way"
   /[^.;:!?]*\b(?:nothing about|either way|no result either way)\b[^.;:!?]*/g,
   // "Amazon posts all roles on amazon.jobs" is a pointer, not a status
@@ -57,9 +58,48 @@ const NEUTRAL = [
   /\b(?:i can|i could|i'll|i will|want me to|let me)\s+(?:also\s+)?(?:check|run|search|look|pull|list|generate|write|re-?run|work|help|try|retry|paste)\b[^.;:!?,]*/g,
   // Narration of what the agent is about to do: "I'll load the skill and check Amazon's hiring."
   /\b(?:i'll|i will|i'm going to|i am going to|let me)\b[^.;:!?]*/g,
+  // An offer to look something up: "I can see what they have open", "I can check which of them are hiring"
+  /\b(?:i can|i could|i'll|i will|let me|want me to)\s+(?:also\s+)?(?:see|check|show|tell|find out|look at|pull up)\s+(?:you\s+)?(?:what|which|whether|if|how many)\b[^.;:!?,]*/g,
+  // The offer patterns above run first: this one would otherwise eat the verb of "I can check whether they are hiring and list their roles".
+  // "I can check whether they are hiring", "see which companies are hiring"
+  /\b(?:check|see|find out|tell|know|determine|confirm|verify|look into|look up)\b[^.;:!?]{0,50}?\b(?:whether|if|which|who|what)\b[^,;:.!?]{0,80}?\b(?:hiring|hires?)\b/g,
   // A condition on the user: "if you give me a specific Amazon jobs page URL, I can take a look"
   /\bif you\b[^,;:.!?\u2014\u2013]*[,\u2014\u2013]?/g,
+  // "Amazon doesn't publish its jobs on any of the job board platforms this skill can read"
+  /\b(?:doesn't|does not|don't|do not|isn't|is not|aren't|are not)\s+(?:publish|post|list|use|expose|host|on|one of|listed on|posted on)\b[^.;:!?,]*?\b(?:supported|platforms?|boards?|ats)\b/g,
+  // What a search or the tool does not return: "it won't list Amazon's own openings"
+  new RegExp(String.raw`\b(?:it|this|that|which|query|search|tool|skill|check|results?)\s+(?:also\s+)?(?:won't|will not|wouldn't|doesn't|does not|can't|cannot|can not|isn't|is not|didn't|did not)\s+(?:\w+\s+){0,2}?(?:list|show|return|surface|include|find|give|contain|display|see|read|provide|reach|cover)\b${TAIL}`, "g"),
+  // "it returns roles from other boards, not Amazon's own postings"
+  /\b(?:returns?|surfaces?|shows?|finds?|lists?|gives?)\b[^.;:!?]*?,?\s*\b(?:not|rather than|instead of)\b[^.;:!?]*/g,
+  // A refusal to draw a conclusion: "That doesn't show the company isn't hiring", "I can't say if it is hiring"
+  new RegExp(String.raw`\b(?:does not|doesn't|do not|don't|did not|didn't|can't|cannot|can not|couldn't|could not|won't|will not|unable to)\s+(?:necessarily\s+)?(?:\w+\s+){0,1}?(?:show|prove|indicate|imply|suggest|establish|say|tell|confirm|know|determine|verify|guess|speculate|assume)\b${TAIL}`, "g"),
+  // "which is different from Amazon having no openings", "not evidence of ..."
+  new RegExp(String.raw`\b(?:different from|not the same as|not (?:evidence|proof|a signal)(?: that| of)?)\b${TAIL}`, "g"),
+  // "I have nothing to report on its openings", "gave me no hiring information either way", "got no data"
+  new RegExp(String.raw`\bnothing to (?:report|say|show|tell|go on)\b${TAIL}|\b(?:got|gave me|returned|found|have|had) no (?:\w+ ){0,2}?(?:data|information|board|results?|evidence)\b${TAIL}`, "g"),
 ];
+// An instruction, offer or purpose clause addressed to the user is not a statement about the company. Whole clauses that start with a
+// directive verb ("visit amazon.jobs", "search for Amazon roles yourself", "you can check ...", "to find Amazon's openings") are dropped
+// before the sentence is judged. Only that clause goes: the rest of the sentence, after a comma, dash, colon or "and/but/because/so",
+// is still judged, so "visit amazon.jobs, they are hiring a lot" and "you can apply, Amazon is hiring" still fail. A clause with a
+// digit is never dropped, so a count cannot hide in an instruction.
+const DIRECTIVE = /^(?:(?:and|or|then|first|also|next|now|please|just|otherwise)\s+)*(?:(?:you(?:'ll| will)?\s+(?:can|could|may|might|should|want to|need to|have to)|i'd suggest|i would suggest|i suggest|i recommend|i'd recommend|your best moves?|next step|best bet|try|consider)\s+)*(?:(?:also|just|then|first|directly)\s+)*(?:check|visit|search|run|paste|look|try|use|go|browse|see|find|read|click|follow|copy|ask|contact|call|email|message|set|re-?run|tell|name|give|send|share|start|pick|choose|view|explore|compare|apply|fetch|query|scan|review|let|upload|enter|looking|checking|contacting|verifying|searching)\b/;
+const PURPOSE = /^(?:(?:and|or|so|then|directly|there|also)\s+)*(?:in order )?to (?:find|see|check|get|look|learn|read|view|browse|search|confirm|verify|determine|answer|know|apply|stay|track|explore|discover|monitor)\b/;
+function dropDirectives(sentence) {
+  const parts = sentence.split(/([,;:\u2014\u2013()]|\s-\s|\b(?:and|but|because|since|so|while|though|although)\b)/);
+  let carry = "";
+  const t = parts
+    .map((part, i) => {
+      if (i % 2 === 1) return part;
+      const c = part.replace(/^[\s\-\u2022*\d.)]+/, "").trim();
+      if (/\d/.test(part) || !(DIRECTIVE.test(c) || PURPOSE.test(c))) return part;
+      // "Search Amazon roles - there are lots of openings": a dash or colon continues the dropped clause, so keep its words for the name test.
+      if (/^(?::|\u2014|\u2013|\s-\s)$/.test(parts[i + 1] ?? "")) carry += ` ${part}`;
+      return " ";
+    })
+    .join("");
+  return { t, carry };
+}
 const HIRING_CLAIMS = [
   /\b(is|are) (currently |still |actively )?hiring\b/,
   /\b(has|have) (many |lots of |thousands of )?(open|openings|roles|positions)\b/,
@@ -79,8 +119,10 @@ function cleanForClaims(text) {
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/`[^`]*`/g, " ")
     .replace(/https?:\/\/\S+/g, " ")
-    .replace(/\b[\w-]+\.(?:jobs|com|io|co|org|net|ai)\b/g, " ")
+    .replace(/\b(?:[\w-]+\.)+(?:jobs|com|io|co|org|net|ai)\b/g, " ")
     .replace(/\([^()]*\bor\b[^()]*\)/g, " ")
+    .replace(/[\u201c\u201d]/g, '"')
+    .replace(/"[^"\n]*?([.!?])"/g, " $1 ")
     .replace(/"[^"\n]*"/g, " ")
     .replace(/\betc\./g, "etc")
     .replace(/[*_]/g, "")
@@ -91,18 +133,47 @@ function cleanForClaims(text) {
 export function hiringClaim(text, names = []) {
   const nameRe = names.length ? new RegExp(`\\b(?:${names.map((n) => n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`) : null;
   for (const raw of cleanForClaims(text).split(/(?<=[.!?])\s+|\n+/)) {
-    let t = raw;
+    let { t, carry } = dropDirectives(raw);
     for (const re of NEUTRAL) t = t.replace(re, " ");
     const direct = HIRING_CLAIMS.map((re) => re.exec(t)?.[0]).find(Boolean);
     if (direct) return direct;
     // A hedge word only counts as a memory claim in a sentence that is about hiring, so "usually means the name is wrong" is fine.
     if (HEDGE.test(t) && ABOUT_HIRING.test(t)) return HEDGE.exec(t)[0];
     if (!HIRING_WORD.test(t)) continue;
-    if (nameRe?.test(t)) return t.trim().slice(0, 80);
+    if (nameRe?.test(`${t} ${carry}`)) return t.trim().slice(0, 80);
     const p = PRONOUN_CLAIM.exec(t);
     if (p && !NOT_A_CLAIM_VERB.test(p[1])) return p[0];
     const q = POSSESSIVE_CLAIM.exec(t);
     if (q) return q[0];
+  }
+}
+
+// The search key (JOB_BOARD_SEARCH_API_KEY; providers Kagi, Brave, Exa) is an optional add-on, and --check never uses it.
+// recommendsSearchKey returns the first phrase in `text` that tells the user to set up a search key, a search provider or
+// the search fallback, or undefined. It is judged one mention at a time:
+//  - A key term counts: the env var name (any prefix, ending SEARCH_API_KEY), "search key", "search API key", "API key",
+//    "search provider", and "enable / use / run the search fallback".
+//  - Provider names count only as a service to sign up for ("sign up for Exa", "Brave Search API", "Kagi account").
+//    A search ENGINE named as a place to paste site queries ("paste these into Google, Bing or Kagi") is not a
+//    recommendation, because site queries need no key.
+//  - A mention is not a recommendation when it is negated locally: "no" / "not" / "without" / "n't" within the three
+//    words before it ("no API key needed", "needs no network or search API key") or "not needed / required" right after it.
+//    Negation does not carry across a comma, so "no key needed, but set JOB_BOARD_SEARCH_API_KEY" still counts.
+const KEY_TERMS = /\b\w*SEARCH_API_KEY\b|\bsearch[- ]?(?:api[- ])?keys?\b|\bapi[- ]?keys?\b|\bsearch providers?\b/gi;
+// The search fallback counts only as something to turn on; describing what it returns ("the search fallback tends to return other
+// companies' roles") is not a recommendation.
+const FALLBACK_ASKED = /\b(?:enable|set ?up|turn on|activate|configure|use|run|try|add|with)\s+(?:\w+\s+){0,2}?search[- ](?:engine[- ])?fallback\b|\bsearch[- ](?:engine[- ])?fallback\b[^.\n]{0,30}\b(?:by setting|if you set|once you set)\b/gi;
+const PROVIDER_SERVICE = /\b(?:kagi|brave|exa)\b[^.\n]{0,40}?\b(?:sign[- ]?up|subscri\w+|account|free tier|paid|credentials?)\b|\b(?:sign[- ]?up|subscri\w+|account|free tier|paid)\b[^.\n]{0,40}?\b(?:kagi|brave|exa)\b|\b(?:kagi|brave|exa)\s+(?:search\s+)?api\b/gi;
+const NEGATED_BEFORE = /(?:\b(?:no|not|without|never|nor)\b|n't)(?:\s+\S+){0,3}\s*$/i;
+const NEGATED_AFTER = /^[^.;\n]{0,20}?(?:not|n't)\s+(?:needed|required|necessary)|^[^.;\n]{0,10}?\bunnecessary\b/i;
+export function recommendsSearchKey(text) {
+  const t = String(text).replace(/[\u2018\u2019]/g, "'").replace(/[`*]/g, "");
+  for (const re of [KEY_TERMS, FALLBACK_ASKED, PROVIDER_SERVICE]) {
+    for (const m of t.matchAll(re)) {
+      const clause = t.slice(Math.max(0, m.index - 40), m.index).split(/[.;:!?,\n\u2014]/).pop();
+      if (re !== PROVIDER_SERVICE && (NEGATED_BEFORE.test(clause) || NEGATED_AFTER.test(t.slice(m.index + m[0].length, m.index + m[0].length + 40)))) continue;
+      return m[0];
+    }
   }
 }
 
@@ -166,6 +237,26 @@ export function namedEmployers(text) {
   return hits;
 }
 
+// S11: the answer must say the unreadable company could not be read, in the skill's quoted sentence or in other words.
+const UNREADABLE_WORDING = /\b(?:could not|couldn't|can't|cannot|can not|unable to|not able to|wasn't able to|was not able to|did not|didn't)\s+(?:\w+\s+){0,2}?(?:read|check|find|access|load|get)\b|\bno (?:supported |readable |public )?(?:job )?boards?\b|\bunreadable\b|\b(?:not|isn't|aren't|wasn't) (?:\w+ ){0,2}?(?:readable|supported|on a supported)\b|\b(?:custom|bespoke|own) (?:career|careers|jobs?) (?:site|page)\b/i;
+const saysUnreadable = (text, name) => {
+  const t = text.replace(/[\u2018\u2019]/g, "'");
+  return t.split(/(?<=[.!?])\s+|\n+/).some((s) => s.toLowerCase().includes(name) && UNREADABLE_WORDING.test(s));
+};
+// "Amazon has no software engineer roles", "no roles at Amazon", "0 roles at Amazon": the roles were never read, so this is false.
+const AMAZON_NO_ROLES = [
+  /\b(?:no|zero|0|none)\s+(?:\w+\s+){0,4}?(?:roles?|openings?|postings?|positions?|jobs?|vacanc\w+)\s+(?:at|for|from|on|with|in)\s+amazon/i,
+  /\bamazon\b[^.\n]{0,40}?\b(?:has|had|have|shows?|showed|returned?|lists?|listed|offers?|posted)\s+(?:currently\s+)?(?:no|zero|0|none)\b[^.\n]{0,40}?(?:roles?|openings?|postings?|positions?|jobs?|vacanc\w+)/i,
+  /\bamazon\b[^.\n]{0,30}?\b(?:isn't|is not|is not currently|isn't currently)\s+hiring\b/i,
+  /\b(?:nothing|no (?:\w+ ){0,2}results?)\s+(?:\w+\s+){0,2}?(?:at|for|from)\s+amazon/i,
+];
+
+// S6: the answer must ask for companies. A question mark counts; so does an imperative request in a sentence that mentions companies
+// ("tell me which companies...", "please provide the names of companies", "name some companies"). Offering to generate a list does not.
+const ASK_COMPANIES = /\b(?:tell|let|give|send|show)\s+me\b|\bplease\s+(?:provide|share|name|list|pick|choose|send|give|tell)\b|\b(?:i )?need you to\b|\byou(?:'ll| will)?\s+(?:need|have) to\s+(?:name|provide|tell|pick|give|share)\b|(?<!\b(?:i|we|can|could|will|would|to|and|or|i'd|i'll)\s)\b(?:name|share|provide|list|pick|choose)\s+(?:me\s+)?(?:some|a few|two|three|one|any|your|the (?:names?|companies)|names?|companies|a list)\b/i;
+const COMPANY_WORD = /\b(?:compan(?:y|ies)|employers?|organi[sz]ations?|firms?)\b/i;
+const asksForCompanies = (text) => text.split(/(?<=[.!?:])\s+|\n+/).some((s) => ASK_COMPANIES.test(s) && COMPANY_WORD.test(s));
+
 export function grade(rec) {
   const { calls, texts: parsedTexts, final, tokens, cost, errors } = parseRun(rec);
   const texts = parsedTexts ?? (final ? [final] : []);
@@ -185,7 +276,7 @@ export function grade(rec) {
   const cliOuts = cli.filter(cliOk).map((c) => c.out);
   const f = final.toLowerCase();
   const why = [];
-  const requiresCli = ["S1", "S2", "S3", "S4", "S5", "S7", "S8", "S9", "S10"].includes(rec.id);
+  const requiresCli = ["S1", "S2", "S3", "S4", "S5", "S7", "S8", "S9", "S10", "S11"].includes(rec.id);
   const malformedToolCall = final.includes("<function=") || final.includes("<tool_call>") || (requiresCli && calls.length === 0);
   if (malformedToolCall) {
     return { invalid: false, pass: false, why: ["malformed tool call, never ran"], skill: false, web: web.length, cli: 0, tokens, cost, final, calls, malformedToolCall };
@@ -218,6 +309,8 @@ export function grade(rec) {
     const hit = texts.map((t) => hiringClaim(t, names)).find(Boolean);
     need(!hit, `${id} possible hiring claim from memory: "${hit}"`);
   };
+  // The search key is optional and --check never uses it, so S7 and S9 (both run --check) must not recommend it; S5 and S6 must not at all.
+  const keyHit = texts.map(recommendsSearchKey).find(Boolean);
   switch (rec.id) {
     case "S0": {
       need(namedUnnegated(final, "job-board"), "did not name job-board");
@@ -257,19 +350,22 @@ export function grade(rec) {
       need(cmds.includes("--queries"), "did not use --queries");
       need(f.includes("site:"), "no site: queries in answer");
       need(/site:[^\n]*stripe/i.test(final), "no site: query names Stripe");
+      need(!keyHit, `recommends the search key: "${keyHit}"`);
       break;
     case "S6": {
       need(!cli.length, "ran the CLI with no companies");
       need(!web.length, "used web tools");
-      need(final.includes("?"), "did not ask a question");
+      need(final.includes("?") || asksForCompanies(final), "did not ask which companies (no question and no request)");
       const named = namedEmployers(final);
       need(!named.length, `named companies of its own: ${[...new Set(named)].join(", ")}`);
+      need(!keyHit, `recommends the search key: "${keyHit}"`);
       break;
     }
     case "S7":
       need(!web.length, "used web tools");
       cannotRead("Amazon");
       noClaims("S7", ["amazon"]);
+      need(!keyHit, `recommends the search key after --check: "${keyHit}"`);
       break;
     case "S8":
       need(cmds.includes("stripe") && /--location|--seniority|--max-age-days/.test(cmds), "CLI missing Stripe/filters");
@@ -280,8 +376,21 @@ export function grade(rec) {
       need(!web.length, "used web tools");
       cannotRead("Zzqxv");
       noClaims("S9", ["zzqxv"]);
+      need(!keyHit, `recommends the search key after --check: "${keyHit}"`);
       need(!texts.some((t) => /(?<![\d.])\b[1-9]\d*\s+(open\s+)?(roles?|openings?|positions?|jobs?)\b(?![\s-]*boards?\b)/i.test(t)), "invented a count");
       break;
+    case "S11": {
+      // A role search for both companies (not only --check). Amazon is an unreadable company, so the CLI may print nothing about it.
+      const search = cli.filter((c) => /--company\b/.test(c.cmd) && !/--check\b/.test(c.cmd)).map((c) => c.cmd.toLowerCase()).join(" ");
+      need(search.includes("ramp") && search.includes("amazon"), "no role search (--company) for both Ramp and Amazon");
+      need(!web.length, "used web tools");
+      urlsOk({ linksRequired: false });
+      need(saysUnreadable(final, "amazon"), "answer does not say Amazon could not be read");
+      const none = AMAZON_NO_ROLES.find((re) => re.test(final));
+      need(!none, `claims Amazon has no roles: "${none?.exec(final)?.[0]}"`);
+      noClaims("S11", ["amazon"]);
+      break;
+    }
     case "S10": {
       const html = cli.filter((c) => c.cmd.toLowerCase().includes("--format html"));
       need(html.length > 0, "did not use --format html");
