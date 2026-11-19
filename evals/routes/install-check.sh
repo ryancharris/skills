@@ -11,11 +11,13 @@ route=${1:-}; ref=HEAD tar=""
 shift
 while [ $# -gt 0 ]; do
   case "$1" in
-    --ref) ref=$2; shift 2 ;;
-    --tar) tar=$2; shift 2 ;;   # a ready-made repo archive, used to test a deliberately broken tree
+    --ref) [ $# -ge 2 ] && [ -n "$2" ] || { echo "--ref needs a value" >&2; exit 2; }; ref=$2; shift 2 ;;
+    --tar) [ $# -ge 2 ] && [ -n "$2" ] || { echo "--tar needs a value" >&2; exit 2; }; tar=$2; shift 2 ;;   # a ready-made repo archive, used to test a deliberately broken tree
     *) echo "unknown option $1" >&2; exit 2 ;;
   esac
 done
+
+[ -z "$tar" ] || [ -f "$tar" ] || { echo "FAIL: --tar file '$tar' does not exist" >&2; exit 2; }
 
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$here/../.." && pwd)
@@ -23,7 +25,7 @@ ctx=$(mktemp -d); log=$(mktemp)
 cleanup() { [ -n "${cid:-}" ] && docker rm -f "$cid" >/dev/null 2>&1; rm -rf "$ctx" "$log"; }
 trap cleanup EXIT
 
-if [ -n "$tar" ]; then cp "$tar" "$ctx/repo.tar"; label=$(basename "$tar")
+if [ -n "$tar" ]; then cp "$tar" "$ctx/repo.tar"; label=$(basename "$tar" | tr -c "A-Za-z0-9._-\n" "_" | sed "s/^[^A-Za-z0-9]*//" | cut -c1-60); [ -n "$label" ] || label=tar
 else git -C "$root" archive "$ref" > "$ctx/repo.tar" || { echo "FAIL: cannot archive ref '$ref'" >&2; exit 1; }
      label=$(git -C "$root" rev-parse --short "$ref"); fi
 cp "$here/Dockerfile.$route" "$ctx/Dockerfile"
