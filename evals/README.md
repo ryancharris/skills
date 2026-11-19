@@ -69,6 +69,10 @@ invalid runs, malformed tool calls, hiring claims hidden in the body or in earli
 use through `curl`. It also re-grades a few trimmed real records from `evals/fixtures/`. Change the
 grader, run this, and add a case for any new rule. On Node 20 or 22, `node --test evals/` works too.
 
+### Grader strictness rules
+
+S7 and S9 pass only if no sentence outside the quoted cannot-check sentence pairs a hiring word with the company. A short allow-list of neutral wording is exempt (offers to check, "that doesn't mean it has no openings"). S1, S2 and S8 compare every answer URL exactly with the URLs printed by a CLI call that worked. S6 fails when the answer names well-known employers of its own. A run with `timedOut: true` is a valid fail ("timed out"), not an invalid run. To retune a rule, regrade the saved records and read every changed verdict before trusting it.
+
 ## Other install routes
 
 `evals/routes/` covers the Claude Code plugin and pi package install routes. See `evals/routes/README.md`.
