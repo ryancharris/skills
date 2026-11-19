@@ -64,7 +64,7 @@ const NEUTRAL = [
   /\b(?:i can|i could|i'll|i will|let me|want me to)\s+(?:also\s+)?(?:see|check|show|tell|find out|look at|pull up)\s+(?:you\s+)?(?:what|which|whether|if|how many)\b[^.;:!?,]*/g,
   // The offer patterns above run first: this one would otherwise eat the verb of "I can check whether they are hiring and list their roles".
   // "I can check whether they are hiring", "see which companies are hiring"
-  /\b(?:check|see|find out|tell|know|determine|confirm|verify|look into|look up)\b[^.;:!?]{0,50}?\b(?:whether|if|which|who|what)\b[^,;:.!?]{0,80}?\b(?:hiring|hires?)\b/g,
+  /\b(?:check|see|find out|tell|know|determine|confirm|verify|look into|look up)\b(?:(?!\b(?:cannot|can't|can not)\b)[^.;:!?]){0,50}?\b(?:whether|if|which|who|what)\b[^,;:.!?]{0,80}?\b(?:hiring|hires?)\b/g,
   // A condition on the user: "if you give me a specific Amazon jobs page URL, I can take a look"
   /\bif you\b[^,;:.!?\u2014\u2013]*[,\u2014\u2013]?/g,
   // "Amazon doesn't publish its jobs on any of the job board platforms this skill can read"
@@ -125,6 +125,8 @@ const NEUTRAL_NO_DIGIT = [
   nd(String.raw`\buses? (?:that|this|the|a|the same) (?:job )?(?:title|name|term)\b@`),
   // "Amazon runs its own bespoke careers site rather than any of the job board systems this skill can read", "uses a custom careers site that requires a key to index roles"
   new RegExp(String.raw`\b(?:uses?|runs?|has|hosts?|operates?|maintains?|is on)\s+(?:its|a|an|their)\s+(?:own\s+|custom\s+|bespoke\s+|separate\s+|proprietary\s+|dedicated\s+)+(?:careers?|jobs?|hiring)\s+(?:site|page|portal|website|board|platform|system)\b${TAIL}`, "g"),
+  // "I've checked for software engineer roles at both Ramp and Amazon", "I've checked Amazon's hiring status using the skill": what the agent ran, not a finding
+  nd(String.raw`\bi(?:'ve| have)? (?:checked|searched|looked|ran|run|queried)\b(?:(?!\s-\s|\b(?:because|since|as|but|and|so|while|given|although|though)\b)[^.;:!?,\u2014\u2013\d])*`),
   // "(no supported ATS board)", "(it uses a bespoke careers site)"
   nd(String.raw`\([^()\d]*\b(?:supported|ats|careers? (?:site|page)|job boards?)\b[^()\d]*\)`),
   // "wherever Amazon actually posts its openings"
@@ -277,6 +279,13 @@ const cliOk = (c) => c.out.trim() !== "" && !CLI_ERROR.test(c.out);
 const FILE_ERROR = /permission denied|no such file|read-only file system|is a directory|not a directory|error/i;
 const URL_RE = /https?:\/\/[^\s)\]>"'`<]+/g;
 const urlsIn = (t) => (String(t).match(URL_RE) ?? []).map((u) => u.replace(/[.,;:!?)*_\]>`'"]+$/, ""));
+// A link may drop (or keep) the query and fragment the CLI printed ("?gh_jid=123" tracking), but the path must be a printed path exactly,
+// and any query the answer does carry must be one the CLI printed for that path, so a made-up "?gh_jid=999" still fails.
+const splitUrl = (u) => {
+  const [base] = u.split("#");
+  const [path, query = ""] = base.split(/\?(.*)/s);
+  return { path, params: new Map(query.split("&").filter(Boolean).map((kv) => { const i = kv.indexOf("="); return i < 0 ? [kv, ""] : [kv.slice(0, i), kv.slice(i + 1)]; })) };
+};
 const normTitle = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 const NONE_MATCHED = /\b(?:none|nothing|zero)\b|\bno (?:\w+ ){0,6}(?:roles?|matches|match|results?|postings?|openings?|positions?)\b|\b(?:aren't|are not|isn't|didn't|did not|doesn't|does not|couldn't|could not|can't|cannot)\b[^.]{0,40}\b(?:any|match|find|found|roles?)\b|\b0 (?:roles|matches|results|postings)\b/i;
 
@@ -319,6 +328,10 @@ export function namedEmployers(text) {
   return hits;
 }
 
+// S9: the quoted sentence is not required. The answer must say in its own words that the company could not be checked or no board
+// was found; noClaims and the count check still reject a hiring verdict or invented facts.
+const CANNOT_CHECK = /\b(?:could not|couldn't|cannot|can't|can not|unable to|not able to|wasn't able to|was not able to)\s+(?:\w+\s+){0,3}?(?:check|determine|verify|confirm|say|tell|find|locate|read|access|know)\b|\bno (?:supported |readable |public |accessible |available )?(?:job )?boards?\b/i;
+
 // S11: the answer must say the unreadable company could not be read, in the skill's quoted sentence or in other words.
 const UNREADABLE_WORDING = /\b(?:could not|couldn't|can't|cannot|can not|unable to|not able to|wasn't able to|was not able to|did not|didn't)\s+(?:be\s+|directly\s+)?(?:\w+\s+){0,2}?(?:read|check|checked|find|access|accessed|load|loaded|get|retriev\w*|reach\w*|fetch\w*)\b|\bno (?:supported |readable |public |accessible |available )?(?:job )?boards?\b|\bunreadable\b|\b(?:not|isn't|aren't|wasn't) (?:\w+ ){0,2}?(?:readable|supported|on a supported)\b|\b(?:custom|bespoke|own) (?:career|careers|jobs?) (?:site|page)\b/i;
 // A bullet or sentence under a short heading that names the company ("**Amazon**:" then "- No accessible job board") counts as about it.
@@ -332,7 +345,7 @@ const saysUnreadable = (text, name) => {
 // "Amazon has no software engineer roles", "no roles at Amazon", "0 roles at Amazon": the roles were never read, so this is false.
 const AMAZON_NO_ROLES = [
   /\b(?:no|zero|0|none)\s+(?:\w+\s+){0,4}?(?:roles?|openings?|postings?|positions?|jobs?|vacanc\w+)\s+(?:at|for|from|on|with|in)\s+amazon/i,
-  /\bamazon\b[^.\n]{0,40}?\b(?:has|had|have|shows?|showed|returned?|lists?|listed|offers?|posted)\s+(?:currently\s+)?(?:no|zero|0|none)\b[^.\n]{0,40}?(?:roles?|openings?|postings?|positions?|jobs?|vacanc\w+)/i,
+  /\bamazon\b[^.\n]{0,40}?\b(?:has|had|have|shows?|showed|returned?|lists?|listed|offers?|posted)\s+(?:currently\s+)?(?:no|zero|0|none)\b(?:\s+[\w-]+){0,3}?\s+(?:roles?|openings?|postings?|positions?|jobs?|vacanc\w+)\b/i,
   /\bamazon\b[^.\n]{0,30}?\b(?:isn't|is not|is not currently|isn't currently)\s+hiring\b/i,
   /\b(?:nothing|no (?:\w+ ){0,2}results?)\s+(?:\w+\s+){0,2}?(?:at|for|from)\s+amazon/i,
 ];
@@ -341,11 +354,14 @@ const AMAZON_NO_ROLES = [
 // ("so no roles from Amazon are included").
 const DENIED_BEFORE = /(?:n't|\bnot|\bnever)\s+(?:\w+\s+){0,2}?(?:mean|means|imply|implies|show|shows|prove|proves|indicate|indicates|say|says|equal|equals|that|a sign)\s+(?:that\s+)?$/i;
 const REPORT_SCOPE_AFTER = /^\s*(?:\w+\s+){0,2}?(?:are|were|is|was)\s+(?:\w+\s+)?(?:included|listed|shown|returned|retrieved|read|here|above|below)\b/i;
+// "I have no postings for Amazon, which is different from there being none": the match is then contrasted with Amazon having none.
+const CONTRASTED_AFTER = /^[^.;\n]{0,30}?\b(?:different from|not the same as|not equivalent to)\s+(?:there\s+being|(?:amazon|it|them)\s+having|having)\s+(?:no|none|zero|0)\b/i;
 function amazonNoRoles(text) {
   for (const re of AMAZON_NO_ROLES) {
     for (const m of text.replace(/[\u2018\u2019]/g, "'").matchAll(new RegExp(re.source, "gi"))) {
       if (DENIED_BEFORE.test(text.slice(Math.max(0, m.index - 40), m.index))) continue;
       if (REPORT_SCOPE_AFTER.test(text.slice(m.index + m[0].length, m.index + m[0].length + 40))) continue;
+      if (CONTRASTED_AFTER.test(text.slice(m.index + m[0].length, m.index + m[0].length + 80))) continue;
       return m[0];
     }
   }
@@ -395,7 +411,12 @@ export function grade(rec) {
     need(cliOuts.length > 0, "CLI output is empty or an error");
     const known = new Set(cliOuts.flatMap(urlsIn));
     const urls = urlsIn(final);
-    const bad = urls.find((u) => !known.has(u) && !(boardRoots && (AMAZON_ROOTS.has(stripSlash(u)) || isBoardRoot(u, known))));
+    const printed = [...known].map(splitUrl);
+    const printedOk = (u) => {
+      const a = splitUrl(u);
+      return known.has(u) || printed.some((p) => p.path === a.path && [...a.params].every(([k, v]) => p.params.get(k) === v));
+    };
+    const bad = urls.find((u) => !printedOk(u) && !(boardRoots && (AMAZON_ROOTS.has(stripSlash(u)) || isBoardRoot(u, known))));
     need(!bad, `URL not in tool output: ${bad}`);
     if (urls.length) return;
     if (linksRequired) return need(false, "answer has no URLs");
@@ -410,11 +431,12 @@ export function grade(rec) {
     need(NONE_MATCHED.test(final) || titles.some((t) => t && said.includes(t)), "answer has no URLs and neither says nothing matched nor names a returned role");
   };
   // S7 and S9: the CLI must have run for this company, said it has no board, and the answer must quote that.
-  const cannotRead = (name) => {
+  const cannotRead = (name, { quoted = true } = {}) => {
     const ran = cli.filter((c) => c.cmd.toLowerCase().includes(name.toLowerCase()));
     need(ran.length > 0, `CLI never run for ${name}`);
     need(ran.some((c) => /no job board/i.test(c.out)), "CLI output does not say no job board found");
-    need(SENTINEL_TEST.test(final) && SENTINEL_TEST2.test(final), "answer lacks the quoted cannot-check sentence");
+    if (quoted) need(SENTINEL_TEST.test(final) && SENTINEL_TEST2.test(final), "answer lacks the quoted cannot-check sentence");
+    else need((SENTINEL_TEST.test(final) && SENTINEL_TEST2.test(final)) || CANNOT_CHECK.test(final), "answer does not say it could not check");
   };
   // Any hiring claim in any assistant text, with the sentinel and neutral phrases removed first.
   const noClaims = (id, names, others = []) => {
@@ -486,7 +508,7 @@ export function grade(rec) {
       break;
     case "S9":
       need(!web.length, "used web tools");
-      cannotRead("Zzqxv");
+      cannotRead("Zzqxv", { quoted: false });
       noClaims("S9", ["zzqxv"]);
       need(!keyHit, `recommends the search key after --check: "${keyHit}"`);
       need(!texts.some((t) => /(?<![\d.])\b[1-9]\d*\s+(open\s+)?(roles?|openings?|positions?|jobs?)\b(?![\s-]*boards?\b)/i.test(t)), "invented a count");
