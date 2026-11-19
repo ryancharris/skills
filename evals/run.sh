@@ -3,12 +3,12 @@
 # Manual only: it calls paid model APIs. Never run it from CI.
 set -euo pipefail
 
-ref=HEAD save="" models="" runs=3 concurrency=3 stories="" envfile="" seed="" out=""
+ref=HEAD save="" force_save=0 models="" runs=3 concurrency=3 stories="" envfile="" seed="" out=""
 usage() {
-  cat <<'U'
+  cat >&2 <<'U'
 usage: evals/run.sh --models a,b --env-file FILE [options]
   --models LIST       comma list of opencode model IDs, e.g. openrouter/anthropic/claude-sonnet-5.5
-  --env-file FILE     file with provider keys (KEY=value lines), passed to the container, never baked into the image
+  --env-file FILE     file with provider keys (KEY=value lines, values NOT quoted), passed to the container, never baked into the image
   --ref REF           git ref whose committed skills/job-board is installed (default HEAD; use origin/main to test what is public)
   --runs N            runs per model and story (default 3)
   --stories S1,S5     only these stories (default all)
@@ -16,38 +16,71 @@ usage: evals/run.sh --models a,b --env-file FILE [options]
   --seed N            shuffle seed (default random)
   --out DIR           output directory (default evals/out/<timestamp>)
   --save NAME         also copy summary.md and summary.json to evals/results/<date>-NAME.* (commit these to compare later)
+  --force-save        let --save overwrite an existing evals/results/<date>-NAME.* pair
 U
   exit 2
 }
+fail() { echo "error: $*" >&2; exit 1; }
+# every flag below takes a value: print usage instead of tripping `set -u` when it is missing
+val() { [ "$#" -ge 2 ] && [ -n "$2" ] || { echo "error: $1 needs a value" >&2; usage; }; }
 while [ $# -gt 0 ]; do
   case "$1" in
-    --models) models=$2; shift 2 ;; --env-file) envfile=$2; shift 2 ;; --ref) ref=$2; shift 2 ;;
-    --runs) runs=$2; shift 2 ;; --stories) stories=$2; shift 2 ;; --concurrency) concurrency=$2; shift 2 ;;
-    --seed) seed=$2; shift 2 ;; --save) save=$2; shift 2 ;; --out) out=$2; shift 2 ;; *) usage ;;
+    --models) val "$@"; models=$2; shift 2 ;; --env-file) val "$@"; envfile=$2; shift 2 ;; --ref) val "$@"; ref=$2; shift 2 ;;
+    --runs) val "$@"; runs=$2; shift 2 ;; --stories) val "$@"; stories=$2; shift 2 ;; --concurrency) val "$@"; concurrency=$2; shift 2 ;;
+    --seed) val "$@"; seed=$2; shift 2 ;; --save) val "$@"; save=$2; shift 2 ;; --out) val "$@"; out=$2; shift 2 ;;
+    --force-save) force_save=1; shift ;; *) echo "error: unknown option $1" >&2; usage ;;
   esac
 done
 [ -n "$models" ] && [ -n "$envfile" ] || usage
 
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$here/.." && pwd)
+date_now=$(date +%F)
+
+# Validate everything before any directory is made or any docker call happens.
+[ -f "$envfile" ] && [ -r "$envfile" ] || fail "--env-file '$envfile' is not a readable file"
+# docker --env-file keeps quote characters as part of the value, so a quoted key would be sent with its quotes and rejected
+if grep -Eq '^[A-Za-z_][A-Za-z0-9_]*=["'"'"']' "$envfile"; then fail "--env-file '$envfile' has a quoted value; write KEY=value with no quotes (docker keeps the quotes as part of the value)"; fi
+commit=$(git -C "$root" rev-parse --verify --quiet "$ref^{commit}") || fail "--ref '$ref' is not a commit in this repository"
+case "$runs" in ''|*[!0-9]*|0) fail "--runs must be a positive integer" ;; esac
+case "$concurrency" in ''|*[!0-9]*|0) fail "--concurrency must be a positive integer" ;; esac
+case "$seed" in ''|*[!0-9]*) [ -z "$seed" ] || fail "--seed must be a non-negative integer" ;; esac
+if [ -n "$save" ]; then
+  [[ $save =~ ^[A-Za-z0-9._-]+$ ]] && [[ $save != .* ]] || fail "--save name '$save' must match ^[A-Za-z0-9._-]+\$ and not start with '.'"
+  if [ "$force_save" -eq 0 ]; then
+    for ext in md json; do
+      [ ! -e "$here/results/$date_now-$save.$ext" ] || fail "evals/results/$date_now-$save.$ext already exists; pick another --save name or pass --force-save"
+    done
+  fi
+fi
+
+# Installed before anything is created. The container is removed by name so even a half-finished `docker create` cannot leak
+# the env-file values, which docker stores in the container config (visible to `docker inspect`) until the container is removed.
+ctx="" cname="jb-evals-$$-$(date +%s)"
+cleanup() { docker rm -f "$cname" >/dev/null 2>&1 || true; [ -z "$ctx" ] || rm -rf "$ctx"; }
+trap cleanup EXIT
+
 out=${out:-$here/out/$(date +%Y%m%d-%H%M%S)}
 mkdir -p "$out"; out=$(cd "$out" && pwd)
 seed=${seed:-$(( RANDOM * 32768 + RANDOM ))}
+short=$(git -C "$root" rev-parse --short "$commit")
 
-ctx=$(mktemp -d); trap 'rm -rf "$ctx"' EXIT
-git -C "$root" archive "$ref" skills/job-board > "$ctx/skill.tar"
+ctx=$(mktemp -d)
+git -C "$root" archive "$commit" skills/job-board > "$ctx/skill.tar"
 cp "$here/Dockerfile" "$here/stories.json" "$here/run.mjs" "$here/redact.mjs" "$here/abort.mjs" "$here/versions.mjs" "$ctx/"
-tag=jb-evals:$(git -C "$root" rev-parse --short "$ref")
+tag=jb-evals:$short
 docker build -q -t "$tag" "$ctx" >/dev/null
 
-printf '{"date":"%s","ref":"%s","commit":"%s","name":"%s"}\n' "$(date +%F)" "$ref" "$(git -C "$root" rev-parse --short "$ref")" "${save:-$ref}" > "$out/meta.json"
-cid=$(docker create --env-file "$envfile" \
+printf '{"date":"%s","ref":"%s","commit":"%s","name":"%s"}\n' "$date_now" "$ref" "$short" "${save:-$ref}" > "$out/meta.json"
+docker create --name "$cname" --env-file "$envfile" \
   -e MODELS="$models" -e RUNS="$runs" -e CONCURRENCY="$concurrency" -e SEED="$seed" -e STORIES="$stories" \
-  "$tag" node /evals/run.mjs)
-trap 'docker rm -f "$cid" >/dev/null 2>&1; rm -rf "$ctx"' EXIT
+  "$tag" node /evals/run.mjs >/dev/null
 rc=0
-docker start -a "$cid" || rc=$?
-docker cp "$cid:/out/." "$out/"
+docker start -a "$cname" || rc=$?
+docker cp "$cname:/out/." "$out/" || fail "could not copy results out of the container"
+for f in results.jsonl order.json; do
+  [ -s "$out/$f" ] || fail "the runner exited with $rc before writing $f (it died early); see its output above. Nothing was graded."
+done
 node "$here/report.mjs" "$out"
 node "$here/summary.mjs" "$out" >/dev/null
 invalid=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).meta.invalidRuns)' "$out/summary.json")
@@ -59,9 +92,9 @@ elif [ "$rc" -ne 0 ]; then
   [ -n "$save" ] && echo "Not saving to evals/results/." >&2
 elif [ -n "$save" ]; then
   mkdir -p "$here/results"
-  cp "$out/summary.md" "$here/results/$(date +%F)-$save.md"
-  cp "$out/summary.json" "$here/results/$(date +%F)-$save.json"
-  echo "saved evals/results/$(date +%F)-$save.{md,json}"
+  cp "$out/summary.md" "$here/results/$date_now-$save.md"
+  cp "$out/summary.json" "$here/results/$date_now-$save.json"
+  echo "saved evals/results/$date_now-$save.{md,json}"
 fi
 echo "open $out/report.html"
 exit $(( invalid > 0 || rc != 0 ? 1 : 0 ))
