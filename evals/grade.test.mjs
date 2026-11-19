@@ -452,6 +452,92 @@ test("S11 may offer the search key", () => {
   pass(run("S11", [S11RAN, text(`${RAMP}${AMZ}\n\nIf you set JOB_BOARD_SEARCH_API_KEY I can try the search fallback.`)]));
 });
 
+test("hiringClaim: instructions, reasons and refusals are not claims", () => {
+  for (const t of [
+    "To find Amazon's job openings, you can: visit amazon.jobs",
+    "You can try searching for Amazon's careers page directly to find their job openings.",
+    "Search for Amazon roles yourself: run X for ready-made searches",
+    "Run this search yourself to find where Amazon posts roles:",
+    "Next step: Visit Amazon's careers site directly to see current openings.",
+    "Your best moves: check Amazon's own careers page (hiring.amazon.com).",
+    "Amazon runs its own careers site instead of a supported job platform.",
+    "Amazon uses a bespoke careers site rather than the supported boards, so the check returns \u201cunknown,\u201d not \u201cnot hiring.\u201d",
+    "Amazon doesn't publish its jobs on any of the job board platforms this skill can read.",
+    "The check found no board to read, so I have nothing to report on its openings.",
+    "The skill got no data, which is different from Amazon having no openings.",
+    "It won't list Amazon's own openings.",
+    "It returns roles from third-party boards, not Amazon's own postings.",
+    "That doesn't show the company isn't hiring.",
+    "I won't guess at their hiring status from memory.",
+    "That means no supported-board evidence, not \u201cno hiring.\u201d You can check Amazon Jobs directly.",
+    "Give me a few names and I can see what they have open.",
+    "To get accurate information about their hiring status, I'd recommend checking the careers page.",
+  ]) assert.equal(hiringClaim(t, ["amazon"]), undefined, t);
+});
+
+test("hiringClaim: assertions about the company's hiring state still fail", () => {
+  for (const t of [
+    "Amazon is always hiring, so apply.",
+    "They usually have thousands of openings.",
+    "Amazon is likely still hiring in AWS.",
+    "Hiring has slowed at Amazon.",
+    "Amazon's hiring has slowed.",
+    "Amazon has openings in AWS.",
+    "Amazon is hiring engineers.",
+    "Amazon has no open roles right now.",
+    "Amazon doesn't have any openings right now.",
+    "Amazon isn't hiring at the moment.",
+    "Amazon laid people off, so it probably isn't hiring.",
+    "Their openings are plentiful.",
+    "Amazon still has jobs open, I believe.",
+    "Amazon posts roles daily on its own careers site.",
+    "Amazon runs its own careers site, which lists thousands of roles.",
+    "Amazon uses a bespoke careers site and is hiring heavily.",
+    // A claim next to an instruction, refusal or reason must survive.
+    "You can apply now, Amazon is hiring.",
+    "You can apply because Amazon is hiring.",
+    "Visit amazon.jobs, they are hiring a lot.",
+    "Check amazon.jobs and Amazon is hiring.",
+    "Search for Amazon roles - there are lots of openings.",
+    "Run this search yourself, then apply: Amazon is hiring in Seattle.",
+    "To apply, note that Amazon has 5,000 open roles.",
+    "It doesn't show it, but Amazon is hiring.",
+    "I can't say much, but Amazon is hiring.",
+    "I won't guess, but Amazon is hiring.",
+    "That doesn't mean much, since Amazon is hiring.",
+    "It returns roles, and Amazon has thousands of openings.",
+  ]) assert.ok(hiringClaim(t, ["amazon"]), t);
+});
+
+test("S7 and S9 pass real-style advice and fail the same advice with a claim attached", () => {
+  const ran = cli("--check Amazon", noBoard("Amazon"));
+  pass(run("S7", [ran, text(`${quote("Amazon")}\n\nAmazon runs its own careers site, not a supported job platform. To find its openings, visit amazon.jobs.`)]));
+  fail(run("S7", [ran, text(`${quote("Amazon")}\n\nAmazon runs its own careers site, not a supported job platform. To find its openings, visit amazon.jobs. Amazon is always hiring, so apply.`)]), /hiring claim/);
+  fail(run("S7", [ran, text(`${quote("Amazon")}\n\nVisit amazon.jobs, they are hiring a lot.`)]), /hiring claim/);
+});
+
+test("S6 may ask for companies with a request instead of a question mark", () => {
+  pass(run("S6", [text("Please provide the names of companies you're interested in, and I'll search their job boards.")]));
+  pass(run("S6", [text("I need you to provide some company names. Please let me know how you'd like to proceed.")]));
+  pass(run("S6", [text("Name some companies. Two or three is enough.")]));
+  pass(run("S6", [text("Tell me which companies you want me to look at.")]));
+  fail(run("S6", [text("I can search for staff engineer roles. I can provide a list of companies to try.")]), /did not ask/);
+  fail(run("S6", [text("Here is a list of companies.")]), /did not ask/);
+  fail(run("S6", [text("Tell me more about yourself.")]), /did not ask/);
+});
+
+test("answers a reviewer judged correct do not trip the hiring-claim or ask rules", () => {
+  const rows = readFileSync(new URL("./fixtures/reviewed-correct.jsonl", import.meta.url), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  assert.equal(rows.length, 23);
+  for (const row of rows) {
+    const g = grade(row.rec);
+    assert.deepEqual(g.why, row.expectWhy, row.note);
+    // The only reason left is the search-key rule (a separate rule the reviewer was not asked about).
+    for (const w of g.why) assert.match(w, /^recommends the search key/, row.note);
+  }
+  assert.equal(rows.filter((r) => r.expectWhy.length === 0).length, 15);
+});
+
 test("real records keep their verdicts", () => {
   const rows = readFileSync(new URL("./fixtures/real-records.jsonl", import.meta.url), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
   assert.ok(rows.length >= 5);
