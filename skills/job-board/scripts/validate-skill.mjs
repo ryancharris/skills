@@ -25,6 +25,26 @@ const skillPath = resolve(here, "..", "SKILL.md");
 const errors = [];
 const warnings = [];
 
+/** Remove one level of YAML quoting from a single-line scalar. */
+function unquote(value) {
+  if (value.length >= 2 && value.startsWith("'") && value.endsWith("'")) {
+    return value.slice(1, -1).replace(/''/g, "'");
+  }
+  if (value.length >= 2 && value.startsWith('"') && value.endsWith('"')) {
+    return value.slice(1, -1).replace(/\\(["\\])/g, "$1");
+  }
+  return value;
+}
+
+/** Why a value written without quotes would not be a valid YAML plain scalar, or null. */
+function plainScalarProblem(value) {
+  if (/^["'|>\[{]/.test(value)) return null; // quoted, block, or flow: a different rule applies
+  if (/^[@`%&*!?,\]}]/.test(value)) return `value starts with the YAML indicator '${value[0]}'.`;
+  if (/:(\s|$)/.test(value)) return "value contains ': ', which starts a nested mapping.";
+  if (/\s#/.test(value)) return "value contains ' #', which starts a comment.";
+  return null;
+}
+
 let text;
 try {
   text = readFileSync(skillPath, "utf8");
@@ -40,8 +60,19 @@ if (!match) {
   const front = match[1];
   const get = (key) => {
     const m = new RegExp(`^${key}:\\s*(.+)$`, "m").exec(front);
-    return m ? m[1].trim() : null;
+    return m ? unquote(m[1].trim()) : null;
   };
+
+  // A plain (unquoted) YAML scalar cannot contain ": " or " #", and cannot start with an indicator
+  // character. Lenient loaders accept it anyway; a strict one (pi uses the `yaml` package) rejects the
+  // whole frontmatter and never loads the skill. This check needs no dependency; the test suite parses
+  // the frontmatter with a real YAML parser as the ground truth.
+  for (const line of front.split(/\r?\n/)) {
+    const kv = /^\s*([A-Za-z0-9_-]+):\s+(\S.*)$/.exec(line);
+    if (!kv) continue;
+    const problem = plainScalarProblem(kv[2].trim());
+    if (problem) errors.push(`frontmatter '${kv[1]}': ${problem} Quote the value ('...').`);
+  }
 
   const name = get("name");
   const description = get("description");
