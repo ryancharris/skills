@@ -54,3 +54,17 @@ Three runs per cell is a small sample. The docs elsewhere in this repo report ab
 variance on the no-verdict-from-memory story, so use more runs before claiming a difference.
 Failures that are the model's tool-calling format (printing `<function=...>` as text) are counted
 as "malformed tool calls" in the report; they are not the skill's fault.
+
+## Testing the grader
+
+`evals/grade.test.mjs` tests `grade.mjs` offline with Node's built-in runner (no dependencies,
+no network, no docker, no model calls):
+
+```bash
+node --test evals/*.test.mjs
+```
+
+It builds small synthetic records for every story (S0 to S10, one pass and one fail each), plus
+invalid runs, malformed tool calls, hiring claims hidden in the body or in earlier narration, and web
+use through `curl`. It also re-grades a few trimmed real records from `evals/fixtures/`. Change the
+grader, run this, and add a case for any new rule. On Node 20 or 22, `node --test evals/` works too.
